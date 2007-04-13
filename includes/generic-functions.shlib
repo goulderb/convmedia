@@ -1,0 +1,17 @@
+die()	{
+	echo "$1"
+	exit 1
+}
+
+mplayer_retrieve_info()	{
+	case $1 in
+	grep)
+	mplayer $MPLAYER_OPTS -vo null -ao null -frames 0 -identify "$2" 2>/dev/null | grep "^ID" | sed -e 's/[\`\\!$"]/\\&/g' | \
+		sed -e '/^ID_FILENAME/ { s/^ID_FILENAME=\(.*\)/ID_FILENAME="\1"/g; }' | grep $3 | cut -d= -f2
+	;;
+	all)
+	mplayer $MPLAYER_OPTS -vo null -ao null -frames 0 -identify "$2" 2>/dev/null | grep "^ID" | sed -e 's/[\`\\!$"]/\\&/g' | \
+		sed -e '/^ID_FILENAME/ { s/^ID_FILENAME=\(.*\)/ID_FILENAME="\1"/g; }'
+	;;
+	esac
+}

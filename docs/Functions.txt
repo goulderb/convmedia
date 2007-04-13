@@ -1,0 +1,154 @@
+Convmedia documentation: Functions
+
+Please refer to Variables.txt for a description of all variables listed as required or optional and what they should contain.
+
+1. Generic functions
+Function: die
+Description: Prints a message, then exit's with a status of 1.
+Required arguments: 1
+Required environment variables: None.
+Optional environment variables: None.
+Usage: die "We die!"
+
+Function: mplayer_retrieve_info
+Description: Retrieves information about a file by using mplayer -identify, can operate selectively or display all information.
+Required arguments: 2 or 3
+Required environment variables: None.
+Optional environment variables: MPLAYER_OPTS.
+Other information: First argument is either grep or all, second argument is the input file to inspect, third only applies for grep,
+it is the information you are trying to retrieve.
+Usage: mplayer_retrive_info all file.ogg or mplayer_retrive_info grep file.ogg ID_ABITRATE
+
+2. Container functions
+Function: get_metatag_data
+Description: Retrieves metatag information from the input file, based on what format is specified.
+Required arguments: 3
+Required environment variables: None.
+Optional environment variables: None.
+Formats supported: ogg, flac, id3, mp4.
+Other information: First argument is the format, second argument is the input file, third argument is the tag to retrieve. Please note that
+the tag is subject to the tool used and you should reference the tool to know what to search for, the tools used are: faad (using the -i switch),
+metaflac, ogginfo and id3info.
+Usage: get_metatag_data ogg file.ogg TITLE
+
+Function: set_metatag
+Description: Sets metatag information on the input file.
+Required arguments: 4
+Required environment variables: None.
+Optional environment variables: None.
+Formats supported: ogg, flac, id3, mp4.
+Other information: First argument is the format, second argument is the tag name or argument to the tool, third argument is the data to go in the tag,
+fourth is file to edit. Note that the argument to the tool is dependent on the tool being used, in some cases you may use a tag name instead of an
+argument. Please reference the documentation of each program for further details.
+
+Below is a list of tools and weather or not they use an argument or a tag name:
+metaflac: Tag name.
+vorbiscomment: Tag name.
+id3tag: Argument.
+mp4tag: Argument.
+
+Usage: set_metatag ogg ALBUM Foobar file.ogg
+
+Function: get_common_metatags
+Description: Retrieves common metatags from the input.
+Required arguments: 2
+Required environment variables: None.
+Optional environment variables: None.
+Formats supported: ogg, flac, id3, mp4.
+Other information: First argument is the format, second argument is the input file. This function gets the major tags in Audio files, artist, album, title
+and track number. The artist is put in the variable ARTIST, the album is put in the variable ALBUM, the title is put in the variable TITLE and the track
+number is put in the variable TRACKNUM.
+Usage: get_metatag_data ogg file.ogg
+
+Function: set_common_metatags
+Description: Sets the metatags retrieved by get_common_metatags to a file.
+Required arguments: 2
+Required environment variables: None.
+Optional environment variables: ARTIST, ALBUM, TITLE, TRACKNUM.
+Formats supported: ogg, flac, id3, mp4.
+Other information: First argument is the format, second argument is the input file.
+Usage: set_metatag_data ogg file.ogg
+
+Function: mux_file
+Description: Muxes a raw or muxed stream into the specified container.
+Required arguments: 3
+Required environment variables: VIDEO_FPS
+Optional environment variables: None.
+Formats supported: mp4.
+Other information: First argument is the format, second is the input file, third is the output file.
+Usage: mux_file mp4 input.x264 output.mp4
+
+Function: merge_files
+Description: Merges multiple files into a single container.
+Required arguments: 1
+Required environment variables: FILEMERGE_ARGS
+Optional environment variables: None.
+Formats supported: mp4, mkv, ogm.
+Other information: FILEMERGE_ARGS is merely appended to the command, it is up to you what it contains, it can include any options the program in question supports.
+The programs used are MP4Box (part of GPAC), ogmmerge and mkvmerge.
+Usage: export FILEMERGE_ARGS="video.mp4 audio.ogg subtitles.srt"; merge_files mkv
+
+3. Audio functions
+Function: decode_audio_pipe
+Description: Creates a named pipe (FIFO) then forks mplayer to the background, set to output wave-format data to the named pipe.
+Required arguments: 2
+Required environment variables: None.
+Optional environment variables: MPLAYER_OPTS
+Other information: First argument is the file to decode, second argument is the name of the output file/pipe. Please note that all
+audio decoding is handled through mplayer, meaning anything mplayer can decode can be used as input.
+Usage: audio_decode_pipe file.ogg file.wav
+
+Function: decode_audio_file
+Description: Creates a wave file out of the input file using mplayer (this DOES NOT fork).
+Required arguments: 2
+Required environment variables: None.
+Optional environment variables: MPLAYER_OPTS
+Other information: First argument is the file to decode, second argument is the name of the output file/pipe. Please note that all
+audio decoding is handled through mplayer, meaning anything mplayer can decode can be used as input.
+Usage: audio_decode_file file.ogg file.wav
+
+Function: get_qualitymap
+Description: Maps the AQUALITY variable to either an approximate bitrate or an inverted scale (for FLAC), AQUALITY uses the Vorbis scale.
+Required arguments: 1
+Required environment variables: AQUALITY
+Optional environment variables: None.
+Other information: First argument is the type of output to return (either invertq for inverted scale or bitrate for bitrate.)
+Usage: get_qualitymap invertq or get_qualitymap bitrate
+
+Function: audio_encode
+Description: Decodes the input file and then proceeds to encode it into the specified output format.
+Required arguments: 3
+Required environment variables: AQUALITY, TMPDIR.
+Optional environment variables: None.
+Formats supported: vorbis, flac, aac-lc, aac-main, mp3.
+Other information: The first argument is the format to encode to, the second is the input file to encode/transcode, the third is the output
+file you wish to create. aac-lc stands for "AAC Low Complexity Profile", where as aac-main stands for "AAC Main Profile".
+Usage: export AQUALITY="4"; export TMPDIR="/tmp/foobar/"; audio_encode vorbis file.mp3 file.ogg
+
+4. Video functions
+Function: video_encode
+Description: Encodes input video stream into a different format.
+Required arguments: 2
+Required environment variables: OVC, VIDEO_FPS, OVCOPTS, OVCOPTS_PASS1, OVCOPTS_PASS2, TMPDIR, PASS.
+Optional environment variables: VENC_OPTS.
+Formats supported: Depends on how mencoder is built, can support anything that mencoder can.
+Other information: The first argument is the input file or stream to encode, the second is the file to output to.
+Usage: export OVC="lavc"; export OVCOPTS="-lavcopts vcodec=mpeg4"; export PASS="1"; video_encode input.mpg output.m4v
+
+Function: video_cropdetect
+Description: Detects crop parameters for mplayer/mencoder's crop video filter, then prints them.
+Required arguments: 1
+Required environment variables: None.
+Optional environment variables: VENC_OPTS (for setting stuff like the DVD drive).
+Formats supported: Depends on how mplayer is built, can support anything that mplayer can.
+Other information: First argument is the input stream/file to detect crop parameters for.
+Usage: video_cropdetect input.mpg
+
+Function: video_calculate_bitrate
+Description: Calculates optimal bitrate for creating files of a specific size.
+Required arguments: 1
+Required environment variables: AQUALITY, VIDEO_FPS, VIDEO_LENGTH
+Optional environment variables: None.
+Other information: First argument is the target file size in Megabytes, e.g. 800.
+Usage: export VIDEO_FPS=`mplayer_retrieve_info grep $1 ID_VIDEO_FPS`; export VIDEO_FPS=`mplayer_retrieve_info grep $1 ID_LENGTH`; \
+video_calculate_bitrate 800

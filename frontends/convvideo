@@ -1,0 +1,253 @@
+#!/bin/bash
+
+export VBITRATE="900"
+export AQUALITY="3"
+export TMPDIR="/tmp/convvideo"
+export DVD_DEVICE="/dev/dvd"
+export VCODEC="h264"
+export ACODEC="vorbis"
+export CONTAINER="mkv"
+export PASS=1
+export INCDIR="/usr/local/share/convmedia/includes"
+
+if [ -d $TMPDIR ]; then
+	rm -rf $TMPDIR
+	mkdir -p $TMPDIR
+else
+	mkdir -p $TMPDIR
+fi
+
+# Load required functions and the configuration file.
+if [ -f $INCDIR/generic-functions.shlib ] && [ -f $INCDIR/container-functions.shlib ] \
+	&& [ -f $INCDIR/audio-functions.shlib ] && [ -f $INCDIR/video-functions.shlib ] \
+	&& [ -f /usr/local/share/convmedia/frontend-includes/convvideo.shlib ]; then
+		source $INCDIR/generic-functions.shlib
+		source $INCDIR/container-functions.shlib
+		source $INCDIR/audio-functions.shlib
+		source $INCDIR/video-functions.shlib
+		source /usr/local/share/convmedia/frontend-includes/convvideo.shlib
+else
+		echo "Can't load functions, exiting."
+		exit 1
+fi
+
+help() {
+	echo "convvideo: An extra-insane Video transcoding application."
+	echo
+	echo "Usage: $0 [OPTIONS] FILE"
+	echo
+	echo "Supported video codecs: h264, mpeg4"
+	echo "Supported audio codecs: vorbis, mp3, aac-lc (Low complexity), aac-main, flac"
+	echo
+	echo "Input/output handling options:"
+	echo "-o: Output filename (required)"
+	echo "-D: DVD mode, extracts DVD chapters using dvdxchap, requires ogmmerge."
+	echo "-d: DVD device node (default /dev/dvd)."
+	echo "-f: Container selection (Supported containers: mkv, mp4)"
+	echo "-s: Subtitle file to include (container must be able to support the file format)"
+	echo "-S: Manually split video based on time, specify start time (hour:minute:second format) then end-time relative to start time (e.g. 23:00,25:00)."
+	echo "-t: Audio track to rip, specify short-hand for language."
+	echo
+	echo "Codec options:"
+	echo "-C: Codec selection (Format: h264/vorbis)"
+	echo "-A: Anime/Cartoon mode for MPEG-4 ASP (XVID/DIVX), this tweaks the encoder for Anime/Cartoons."
+	echo "-l: Live action mode for MPEG-4 ASP (XVID/DIVX), this tweaks the encoder for Live Action material at the cost of speed."
+	echo "-q: Audio quality (default 3)."
+	echo "-b: Video bitrate (default 900)."
+	echo "-m: Use multipass encoding, specifying the number of passes up to a maximum of three."
+	echo "-T: Turbo mode, decreases quality but might increase speed."
+	echo "-c: On-the-fly bitrate calculation, specify a target size in megabytes for the output."
+	echo
+	echo "Audio and video manipulation options:"
+	echo "-V: Automatic crop detection, this will automatically crop the video while encoding."
+	echo "-r: Resample input audio to the specified audio sampling rate, such as 44100"
+	echo "-a: Allows the usage of mplayer audio filters."
+	echo "-v: Allows the usage of mplayer video filters."
+	echo
+	echo "Misc options:" 
+	echo "-h: Print this help."
+	echo
+	echo "Notes:"
+	echo "MP4 does NOT support multiple audio tracks, do not bother ripping the extract tracks as only the first will be used."
+	echo "MP4 does NOT support Vorbis audio tracks, this is due to the MP4 standard and only certain software/hardware would be"
+	echo "able to play such files, so Vorbis audio tracks will throw an error when used with MP4."
+	echo
+	echo "Splitting the video requires extra disc space to store the splitted video file, by default the temporary directory used"
+	echo "is /tmp/convvideo/. Also, please ensure that the audio and video you're trying to split can be contained in AVI, otherwise"
+	echo "the video cannot be split because the video file is split into an AVI file."
+	exit 0
+}
+
+while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
+	case "$z" in
+	o)
+		if [ ! -z "$OPTARG" ]; then
+			export OUTPUT="$OPTARG"
+		else
+			die "No output filename given, exiting."
+		fi
+	;;
+	A)
+		export CARTOON=1
+	;;
+	D)
+		if [ ! -z `which dvdxchap` ]; then
+			export DVDMODE=1
+		else
+			echo "ogmmerge is not installed, disabling DVD chapter extraction."
+		fi
+	;;
+	d)
+		if [ ! -z "$OPTARG" ]; then
+			export MENCODER_OPTS="-dvd-device $OPTARG"
+			export MPLAYER_OPTS="$MPLAYER_OPTS -dvd-device $OPTARG"
+		else
+			die "Please supply an argument to -d."
+		fi
+	;;
+	C)
+		if [ ! -z "$OPTARG" ]; then
+			if [ ! -z  "`echo "$OPTARG" | cut -d/ -f2`" ]; then
+				export VCODEC="`echo "$OPTARG" | cut -d/ -f1`"
+				export ACODEC="`echo "$OPTARG" | cut -d/ -f2`"
+			fi
+		else
+			die "Please supply an argument to -C."
+		fi
+	;;
+	s)
+		if [ ! -z "$OPTARG" ]; then
+			export SUBTITLE="$OPTARG"
+		else
+			die "Please supply an argument to -s."
+		fi
+	;;
+	S)
+		export SPOS="-ss `echo "$OPTARG" | cut -d, -f1`"
+		export EPOS="-endpos `echo "$OPTARG" | cut -d, -f2`"
+	;;
+	a)
+		if [ ! -z "$OPTARG" ]; then
+			export AF="-af $OPTARG"
+		else
+			die "Please supply an argument to -a."
+		fi
+	;;
+	v)
+		if [ ! -z "$OPTARG" ]; then
+			export VF="-vf $OPTARG"
+		else
+			die "Please supply an argument to -v."
+		fi
+	;;
+	b)
+		if [ ! -z "$OPTARG" ]; then
+			export VBITRATE="$OPTARG"
+		else
+			die "Please supply an argument to -b."
+		fi
+	;;
+	q)
+		if [ ! -z "$OPTARG" ]; then
+			export AQUALITY="$OPTARG"
+	else
+			die "Please supply an argument to -q."
+	fi
+	;;
+	c)
+		if [ ! -z "$OPTARG" ]; then
+			export BITCALC="1"
+			export TARGET_FILESIZE="$OPTARG"
+		else
+			die "Please supply an argument to -c."
+		fi
+	;;
+	m)
+		if [ ! -z "$OPTARG" ]; then
+			export PASS="$OPTARG"
+		else
+			die "Please supply an argument to -m."
+		fi
+	;;
+	t)
+		if [ ! -z "$OPTARG" ]; then
+			export ATRACKS="`echo $OPTARG | sed 's/,/ /'`"
+			for i in $ATRACKS; do
+				((ATRACKNUM++))
+			done
+			if [ $ATRACKNUM -gt 1 ]; then
+				export MULTI_TRACK=1
+			else
+				unset ATRACKS
+				export ATRACK="-alang $OPTARG"
+			fi
+		else
+			die "Please supply an argument to -t."
+		fi
+	;;
+	T)
+		export TURBO=1
+	;;
+	f)
+		if [ ! -z "$OPTARG" ]; then
+			export CONTAINER="$OPTARG"
+		else
+			die "Please supply an argument to -f."
+		fi
+	;;
+	V)
+		export CROPDETECT="1"
+	;;
+	l)
+		export LIVEACTION="1"
+	;;
+	r)
+		if [ ! -z "$OPTARG" ]; then
+			export RESAMPLE="$OPTARG"
+		else
+			die "Please supply an argument to -r."
+		fi
+	;;
+	h)
+		help
+	;;
+	esac
+done
+shift $(($OPTIND-1))
+
+if [ -z "$OUTPUT" ]; then
+	help
+elif [ -z "$1" ]; then
+	help
+fi
+
+if [ $CONTAINER = "mp4" ] && [ $ACODEC = "vorbis" ]; then
+	echo "Please select another audio codec besides Vorbis!"
+	die "MP4 files with Vorbis audio cannot be played back properly on standards-compliant software or hardware!"
+fi
+
+if [ ! -z "$SPOS" ] && [ ! -z "$EPOS" ]; then
+	echo "Splitting video:"
+	if [ ! -z $MULTI_TRACK ]; then
+		echo "Multiple audios need to be split out, will encode each before proceeding to encoding video."
+		for i in $ATRACKS; do
+			((ANUMB++))
+			mencoder $SPOS $EPOS -alang $i -ovc copy -oac copy -o "$TMPDIR/video-cut${ANUMB}.avi" "$1" &> /dev/null
+			audio_encode $ACODEC "$TMPDIR/video-cut${ANUMB}.avi" "$TMPDIR/audio${ANUMB}.ogg"
+			if [ $ANUMB -gt "1" ]; then
+				rm "$TMPDIR/video-cut${ANUMB}.avi"
+			fi
+		done
+		unset ANUMB MULTI_TRACK
+		export DONT_ENCODE=1
+	else
+		mencoder $SPOS $EPOS $ATRACK -ovc copy -oac copy -o "$TMPDIR/video-cut.avi" "$1" &> /dev/null
+	fi
+	if [ -f "$TMPDIR/video-cut1.avi" ]; then
+		convertvideo "$TMPDIR/video-cut1.avi"
+	else
+		convertvideo "$TMPDIR/video-cut.avi"
+	fi
+else
+	convertvideo "$1"
+fi

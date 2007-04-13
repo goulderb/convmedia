@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Make sure we use UTF-8!
+export CHARSET="UTF-8"
+export TMPDIR="/tmp/convaudio"
+export INCDIR="/usr/local/share/convmedia/includes"
+
+if [ -f /etc/convmedia/convaudio.conf ]; then
+		source /etc/convmedia/convaudio.conf
+else
+		echo "Can't load configuration, exiting."
+		exit 1
+fi
+
+if [ ! -d $TMPDIR ]; then
+ mkdir $TMPDIR
+else
+ rm -rf $TMPDIR
+ mkdir $TMPDIR
+fi
+
+help() {
+	echo "convaudio: An extra-sane audio transcoding application."
+	echo
+	echo "Usage: $0 [OPTIONS] FILES"
+	echo
+	echo "Options:"
+	echo "-f: Format you want the files to be transcoded to."
+	echo "-q: Quality scale, highest quality is 10, lowest is 1."
+	echo "-a: Audio filters to use."
+	echo "-d: Enable debugging mode (set -e -x)."
+	echo "-h: Print this help."
+	exit 0
+}
+
+while getopts 'f:a:q:dh' z; do
+	case "$z" in
+	f)
+		export OUTPUTFORMAT="$OPTARG"
+	;;
+	a)
+		export MPLAYER_OPTS="-af $OPTARG"
+	;;
+	q)
+		export AQUALITY="$OPTARG"
+	;;
+	d)
+		set -e -x
+	;;
+	h)
+		help
+	;;
+	esac
+done
+shift $(($OPTIND-1))
+
+if [ -f $INCDIR/generic-functions.shlib ] && [ -f $INCDIR/container-functions.shlib ] \
+	&& [ -f $INCDIR/audio-functions.shlib ] && [ -f /usr/local/share/convmedia/frontend-includes/convaudio.shlib ]; then
+		source $INCDIR/generic-functions.shlib
+		source $INCDIR/container-functions.shlib
+		source $INCDIR/audio-functions.shlib
+		source /usr/local/share/convmedia/frontend-includes/convaudio.shlib
+else
+		echo "Can't load functions, exiting."
+		exit 1
+fi
+
+if [ -z $OUTPUTFORMAT ]; then
+	help
+fi
+
+for i in "$@"; do
+	if [ -f "$i" ]; then
+		findinputformat "$i"
+		convert_audio "$i"
+	fi
+done
+rm -rf $TMPDIR

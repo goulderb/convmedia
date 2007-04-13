@@ -1,0 +1,158 @@
+get_metatag_data() {
+	if [ -n "$1" -a -n "$2" -a -n "$3" ]; then
+		case "$1" in
+		id3)
+			echo "`id3info "$2" | grep -i "$3" | cut -d: -f2 | sed 's/\s//' | sed 's/\n//g'`"
+		;;
+		ogg)
+			echo "`ogginfo "$2" | grep -i "${3}=" | cut -d= -f2| sed 's/\n//g'`"
+		;;
+		flac)
+			echo "`metaflac --show-tag="$3" "$2" | cut -d= -f2 | sed 's/\n//g'`"
+		;;
+		mp4)
+			echo "`faad -i "$2" 2>&1 | grep -i "$3" | cut -d: -f2 | sed 's/\s//' | sed 's/\n//g'`"
+		;;
+		esac 
+	fi
+}
+
+set_metatag()	{
+	if [ -n "$1" -a -n "$2" -a -n "$3" -a -n "$4" ]; then
+		case "$1" in
+		flac)
+			metaflac --set-tag="$2=$3" "$4"
+		;;
+		id3)
+			id3tag -${2}"$3" "$4" &> /dev/null
+		;;
+		ogg)
+			vorbiscomment -t "$2=$3" -a "$4"
+		;;
+		mp4)
+			mp4tags -$2 "$3" "$4"
+		;;
+		esac
+	fi
+}
+
+get_common_metatags()	{
+	if [ -n "$1" -a -n "$2" ]; then
+		case "$1" in
+		id3)
+			export ARTIST="`get_metatag_data id3 "$2" performer`"
+			export ALBUM="`get_metatag_data id3 "$2" album`"
+			export TITLE="`get_metatag_data id3 "$2" songname`"
+			export TRACKNUM="`get_metatag_data id3 "$2" "Track Number"`"
+		;;
+		ogg)
+			export ARTIST="`get_metatag_data ogg "$2" artist`"
+			export ALBUM="`get_metatag_data ogg "$2" album`"
+			export TITLE="`get_metatag_data ogg "$2" title`"
+			export TRACKNUM="`get_metatag_data ogg "$2" tracknumber`"
+		;;
+		flac)
+			export ARTIST="`get_metatag_data flac "$2" artist`"
+			export ALBUM="`get_metatag_data flac "$2" album`"
+			export TITLE="`get_metatag_data flac "$2" title`"
+			export TRACKNUM="`get_metatag_data flac "$2" tracknumber`"
+		;;
+		mp4)
+			export ARTIST="`get_metatag_data mp4 "$2" artist`"
+			export ALBUM="`get_metatag_data mp4 "$2" album`"
+			export TITLE="`get_metatag_data mp4 "$2" title`"
+			export TRACKNUM="`get_metatag_data mp4 "$2" track`"
+		;;
+		esac
+	fi
+}
+
+set_common_metatags()	{
+	if [ -n "$1" -a -n "$2" ]; then 
+		case "$1" in
+		flac)
+			if [ -n "$ARTIST" ]; then
+				set_metatag flac ARTIST "$ARTIST" "$2"
+			fi
+			if [ -n "$ALBUM" ]; then
+				set_metatag flac ALBUM "$ALBUM" "$2"
+			fi
+			if [ -n "$TITLE" ]; then
+				set_metatag flac TITLE "$TITLE" "$2"
+			fi
+			if [ -n "$TRACKNUM" ]; then
+				set_metatag flac TRACKNUMBER "$TRACKNUM" "$2"
+			fi
+		;;
+		id3)
+			if [ -n "$ARTIST" ]; then
+				set_metatag mp3 a "$ARTIST" "$2"
+			fi
+			if [ -n "$ALBUM" ]; then
+				set_metatag mp3 A "$ALBUM" "$2"
+			fi
+			if [ -n "$TITLE" ]; then
+				set_metatag mp3 s "$TITLE" "$2"
+			fi
+			if [ -n "$TRACKNUM" ]; then
+				set_metatag mp3 t "$TRACKNUM" "$2"
+			fi
+		;;
+		ogg)
+			if [ -n "$ARTIST" ]; then
+				set_metatag ogg ARTIST "$ARTIST" "$2"
+			fi
+			if [ -n "$ALBUM" ]; then
+				set_metatag ogg ALBUM "$ALBUM" "$2"
+			fi
+			if [ -n "$TITLE" ]; then
+				set_metatag ogg TITLE "$TITLE" "$2"
+			fi
+			if [ -n "$TRACKNUM" ]; then
+				set_metatag ogg TRACKNUMBER "$TRACKNUM" "$2"
+			fi
+		;;
+		mp4)
+			if [ -n "$ARTIST" ]; then
+				set_metatag mp4 a "$ARTIST" "$2"
+			fi
+			if [ -n "$ALBUM" ]; then
+				set_metatag mp4 A "$ALBUM" "$2"
+			fi
+			if [ -n "$TITLE" ]; then
+				set_metatag mp4 s "$TITLE" "$2"
+			fi
+			if [ -n "$TRACKNUM" ]; then
+				set_metatag mp4 t "$TRACKNUM" "$2"
+			fi
+		;;
+	esac
+}
+
+mux_file()	{
+	if [ -n "$1" ]; then
+		case "$1" in
+		mp4)
+			if [ -f "$2" -a -n "$3" -a -n "$VIDEO_FPS" ]; then
+				MP4Box "$3" -fps "$VIDEO_FPS" -add "$2" &> /dev/null
+			fi
+		;;
+		esac
+	fi
+}
+
+merge_files()	{ 
+	if [ -n "$1" -a -n "$2" -a -n "$VIDEO_FPS" ]; then
+		case "$1" in
+		mkv)
+			mkvmerge -o "$2" $FILEMERGE_ARGS 1> /dev/null
+		;;
+		ogm)
+			ogmmerge -o "$2" $FILEMERGE_ARGS 1> /dev/null
+		;;
+		mp4)
+			MP4Box "$2" -fps "$VIDEO_FPS" $FILEMERGE_ARGS 1> /dev/null
+		;;
+		esac
+	fi
+}

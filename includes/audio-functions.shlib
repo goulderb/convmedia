@@ -1,0 +1,90 @@
+decode_audio_pipe()	{
+	if [ -n "$1" -a -n "$2" ]; then
+		mkfifo "$2"
+		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null &
+	fi
+}
+
+decode_audio_file()	{
+	if [ -n "$1" -a -n "$2" ]; then
+		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null
+	fi
+}
+
+get_qualitymap() {
+	case "$1" in
+	bitrate)
+		if [ "$AQUALITY" = "1" ]; then
+		 echo "80"
+		elif [ "$AQUALITY" = "2" ]; then
+		 echo "96"
+		elif [ "$AQUALITY" = "3" ]; then
+		 echo "112"
+		elif [ "$AQUALITY" = "4" ]; then
+		 echo "128"
+		elif [ "$AQUALITY" = "5" ]; then
+		 echo "160"
+		elif [ "$AQUALITY" = "6" ]; then
+		 echo "192"
+		elif [ "$AQUALITY" = "7" ]; then
+		 echo "224"
+		elif [ "$AQUALITY" = "8" ]; then
+		 echo "256"
+		elif [ "$AQUALITY" = "9" ]; then
+		 echo "320"
+		elif [ "$AQUALITY" = "10" ]; then
+		 echo "500"
+		fi
+		;;
+	invertq)
+		if [ "$AQUALITY" = "1" ]; then
+		 echo "8"
+		elif [ "$AQUALITY" = "2" ]; then
+		 echo "7"
+		elif [ "$AQUALITY" = "3" ]; then
+		 echo "6"
+		elif [ "$AQUALITY" = "4" ]; then
+		 echo "5"
+		elif [ "$AQUALITY" = "5" ]; then
+		 echo "4"
+		elif [ "$AQUALITY" = "6" ]; then
+		 echo "3"
+		elif [ "$AQUALITY" = "7" ]; then
+		 echo "2"
+		elif [ "$AQUALITY" -ge "8" ]; then
+		 echo "1"
+		fi
+	;;
+	esac
+}
+
+audio_encode() {
+	case "$1" in
+	vorbis)
+		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		oggenc -Q -q "$AQUALITY" -o "$3" "$TMPDIR/audio_enc.wav"
+		vorbisgain -q -f "$3"
+		rm "$TMPDIR/audio_enc.wav"
+	;;
+	flac)
+		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		flac --replay-gain -s -`get_qualitymap invertq` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+		rm "$TMPDIR/audio_enc.wav"
+	;;
+	aac-lc)
+		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		faac --obj-type LC -w -b `get_qualitymap bitrate` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+		rm "$TMPDIR/audio_enc.wav"
+	;;
+	aac-main)
+		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		faac --obj-type Main -w -b `get_qualitymap bitrate` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+		rm "$TMPDIR/audio_enc.wav"
+	;;
+	mp3)
+		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+		rm "$TMPDIR/audio_enc.wav"
+	;;
+	esac
+}

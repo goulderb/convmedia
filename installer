@@ -1,0 +1,97 @@
+#!/bin/sh
+#	installer
+#	Written by: predatorfreak
+
+if [ -f includes/generic-functions.shlib ]; then
+	source includes/generic-functions.shlib
+else
+	echo "Can't load required functions, exiting."
+	exit 1
+fi
+
+checkdeps()	{
+	if [ -z "`which MP4Box`" ]; then
+		die "Please install gpac, it is required for muxing of MP4 streams."
+	fi
+	if [ -z "`which mplayer`" ] && [ -z "`which mencoder`" ]; then
+		die "Mplayer isn't installed or wasn't built with mencoder enabled."
+	fi
+	if [ -z "`which oggenc`" ]; then
+		echo "Vorbis-tools is not installed, this provides oggenc which is required for audio encoding."
+		die
+	fi
+	if [ -z "`which mp4tags`" ]; then
+		echo "MPEG4Ip (or at least, MPEG4Ip with all the required tools) is not installed, this provides support for MP4 tagging, please ensure that your distribution builds it with all the tools enabled, especially mp4tags."
+		die
+	fi
+	if [ -z "`which bc`" ]; then
+		echo "bc is not installed, bc is required for on-the-fly bitrate calculation."
+		die
+	fi
+}
+
+if [ ! `whoami` = "root" ]; then
+	die "You must be root in order to install blackhole."
+fi
+
+case "$1" in
+install)
+	checkdeps
+	if [ ! -d /usr/local/share/convmedia ]; then
+		echo "Beginning convmedia installation."
+		if [ ! -d /usr/local/bin ]; then
+		 mkdir -p /usr/local/bin
+		fi
+		if [ ! -d /etc/convmedia ]; then
+		 mkdir -p /etc/convmedia
+		fi
+		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
+		cp config/* /etc/convmedia/
+		for i in frontends/*; do
+		 cp $i /usr/local/bin/
+		 chmod +x $i
+		done
+		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
+		cp includes/* /usr/local/share/convmedia/includes/
+		echo "Done."
+		exit 0
+	else
+		die "Installer: The directory /usr/local/share/convmedia already exists, please run ./installer upgrade instead."
+	fi
+;;
+upgrade)
+	checkdeps
+	if [ -d /usr/local/share/convmedia ]; then
+		echo "Beginning convmedia upgrade."
+		if [ ! -d /usr/local/bin ]; then
+		 mkdir -p /usr/local/bin
+		fi    
+		if [ ! -d /etc/convmedia ]; then
+		 mkdir -p /etc/convmedia
+		fi
+		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
+		cp config/* /etc/convmedia/
+		for i in frontends/*; do
+		 cp $i /usr/local/bin/
+		 chmod +x $i
+		done
+		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
+		cp includes/* /usr/local/share/convmedia/includes/
+		echo "Done."
+		exit 0
+	else
+		die "Installer: The directory /usr/local/share/convmedia doesn't exist, please run ./installer install instead."
+	fi
+;;
+*)
+	echo "installer -"
+	echo "A streamlined installation system for convmedia."
+	echo
+	echo "Usage: ./installer [OPTION]"
+	echo
+	echo "Options:"
+	echo "install"
+	echo "upgrade"
+	exit 0
+;;
+esac

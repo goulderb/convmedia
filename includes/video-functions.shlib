@@ -1,0 +1,29 @@
+#	DEPENDS: audio-functions
+
+video_encode() {
+	case $PASS in
+	1)
+		mencoder $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o $2
+	;;
+	2)
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o $2
+	;;
+	3)
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -nosound -ovc $OVC $OVCOPTS_PASS2 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o $2
+	;;
+	esac
+}
+
+video_cropdetect() {
+	export CROPARGS="-chapter 2 -endpos 5 -ovc lavc -nosound"
+	echo "`mencoder $MENCODER_OPTS $1 $CROPARGS -vf cropdetect -o /dev/null 2>&1 | grep vf | tail -n 1 | cut -d "=" -f 2 | tr -d ')' | sed 's/\.//'`"
+	unset CROPARGS
+}
+
+video_calculate_bitrate()	{
+	local SIZE=`echo "((($1 * 1024) - (($VIDEO_FPS * $VIDEO_LENGTH * 24) / 1024)) * 1024) / 1000" | bc`
+	echo "($SIZE * 8) / $VIDEO_LENGTH - `get_qualitymap bitrate`" | bc
+}

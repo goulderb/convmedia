@@ -1,0 +1,79 @@
+findinputformat()	{
+	if [ ! -z "`echo "$1" | grep -i '\.mp3'`" ]; then
+		export INPUTFORMAT=mp3
+	elif [ ! -z "`echo "$1" | grep -i '\.ogg'`" ]; then
+		export INPUTFORMAT=ogg
+	elif [ ! -z "`echo "$1" | grep -i '\.flac'`" ]; then
+		export INPUTFORMAT=flac
+	elif [ ! -z "`echo "$1" | grep -i '\.mp4'`" ] || [ ! -z "`echo "$1" | grep -i '\.m4a'`" ]; then
+		export INPUTFORMAT=aac
+	else
+		die "No supported format found, exiting."
+	fi
+}
+
+strip_fileextensions(){ 
+	if [ ! -z "$1" ]; then
+		echo "$1" | sed 's/.wav//' | sed 's/.ogg//' | sed 's/.mp3//' | sed 's/.flac//'| sed 's/.mp4//' | sed 's/.m4a//'
+	fi
+}
+
+convert_audio()	{
+	local FILENOEXTENSION="`strip_fileextensions "$1"`"
+	case $INPUTFORMAT in
+	ogg)
+		get_common_metatags ogg "$1"
+	;;
+	mp3)
+		get_common_metatags id3 "$1"
+	;;
+	aac)
+		get_common_metatags mp4 "$1"
+	;;
+	flac)
+		get_common_metatags flac "$1"
+	;;
+	esac
+	case $OUTPUTFORMAT in
+	ogg)
+		if [ ! -f "$FILENOEXTENSION.ogg" ]; then
+		 echo "Converting $1 to $FILENOEXTENSION.ogg"
+		 audio_encode vorbis "$1" "$FILENOEXTENSION.ogg"
+		 echo "Setting metatags for $FILENOEXTENSION.ogg"
+		 set_common_metatags ogg "$FILENOEXTENSION.ogg"
+		else
+		 die "A file named $FILENOEXTENSION.ogg already exists, exiting."
+		fi
+	;;
+	flac)
+		if [ ! -f "$FILENOEXTENSION.flac" ]; then
+		 echo "Converting $1 to $FILENOEXTENSION.flac"
+		 audio_encode flac "$1" "$FILENOEXTENSION.flac"
+		 echo "Setting metatags for $FILENOEXTENSION.flac"
+		 set_common_metatags flac "$FILENOEXTENSION.flac"
+		else
+		 die "A file named $FILENOEXTENSION.flac already exists, exiting."
+		fi
+	;;
+	aac)
+		if [ ! -f "$FILENOEXTENSION.mp4" ]; then
+		 echo "Converting $1 to $FILENOEXTENSION.mp4"
+		 audio_encode aac-lc "$1" "$FILENOEXTENSION.mp4"
+		 echo "Setting metatags for $FILENOEXTENSION.mp4"
+		 set_common_metatags mp4 "$FILENOEXTENSION.mp4"
+		else
+		 die "A file named $FILENOEXTENSION.mp4 already exists, exiting."
+		fi
+	;;
+	mp3)
+		if [ ! -f "$FILENOEXTENSION.mp3" ]; then
+		 echo "Converting $1 to $FILENOEXTENSION.mp3"
+		 audio_encode mp3 "$1" "$FILENOEXTENSION.mp3"
+		 echo "Setting metatags for $FILENOEXTENSION.mp3"
+		 set_common_metatags id3 "$FILENOEXTENSION.mp3"
+		else
+		 die "A file named $FILENOEXTENSION.mp3 already exists, exiting."
+		fi
+	;;
+	esac
+}

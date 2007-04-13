@@ -1,0 +1,152 @@
+convertvideo() {
+	# Misc stuff, mostly dealing with variables.
+	export VIDEO_FPS=`mplayer_retrieve_info grep $1 ID_VIDEO_FPS`
+	export VIDEO_LENGTH=`mplayer_retrieve_info grep $1 ID_LENGTH`
+	if [ -z $VIDEO_FPS ] && [ -z $VIDEO_LENGTH ]; then
+		die "Can't get the input video's framerate or length!"
+	fi
+
+	if [ ! -z $TARGET_FILESIZE ]; then
+		echo "Calculated nominal bitrate to make a ${TARGET_FILESIZE}MB file:"
+		video_calculate_bitrate $TARGET_FILESIZE
+		export VBITRATE=`video_calculate_bitrate $TARGET_FILESIZE`
+	fi
+
+	if [ ! -z $CROPDETECT ]; then
+		echo -n "Detecting crop parameters..."
+		local CROP="`video_cropdetect $1`"
+		echo " DONE"
+	fi
+	
+	if [ ! -z $DVDMODE ]; then
+		echo -n "Exporting DVD Chapters..."
+		dvdxchap $DVD_DEVICE > "$TMPDIR/dvdchaps.txt"
+		echo " DONE"
+		echo
+	fi
+
+	# Here we do audio encoding and export the extension based on codec.
+	if [ ! -z $RESAMPLE ] && [ ! -z "$AF" ]; then
+		local AF="$AF,lavcresample=$RESAMPLE"
+		export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
+	elif [ ! -z $RESAMPLE ] && [ -z "$AF" ]; then
+		local AF="-af lavcresample=$RESAMPLE"
+		export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
+	elif [ -z $RESAMPLE ] && [ ! -z "$AF" ]; then
+		export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
+	fi
+	echo -n "Encoding audio..."
+	case $ACODEC in
+	vorbis)
+		export EXT="ogg"
+	;;
+	aac*)
+		export EXT="mp4"
+	;;
+	mp3)
+		export EXT="mp3"
+	;;
+	flac)
+		export EXT="flac"
+	;;
+	esac
+
+	if [ ! -z $MULTI_TRACK ] && [ -z $DONT_ENCODE ]; then
+		for i in $ATRACKS; do
+		 ((ANUMB++))
+		 export AUDIO_OPTS="-alang $i"
+		 audio_encode $ACODEC "$1" "$TMPDIR/audio${ANUMB}.$EXT"
+		done
+	elif [ -z $DONT_ENCODE ]; then
+		audio_encode $ACODEC "$1" "$TMPDIR/audio.$EXT"
+	fi
+	echo " DONE"
+
+	# Handle encoding options.
+	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp:qprd"
+	local X264OPTS="bitrate=$VBITRATE:bframes=16:b_adapt=1:b_pyramid=1:weight_b=1:8x8dct=1:threads=auto"
+	if [ ! -z $TURBO ] && [ $PASS = 1 ]; then
+		# Note: pass=1/vpass=1 is a trick to get mencoder to make use of turbo.
+		local X264OPTS="${X264OPTS}:pass=1:turbo=1"
+		local LAVCOPTS="${LAVCOPTS}:vpass=1:turbo=1"
+	elif [ ! -z $TURBO ] && [ $PASS -ge 2 ]; then
+		local X264OPTS="${X264OPTS}:turbo=2"
+		local LAVCOPTS="${LAVCOPTS}:turbo=1"
+	fi
+	if [ ! -z $CARTOON ] && [ -z $LIVEACTION ]; then
+		local LAVCOPTS="${LAVCOPTS}:cmp=2:subcmp=2:precmp=0"
+	elif [ -z $CARTOON ] && [ ! -z $LIVEACTION ]; then
+		local LAVCOPTS="${LAVCOPTS}:cmp=3:subcmp=3:precmp=0"
+	fi
+	if [ ! -z "$CROP" ]; then
+		export VF="$VF -vf-pre crop=${CROP} -vf-add harddup"
+	else
+		export VF="$VF -vf-add harddup"
+	fi
+
+	# Video encoding, reference docs on the specifics of how the shit is encoded.
+	echo "Encoding video:"
+	case $VCODEC in
+	h264)
+		export OVC="x264"
+		if [ $PASS -ge 2 ]; then
+		 export OVCOPTS="-x264encopts ${X264OPTS}:pass=2"
+		else
+		 export OVCOPTS="-x264encopts ${X264OPTS}"
+		fi
+		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:bitrate=3200:pass=1"
+		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:bitrate=3200:pass=3"
+		video_encode "$1" "$TMPDIR/video.x264"
+	;;
+	mpeg4)
+		export OVC="lavc"
+		if [ $PASS -ge 2 ]; then
+		 export OVCOPTS="-lavcopts ${LAVCOPTS}:vpass=2"
+		else
+		 export OVCOPTS="-lavcopts ${LAVCOPTS}"
+		fi
+		export OVCOPTS_PASS1="-lavcopts ${LAVCOPTS}:vbitrate=3200:vpass=1"
+		export OVCOPTS_PASS2="-lavcopts ${LAVCOPTS}:vbitrate=3200:vpass=3"
+		video_encode "$1" "$TMPDIR/video.m4v"
+	;;
+	esac
+
+	echo -n "Merging files into a $CONTAINER file..."
+	case $CONTAINER in
+	mkv)
+		if [ -f $TMPDIR/video.m4v ]; then
+		 mux_file mp4 $TMPDIR/video.m4v $TMPDIR/video.mp4
+		elif [ -f $TMPDIR/video.x264 ]; then
+		 mux_file mp4 $TMPDIR/video.x264 $TMPDIR/video.mp4
+		fi
+		export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
+		if [ ! -z $MULTI_TRACK ]; then
+		 for i in $ATRACKS; do
+		  ((ANUMB++))
+		  export FILEMERGE_ARGS="$FILEMERGE_ARGS --language 0:$i $TMPDIR/audio${ANUMB}.$EXT"
+		 done
+		else
+		 export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
+		fi
+		merge_files mkv "$OUTPUT"
+	;;
+	mp4)
+		if [ -f $TMPDIR/video.m4v ]; then
+		 export FILEMERGE_ARGS="-add $TMPDIR/video.m4v"
+		elif [ -f $TMPDIR/video.x264 ]; then
+		 export FILEMERGE_ARGS="-add $TMPDIR/video.x264"
+		fi
+		if [ ! -z "$SUBTITLE" ]; then
+		 export FILEMERGE_ARGS="-add $SUBTITLE"
+		fi
+		if [ -f $TMPDIR/audio1.$EXT ]; then
+		 export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio1.$EXT"
+		elif [ -f $TMPDIR/audio.$EXT ]; then
+		 export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT"
+		fi
+		merge_files mp4 "$OUTPUT"
+	;;
+	esac
+	echo " DONE"
+	rm -rf $TMPDIR
+}
