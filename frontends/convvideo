@@ -81,7 +81,7 @@ help() {
 while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
 	case "$z" in
 	o)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export OUTPUT="$OPTARG"
 		else
 			die "No output filename given, exiting."
@@ -91,14 +91,14 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
 		export CARTOON=1
 	;;
 	D)
-		if [ ! -z `which dvdxchap` ]; then
+		if [ -n `which dvdxchap` ]; then
 			export DVDMODE=1
 		else
 			echo "ogmmerge is not installed, disabling DVD chapter extraction."
 		fi
 	;;
 	d)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export MENCODER_OPTS="-dvd-device $OPTARG"
 			export MPLAYER_OPTS="$MPLAYER_OPTS -dvd-device $OPTARG"
 		else
@@ -106,8 +106,8 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
 		fi
 	;;
 	C)
-		if [ ! -z "$OPTARG" ]; then
-			if [ ! -z  "`echo "$OPTARG" | cut -d/ -f2`" ]; then
+		if [ -n "$OPTARG" ]; then
+			if [ -n  "`echo "$OPTARG" | cut -d/ -f2`" ]; then
 				export VCODEC="`echo "$OPTARG" | cut -d/ -f1`"
 				export ACODEC="`echo "$OPTARG" | cut -d/ -f2`"
 			fi
@@ -116,7 +116,7 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
 		fi
 	;;
 	s)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export SUBTITLE="$OPTARG"
 		else
 			die "Please supply an argument to -s."
@@ -127,35 +127,35 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
 		export EPOS="-endpos `echo "$OPTARG" | cut -d, -f2`"
 	;;
 	a)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export AF="-af $OPTARG"
 		else
 			die "Please supply an argument to -a."
 		fi
 	;;
 	v)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export VF="-vf $OPTARG"
 		else
 			die "Please supply an argument to -v."
 		fi
 	;;
 	b)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export VBITRATE="$OPTARG"
 		else
 			die "Please supply an argument to -b."
 		fi
 	;;
 	q)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export AQUALITY="$OPTARG"
 	else
 			die "Please supply an argument to -q."
 	fi
 	;;
 	c)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export BITCALC="1"
 			export TARGET_FILESIZE="$OPTARG"
 		else
@@ -163,14 +163,14 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
 		fi
 	;;
 	m)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export PASS="$OPTARG"
 		else
 			die "Please supply an argument to -m."
 		fi
 	;;
 	t)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export ATRACKS="`echo $OPTARG | sed 's/,/ /'`"
 			for i in $ATRACKS; do
 				((ATRACKNUM++))
@@ -189,7 +189,7 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
 		export TURBO=1
 	;;
 	f)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export CONTAINER="$OPTARG"
 		else
 			die "Please supply an argument to -f."
@@ -202,7 +202,7 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::lADhVT' z; do
 		export LIVEACTION="1"
 	;;
 	r)
-		if [ ! -z "$OPTARG" ]; then
+		if [ -n "$OPTARG" ]; then
 			export RESAMPLE="$OPTARG"
 		else
 			die "Please supply an argument to -r."
@@ -226,9 +226,9 @@ if [ $CONTAINER = "mp4" ] && [ $ACODEC = "vorbis" ]; then
 	die "MP4 files with Vorbis audio cannot be played back properly on standards-compliant software or hardware!"
 fi
 
-if [ ! -z "$SPOS" ] && [ ! -z "$EPOS" ]; then
+if [ -n "$SPOS" ] && [ -n "$EPOS" ]; then
 	echo "Splitting video:"
-	if [ ! -z $MULTI_TRACK ]; then
+	if [ -n $MULTI_TRACK ]; then
 		echo "Multiple audios need to be split out, will encode each before proceeding to encoding video."
 		for i in $ATRACKS; do
 			((ANUMB++))

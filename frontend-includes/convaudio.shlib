@@ -1,11 +1,11 @@
 findinputformat()	{
-	if [ ! -z "`echo "$1" | grep -i '\.mp3'`" ]; then
+	if [ -n "`echo "$1" | grep -i '\.mp3'`" ]; then
 		export INPUTFORMAT=mp3
-	elif [ ! -z "`echo "$1" | grep -i '\.ogg'`" ]; then
+	elif [ -n "`echo "$1" | grep -i '\.ogg'`" ]; then
 		export INPUTFORMAT=ogg
-	elif [ ! -z "`echo "$1" | grep -i '\.flac'`" ]; then
+	elif [ -n "`echo "$1" | grep -i '\.flac'`" ]; then
 		export INPUTFORMAT=flac
-	elif [ ! -z "`echo "$1" | grep -i '\.mp4'`" ] || [ ! -z "`echo "$1" | grep -i '\.m4a'`" ]; then
+	elif [ -n "`echo "$1" | grep -i '\.mp4'`" ] || [ -n "`echo "$1" | grep -i '\.m4a'`" ]; then
 		export INPUTFORMAT=aac
 	else
 		die "No supported format found, exiting."
@@ -13,7 +13,7 @@ findinputformat()	{
 }
 
 strip_fileextensions(){ 
-	if [ ! -z "$1" ]; then
+	if [ -n "$1" ]; then
 		echo "$1" | sed 's/.wav//' | sed 's/.ogg//' | sed 's/.mp3//' | sed 's/.flac//'| sed 's/.mp4//' | sed 's/.m4a//'
 	fi
 }
