@@ -1,4 +1,4 @@
-#	DEPENDS: audio-functions
+# DEPENDS: audio-functions
 
 video_encode() {
 	case $PASS in
@@ -23,7 +23,7 @@ video_cropdetect() {
 	unset CROPARGS
 }
 
-video_calculate_bitrate()	{
+video_calculate_bitrate() {
 	local SIZE=`echo "((($1 * 1024) - (($VIDEO_FPS * $VIDEO_LENGTH * 24) / 1024)) * 1024) / 1000" | bc`
 	echo "($SIZE * 8) / $VIDEO_LENGTH - `get_qualitymap bitrate`" | bc
 }

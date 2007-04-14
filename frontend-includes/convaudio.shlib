@@ -1,4 +1,4 @@
-findinputformat()	{
+findinputformat() {
 	if [ -n "`echo "$1" | grep -i '\.mp3'`" ]; then
 		export INPUTFORMAT=mp3
 	elif [ -n "`echo "$1" | grep -i '\.ogg'`" ]; then
@@ -12,7 +12,7 @@ findinputformat()	{
 	fi
 }
 
-strip_fileextensions(){ 
+strip_fileextensions() { 
 	if [ -n "$1" ]; then
 		echo "$1" | sed 's/.wav//' | sed 's/.ogg//' | sed 's/.mp3//' | sed 's/.flac//'| sed 's/.mp4//' | sed 's/.m4a//'
 	fi

@@ -1,11 +1,11 @@
-decode_audio_pipe()	{
+decode_audio_pipe() {
 	if [ -n "$1" -a -n "$2" ]; then
 		mkfifo "$2"
 		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null &
 	fi
 }
 
-decode_audio_file()	{
+decode_audio_file() {
 	if [ -n "$1" -a -n "$2" ]; then
 		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null
 	fi

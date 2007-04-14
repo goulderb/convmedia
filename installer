@@ -1,6 +1,6 @@
 #!/bin/sh
-#	installer
-#	Written by: predatorfreak
+# installer
+# Written by: predatorfreak
 
 if [ -f includes/generic-functions.shlib ]; then
 	source includes/generic-functions.shlib

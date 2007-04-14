@@ -17,7 +17,7 @@ get_metatag_data() {
 	fi
 }
 
-set_metatag()	{
+set_metatag() {
 	if [ -n "$1" -a -n "$2" -a -n "$3" -a -n "$4" ]; then
 		case "$1" in
 		flac)
@@ -36,7 +36,7 @@ set_metatag()	{
 	fi
 }
 
-get_common_metatags()	{
+get_common_metatags() {
 	if [ -n "$1" -a -n "$2" ]; then
 		case "$1" in
 		id3)
@@ -67,7 +67,7 @@ get_common_metatags()	{
 	fi
 }
 
-set_common_metatags()	{
+set_common_metatags() {
 	if [ -n "$1" -a -n "$2" ]; then 
 		case "$1" in
 		flac)
@@ -130,7 +130,7 @@ set_common_metatags()	{
 	fi
 }
 
-mux_file()	{
+mux_file() {
 	if [ -n "$1" ]; then
 		case "$1" in
 		mp4)
@@ -142,7 +142,7 @@ mux_file()	{
 	fi
 }
 
-merge_files()	{ 
+merge_files() { 
 	if [ -n "$1" -a -n "$2" -a -n "$VIDEO_FPS" ]; then
 		case "$1" in
 		mkv)
