@@ -126,7 +126,8 @@ set_common_metatags()	{
 				set_metatag mp4 t "$TRACKNUM" "$2"
 			fi
 		;;
-	esac
+		esac
+	fi
 }
 
 mux_file()	{

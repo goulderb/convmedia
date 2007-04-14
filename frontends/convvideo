@@ -18,9 +18,9 @@ else
 fi
 
 # Load required functions and the configuration file.
-if [ -f $INCDIR/generic-functions.shlib ] && [ -f $INCDIR/container-functions.shlib ] \
-	&& [ -f $INCDIR/audio-functions.shlib ] && [ -f $INCDIR/video-functions.shlib ] \
-	&& [ -f /usr/local/share/convmedia/frontend-includes/convvideo.shlib ]; then
+if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib \
+	-a -f $INCDIR/audio-functions.shlib -a -f $INCDIR/video-functions.shlib \
+	-a -f /usr/local/share/convmedia/frontend-includes/convvideo.shlib ]; then
 		source $INCDIR/generic-functions.shlib
 		source $INCDIR/container-functions.shlib
 		source $INCDIR/audio-functions.shlib
@@ -221,12 +221,12 @@ elif [ -z "$1" ]; then
 	help
 fi
 
-if [ $CONTAINER = "mp4" ] && [ $ACODEC = "vorbis" ]; then
+if [ $CONTAINER = "mp4" -a $ACODEC = "vorbis" ]; then
 	echo "Please select another audio codec besides Vorbis!"
 	die "MP4 files with Vorbis audio cannot be played back properly on standards-compliant software or hardware!"
 fi
 
-if [ -n "$SPOS" ] && [ -n "$EPOS" ]; then
+if [ -n "$SPOS" -a -n "$EPOS" ]; then
 	echo "Splitting video:"
 	if [ -n $MULTI_TRACK ]; then
 		echo "Multiple audios need to be split out, will encode each before proceeding to encoding video."

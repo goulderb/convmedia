@@ -68,7 +68,8 @@ audio_encode() {
 	;;
 	flac)
 		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
-		flac --replay-gain -s -`get_qualitymap invertq` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+		flac -s -`get_qualitymap invertq` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+		metaflac --add-replay-gain "$3" &> /dev/null
 		rm "$TMPDIR/audio_enc.wav"
 	;;
 	aac-lc)
