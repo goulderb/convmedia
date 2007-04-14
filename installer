@@ -13,7 +13,7 @@ checkdeps()	{
 	if [ -z "`which MP4Box`" ]; then
 		die "Please install gpac, it is required for muxing of MP4 streams."
 	fi
-	if [ -z "`which mplayer`" ] && [ -z "`which mencoder`" ]; then
+	if [ -z "`which mplayer`" -a -z "`which mencoder`" ]; then
 		die "Mplayer isn't installed or wasn't built with mencoder enabled."
 	fi
 	if [ -z "`which oggenc`" ]; then
