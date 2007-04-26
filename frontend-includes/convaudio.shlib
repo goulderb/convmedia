@@ -1,11 +1,11 @@
 findinputformat() {
-	if [ -n "`echo "$1" | grep -i '\.mp3'`" ]; then
+	if [ -n "`file $1 | cut -d: -f2 | grep -i "MPEG ADTS, layer III"`" -o "`echo "$1" | grep -i '\.mp3'`" ]; then
 		export INPUTFORMAT=mp3
-	elif [ -n "`echo "$1" | grep -i '\.ogg'`" ]; then
+	elif [ -n "`file $1 | cut -d: -f2 | grep -i "Ogg data"`" -o "`echo "$1" | grep -i '\.ogg'`"]; then
 		export INPUTFORMAT=ogg
-	elif [ -n "`echo "$1" | grep -i '\.flac'`" ]; then
+	elif [ -n "`file $1 | cut -d: -f2 | grep -i "FLAC audio bitstream data"`" -o "`echo "$1" | grep -i '\.flac'`" ]; then
 		export INPUTFORMAT=flac
-	elif [ -n "`echo "$1" | grep -i '\.mp4'`" ] || [ -n "`echo "$1" | grep -i '\.m4a'`" ]; then
+	elif  [ -n "`file $1 | cut -d: -f2 | grep -i "MPEG v4 system"`" -o "`echo "$1" | grep -i '\.mp4'`" -o -n "`echo "$1" | grep -i '\.m4a'`" ]; then
 		export INPUTFORMAT=aac
 	else
 		die "No supported format found, exiting."
@@ -34,6 +34,15 @@ convert_audio()	{
 		get_common_metatags flac "$1"
 	;;
 	esac
+	if [ -n "$RESAMPLE" -a -n "$AF" ]; then
+		local AF="$AF,lavcresample=$RESAMPLE"
+		export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
+	elif [ -n "$RESAMPLE" -a -z "$AF" ]; then
+		local AF="-af lavcresample=$RESAMPLE"
+		export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
+	elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
+		export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
+	fi
 	case $OUTPUTFORMAT in
 	ogg)
 		if [ ! -f "$FILENOEXTENSION.ogg" ]; then

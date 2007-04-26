@@ -28,24 +28,28 @@ help() {
 	echo "-f: Format you want the files to be transcoded to."
 	echo "-q: Quality scale, highest quality is 10, lowest is 1."
 	echo "-a: Audio filters to use."
+	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
 	echo "-d: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
 	exit 0
 }
 
-while getopts 'f:a:q:dh' z; do
+while getopts 'f:a:q:r:dh' z; do
 	case "$z" in
 	f)
 		export OUTPUTFORMAT="$OPTARG"
 	;;
 	a)
-		export MPLAYER_OPTS="-af $OPTARG"
+		export AF="-af $OPTARG"
 	;;
 	q)
 		export AQUALITY="$OPTARG"
 	;;
 	d)
 		set -e -x
+	;;
+	r)
+	  export RESAMPLE="$OPTARG"
 	;;
 	h)
 		help
