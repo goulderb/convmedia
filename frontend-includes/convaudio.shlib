@@ -1,7 +1,7 @@
 findinputformat() {
 	if [ -n "`file $1 | cut -d: -f2 | grep -i "MPEG ADTS, layer III"`" -o "`echo "$1" | grep -i '\.mp3'`" ]; then
 		export INPUTFORMAT=mp3
-	elif [ -n "`file $1 | cut -d: -f2 | grep -i "Ogg data"`" -o "`echo "$1" | grep -i '\.ogg'`"]; then
+	elif [ -n "`file $1 | cut -d: -f2 | grep -i "Ogg data"`" -o "`echo "$1" | grep -i '\.ogg'`" ]; then
 		export INPUTFORMAT=ogg
 	elif [ -n "`file $1 | cut -d: -f2 | grep -i "FLAC audio bitstream data"`" -o "`echo "$1" | grep -i '\.flac'`" ]; then
 		export INPUTFORMAT=flac

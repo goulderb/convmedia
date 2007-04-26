@@ -82,6 +82,10 @@ audio_encode() {
 		faac --obj-type Main -w -b `get_qualitymap bitrate` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
 		rm "$TMPDIR/audio_enc.wav"
 	;;
+	aac-ltp)
+		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		faac --obj-type LTP -w -b `get_qualitymap bitrate` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+	;;
 	mp3)
 		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
 		lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$TMPDIR/audio_enc.wav" "$3" &> /dev/null
