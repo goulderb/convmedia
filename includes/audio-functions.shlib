@@ -86,6 +86,20 @@ audio_encode() {
 		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
 		faac --obj-type LTP -w -b `get_qualitymap bitrate` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
 	;;
+	aac-hev1)
+		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		export BR="$((`get_qualitymap bitrate` * 1024))"
+		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe ]; then
+			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -he -br $BR -if "$TMPDIR/audio_enc.wav" -of "$3" &> /dev/null
+		fi
+	;;
+	aac-hev2)
+		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		export BR="$((`get_qualitymap bitrate` * 1024))"
+		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe ]; then
+			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -hev2 -br $BR -if "$TMPDIR/audio_enc.wav" -of "$3" &> /dev/null
+		fi
+	;;
 	mp3)
 		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
 		lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$TMPDIR/audio_enc.wav" "$3" &> /dev/null

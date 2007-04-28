@@ -37,7 +37,7 @@ help() {
 	echo "Usage: $0 [OPTIONS] FILE"
 	echo
 	echo "Supported video codecs: h264, mpeg4"
-	echo "Supported audio codecs: vorbis, mp3, aac-lc (Low complexity), aac-main, flac"
+	echo "Supported audio codecs: vorbis, mp3, aac-lc (Low complexity), aac-main, aac-ltp (Long Term Predicter), aac-hev1, aac-hev2, flac"
 	echo
 	echo "Input/output handling options:"
 	echo "-o: Output filename (required)"
@@ -71,6 +71,10 @@ help() {
 	echo "MP4 does NOT support multiple audio tracks, do not bother ripping the extract tracks as only the first will be used."
 	echo "MP4 does NOT support Vorbis audio tracks, this is due to the MP4 standard and only certain software/hardware would be"
 	echo "able to play such files, so Vorbis audio tracks will throw an error when used with MP4."
+	echo
+	echo "AAC-HEv1 and AAC-HEv2 require the Nero Digital AAC encoder to be placed in /usr/local/share/convmedia/bin as neroAacEnc.exe."
+	echo "You are free to use either the non-SSE2 encoder or the SSE2 encoder, both work. In addition, Wine is also required in order to"
+	echo "use the Nero encoder."
 	echo
 	echo "Splitting the video requires extra disc space to store the splitted video file, by default the temporary directory used"
 	echo "is /tmp/convvideo/. Also, please ensure that the audio and video you're trying to split can be contained in AVI, otherwise"

@@ -31,7 +31,7 @@ checkdeps()	{
 }
 
 if [ ! `whoami` = "root" ]; then
-	die "You must be root in order to install blackhole."
+	die "You must be root in order to install convmedia."
 fi
 
 case "$1" in

@@ -1,11 +1,11 @@
 findinputformat() {
-	if [ -n "`file $1 | cut -d: -f2 | grep -i "MPEG ADTS, layer III"`" -o "`echo "$1" | grep -i '\.mp3'`" ]; then
+	if [ "`echo "$1" | grep -i '\.mp3'`" ]; then
 		export INPUTFORMAT=mp3
-	elif [ -n "`file $1 | cut -d: -f2 | grep -i "Ogg data"`" -o "`echo "$1" | grep -i '\.ogg'`" ]; then
+	elif [ "`echo "$1" | grep -i '\.ogg'`" ]; then
 		export INPUTFORMAT=ogg
-	elif [ -n "`file $1 | cut -d: -f2 | grep -i "FLAC audio bitstream data"`" -o "`echo "$1" | grep -i '\.flac'`" ]; then
+	elif [ "`echo "$1" | grep -i '\.flac'`" ]; then
 		export INPUTFORMAT=flac
-	elif  [ -n "`file $1 | cut -d: -f2 | grep -i "MPEG v4 system"`" -o "`echo "$1" | grep -i '\.mp4'`" -o -n "`echo "$1" | grep -i '\.m4a'`" ]; then
+	elif  [ -n "`echo "$1" | grep -i '\.m4a'`" ]; then
 		export INPUTFORMAT=aac
 	else
 		die "No supported format found, exiting."
