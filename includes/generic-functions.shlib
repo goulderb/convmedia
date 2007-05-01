@@ -1,6 +1,12 @@
 die() {
+	echo -n "ERROR: "
 	echo "$1"
 	exit 1
+}
+
+warn() {
+	echo -n "WARNING: "
+	echo "$1"
 }
 
 mplayer_retrieve_info()	{

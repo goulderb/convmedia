@@ -16,6 +16,9 @@ checkdeps()	{
 	if [ -z "`which mplayer`" -a -z "`which mencoder`" ]; then
 		die "Mplayer isn't installed or wasn't built with mencoder enabled."
 	fi
+	if [ -z "`which mkvmerge`" ]; then
+		warn "mkvtoolnix is not installed, this provides convmedia with the ability to mux Matroska files. Please install mkvtoolnix for Matroska support, please note that this does not require reinstalling convmedia."
+	fi
 	if [ -z "`which oggenc`" ]; then
 		echo "Vorbis-tools is not installed, this provides oggenc which is required for audio encoding."
 		die

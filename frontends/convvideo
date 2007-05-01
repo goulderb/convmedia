@@ -1,14 +1,15 @@
 #!/bin/bash
 
-export VBITRATE="900"
-export AQUALITY="3"
 export TMPDIR="/tmp/convvideo"
-export DVD_DEVICE="/dev/dvd"
-export VCODEC="h264"
-export ACODEC="vorbis"
-export CONTAINER="mkv"
-export PASS=1
 export INCDIR="/usr/local/share/convmedia/includes"
+export CHARSET="UTF-8"
+
+if [ -f /etc/convmedia/convvideo.conf ]; then
+	source /etc/convmedia/convvideo.conf
+else
+	echo "Can't load configuration, exiting."
+	exit 1
+fi
 
 if [ -d $TMPDIR ]; then
 	rm -rf $TMPDIR
