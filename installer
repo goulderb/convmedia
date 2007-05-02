@@ -52,7 +52,7 @@ install)
 		cp config/* /etc/convmedia/
 		for i in frontends/*; do
 		 cp $i /usr/local/bin/
-		 chmod +x $i
+		 chmod +x /usr/local/bin/`basename $i`
 		done
 		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
 		cp includes/* /usr/local/share/convmedia/includes/
@@ -76,7 +76,7 @@ upgrade)
 		cp config/* /etc/convmedia/
 		for i in frontends/*; do
 		 cp $i /usr/local/bin/
-		 chmod +x $i
+		 chmod +x /usr/local/bin/`basename $i`
 		done
 		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
 		cp includes/* /usr/local/share/convmedia/includes/
