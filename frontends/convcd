@@ -2,7 +2,7 @@
 
 export TMPDIR="/tmp/convcd"
 export INCDIR="/usr/local/share/convmedia/includes"
-export PARANOIAFLAGS="-z 40"
+export CD_DEVICE="/dev/cdrom"
 export AQUALITY="3"
 export ACODEC="vorbis"
 export FILE_MASK="%TRACKNUM - %TITLE"
@@ -37,12 +37,13 @@ help() {
 	echo "-a: Audio filters to use."
 	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
 	echo "-n: When encoding to AAC-LC, prefer Nero's encoder over faac if available."
-	echo "-d: Enable debugging mode (set -e -x)."
+	echo "-d: CD-Rom device node to use."
+	echo "-b: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
 	exit 0
 }
 
-while getopts 'f:a:q:r:ndh' z; do
+while getopts 'f:a:q:r:d:nbh' z; do
 	case "$z" in
 	f)
 		export ACODEC="$OPTARG"
@@ -54,6 +55,9 @@ while getopts 'f:a:q:r:ndh' z; do
 		export AQUALITY="$OPTARG"
 	;;
 	d)
+		export CD_DEVICE="$OPTARG"
+	;;
+	b)
 		set -e -x
 	;;
 	r)
@@ -83,6 +87,8 @@ elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
 	export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
 fi
 
+export PARANOIA_OPTS="-z 40 -d $CD_DEVICE"
+
 cddb_extract_info
 for i in `seq $TRACKS`; do
 	if [ ! "`echo "$i" | wc -m`" = 3 ]; then
@@ -108,10 +114,9 @@ for i in `seq $TRACKS`; do
 	cdparanoia_extract $i
 	mv "${TMPDIR}/cdda.wav" "${TMPDIR}/$FILE_MASK.wav"
 
-	echo "Encoding $FILE_MASK.wav...."
-
 	case $ACODEC in
 	vorbis)
+		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.ogg"
 		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
 		set_common_metatags ogg "${DIR_MASK}/${FILE_MASK}.ogg"
@@ -119,6 +124,7 @@ for i in `seq $TRACKS`; do
 		rm "${TMPDIR}/${FILE_MASK}.wav"
 	;;
 	aac-*)
+		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp4"
 		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
 		set_common_metatags mp4 "${DIR_MASK}/${FILE_MASK}.mp4"
@@ -126,6 +132,7 @@ for i in `seq $TRACKS`; do
 		rm "${TMPDIR}/${FILE_MASK}.wav"
 	;;
 	mp3)
+		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp3"
 		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
 		set_common_metatags id3 "${DIR_MASK}/${FILE_MASK}.mp3"
@@ -133,6 +140,7 @@ for i in `seq $TRACKS`; do
 		rm "${TMPDIR}/${FILE_MASK}.wav"
 	;;
 	flac)
+		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.flac"
 		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
 		set_common_metatags flac "${DIR_MASK}/${FILE_MASK}.flac"
