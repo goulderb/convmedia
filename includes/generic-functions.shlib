@@ -11,21 +11,21 @@ warn() {
 
 cddb_extract_info() {
 	if [ -z $TRACKS ]; then
-	 export TRACKS="`cddb_query read | grep tracks | cut -d' ' -f1`"
+	 export TRACKS="`cddb_query $CDDBQUERY_OPTS read | grep tracks | cut -d' ' -f1`"
 	fi
-	cddb_query read | grep Title | cut -d: -f2 | sed 's:\s\s\s\s::' >> ${TMPDIR}/title.txt
+	cddb_query $CDDBQUERY_OPTS read | grep Title | cut -d: -f2 | sed 's:\s\s\s\s::' >> ${TMPDIR}/title.txt
 	for i in `seq $TRACKS`; do
 		if [ "`echo "$i" | wc -m`" -lt 3 ]; then
 			export N="0${i}"
 		else
 			export N="$i"
 		fi
-		echo -n "$N: " >> ${TMPDIR}/songs.txt
-		echo -n "$N: " >> ${TMPDIR}/artists.txt
-		cddb_query read | grep "$N" | tail -n 1 | cut -d']' -f2 | sed 's/\s//' | sed 's: by :):' | sed "s:'::g" | \
-			cut -d')' -f1 | cut -d'(' -f1 >> ${TMPDIR}/songs.txt
-		cddb_query read | grep "$N" | tail -n 1 | cut -d']' -f2 | sed 's/\s//' | sed 's: by :):' | cut -d')' -f2 | \
-			cut -d'(' -f1 >> ${TMPDIR}/artists.txt
+		echo -n "$N:" >> ${TMPDIR}/songs.txt
+		echo -n "$N:" >> ${TMPDIR}/artists.txt
+		cddb_query $CDDBQUERY_OPTS read | grep "$N" | tail -n 1 | cut -d']' -f2 | sed 's/\s//' | sed 's: by :%:' | sed "s:'::g" | \
+			cut -d'%' -f1 >> ${TMPDIR}/songs.txt
+		cddb_query $CDDBQUERY_OPTS read | grep "$N" | tail -n 1 | cut -d']' -f2 | sed 's/\s//' | sed 's: by :%:' | cut -d'%' -f2 | \
+			sed 's: (:@:' | cut -d'@' -f1 >> ${TMPDIR}/artists.txt
 	done
 }
 
