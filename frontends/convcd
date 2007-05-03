@@ -16,6 +16,13 @@ else
 	mkdir $TMPDIR
 fi
 
+if [ -f /etc/convmedia/convcd.conf ]; then
+	source /etc/convmedia/convcd.conf
+else
+	echo "Can't load configuration, exiting."
+	exit 1
+fi
+
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib -a -f $INCDIR/audio-functions.shlib ]; then
 	source $INCDIR/generic-functions.shlib
 	source $INCDIR/container-functions.shlib
@@ -122,7 +129,6 @@ for i in `seq $TRACKS`; do
 	export FILE_MASK="`echo "$FILE_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g"`"
 	export DIR_MASK="`echo "$DIR_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g"`"
 
-	echo "$TITLE $ARTIST $ALBUM $TRACKNUM"
 	if [ ! -d "$DIR_MASK" ]; then
 		mkdir -p "$DIR_MASK"
 	fi

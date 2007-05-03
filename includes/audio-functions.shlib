@@ -73,7 +73,10 @@ audio_encode() {
 	vorbis)
 		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
 		oggenc -Q -q "$AQUALITY" -o "$3" "$TMPDIR/audio_enc.wav"
-		vorbisgain -q -f "$3"
+		# We might not have Vorbisgain, make sure we do otherwise DON'T try to call it.
+		if [ -n "`which vorbisgain`" ]; then
+			vorbisgain -q -f "$3"
+		fi
 		rm "$TMPDIR/audio_enc.wav"
 	;;
 	flac)
