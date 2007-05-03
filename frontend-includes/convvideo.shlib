@@ -63,8 +63,9 @@ convertvideo() {
 	echo " DONE"
 
 	# Handle encoding options.
-	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp:qprd"
-	local X264OPTS="bitrate=$VBITRATE:bframes=16:b_adapt=1:b_pyramid=1:weight_b=1:8x8dct=1:threads=auto"
+	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp"
+	local X264OPTS="bitrate=$VBITRATE:bframes=8:b_adapt=1:b_pyramid=1:weight_b=1:threads=auto"
+
 	if [ -n "$TURBO" -a "$PASS" = 1 ]; then
 		# Note: pass=1/vpass=1 is a trick to get mencoder to make use of turbo.
 		local X264OPTS="${X264OPTS}:pass=1:turbo=1"
