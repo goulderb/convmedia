@@ -11,11 +11,11 @@ else
 	exit 1
 fi
 
-if [ -d $TMPDIR ]; then
-	rm -rf $TMPDIR
-	mkdir -p $TMPDIR
+if [ -d "$TMPDIR" ]; then
+	rm -rf "$TMPDIR"
+	mkdir -p "$TMPDIR"
 else
-	mkdir -p $TMPDIR
+	mkdir -p "$TMPDIR"
 fi
 
 # Load required functions and the configuration file.
@@ -97,7 +97,7 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::nlADhVT' z; do
 		export CARTOON=1
 	;;
 	D)
-		if [ -n `which dvdxchap` ]; then
+		if [ -n "`which dvdxchap`" ]; then
 			export DVDMODE=1
 		else
 			echo "ogmmerge is not installed, disabling DVD chapter extraction."
@@ -234,13 +234,13 @@ fi
 
 if [ -n "$SPOS" -a -n "$EPOS" ]; then
 	echo "Splitting video:"
-	if [ -n $MULTI_TRACK ]; then
+	if [ -n "$MULTI_TRACK" ]; then
 		echo "Multiple audios need to be split out, will encode each before proceeding to encoding video."
 		for i in $ATRACKS; do
 			((ANUMB++))
 			mencoder $SPOS $EPOS -alang $i -ovc copy -oac copy -o "$TMPDIR/video-cut${ANUMB}.avi" "$1" &> /dev/null
 			audio_encode $ACODEC "$TMPDIR/video-cut${ANUMB}.avi" "$TMPDIR/audio${ANUMB}.ogg"
-			if [ $ANUMB -gt "1" ]; then
+			if [ "$ANUMB" -gt "1" ]; then
 				rm "$TMPDIR/video-cut${ANUMB}.avi"
 			fi
 		done

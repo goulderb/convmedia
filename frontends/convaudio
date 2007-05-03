@@ -12,11 +12,11 @@ else
 		exit 1
 fi
 
-if [ ! -d $TMPDIR ]; then
- mkdir $TMPDIR
+if [ ! -d "$TMPDIR" ]; then
+ mkdir -p "$TMPDIR"
 else
- rm -rf $TMPDIR
- mkdir $TMPDIR
+ rm -rf "$TMPDIR"
+ mkdir -p "$TMPDIR"
 fi
 
 help() {
@@ -83,4 +83,4 @@ for i in "$@"; do
 		convert_audio "$i"
 	fi
 done
-rm -rf $TMPDIR
+rm -rf "$TMPDIR"
