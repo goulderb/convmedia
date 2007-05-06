@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export TMPDIR="/tmp/convvideo"
+export TMPDIR="/tmp/convvideo-$$"
 export INCDIR="/usr/local/share/convmedia/includes"
 export CHARSET="UTF-8"
 

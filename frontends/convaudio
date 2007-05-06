@@ -2,7 +2,7 @@
 
 # Make sure we use UTF-8!
 export CHARSET="UTF-8"
-export TMPDIR="/tmp/convaudio"
+export TMPDIR="/tmp/convaudio-$$"
 export INCDIR="/usr/local/share/convmedia/includes"
 
 if [ -f /etc/convmedia/convaudio.conf ]; then

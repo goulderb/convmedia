@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export TMPDIR="/tmp/convcd"
+export TMPDIR="/tmp/convcd-$$"
 export INCDIR="/usr/local/share/convmedia/includes"
 export CD_DEVICE="/dev/cdrom"
 export AQUALITY="3"
