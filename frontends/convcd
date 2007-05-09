@@ -2,12 +2,7 @@
 
 export TMPDIR="/tmp/convcd-$$"
 export INCDIR="/usr/local/share/convmedia/includes"
-export CD_DEVICE="/dev/cdrom"
-export AQUALITY="3"
-export ACODEC="vorbis"
-export FILE_MASK="%TRACKNUM - %TITLE"
-export DIR_MASK="%ALBUM"
-export EJECT="1"
+export CHARSET="UTF-8"
 
 if [ ! -d $TMPDIR ]; then
 	mkdir $TMPDIR
@@ -120,14 +115,16 @@ for i in `seq $TRACKS`; do
 	fi
 
 	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
-	export TITLE="`grep ${N}: ${TMPDIR}/songs.txt | cut -d: -f2`"
-	export ARTIST="`grep ${N}: ${TMPDIR}/artists.txt | cut -d: -f2`"
+	export TITLE="`grep "${N}:" ${TMPDIR}/songs.txt | cut -d: -f2`"
+	export ARTIST="`grep "${N}:" ${TMPDIR}/artists.txt | cut -d: -f2`"
 	export ALBUM="`cat ${TMPDIR}/title.txt`"
 	export TRACKNUM="$N"
 	export ORIG_FMASK="$FILE_MASK"
 	export ORIG_DMASK="$DIR_MASK"
-	export FILE_MASK="`echo "$FILE_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g"`"
-	export DIR_MASK="`echo "$DIR_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g"`"
+	export FILE_MASK="`echo "$FILE_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
+		sed 's:/: - :g'`"
+	export DIR_MASK="`echo "$DIR_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
+		sed 's:/: - :g'`"
 
 	if [ ! -d "$DIR_MASK" ]; then
 		mkdir -p "$DIR_MASK"
