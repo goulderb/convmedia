@@ -1,7 +1,7 @@
 convertvideo() {
 	# Misc stuff, mostly dealing with variables.
-	export VIDEO_FPS=`mplayer_retrieve_info grep $1 ID_VIDEO_FPS`
-	export VIDEO_LENGTH=`mplayer_retrieve_info grep $1 ID_LENGTH`
+	export VIDEO_FPS=`mplayer_retrieve_info grep "$1" ID_VIDEO_FPS`
+	export VIDEO_LENGTH=`mplayer_retrieve_info grep "$1" ID_LENGTH`
 	if [ -z "$VIDEO_FPS" -a -z "$VIDEO_LENGTH" ]; then
 		die "Can't get the input video's framerate or length!"
 	fi
@@ -64,14 +64,15 @@ convertvideo() {
 
 	# Handle encoding options.
 	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp"
-	local X264OPTS="bitrate=$VBITRATE:bframes=8:b_adapt=1:b_pyramid=1:weight_b=1:threads=auto"
+	local X264OPTS="bitrate=$VBITRATE:bframes=8:b_adapt=1:b_pyramid=1:weight_b=1:trellis=1:threads=auto"
 
 	if [ -n "$TURBO" -a "$PASS" = 1 ]; then
 		# Note: pass=1/vpass=1 is a trick to get mencoder to make use of turbo.
 		local X264OPTS="${X264OPTS}:pass=1:turbo=1"
 		local LAVCOPTS="${LAVCOPTS}:vpass=1:turbo=1"
 	elif [ -n "$TURBO" -a "$PASS" -ge 2 ]; then
-		local X264OPTS="${X264OPTS}:turbo=2"
+		# direct_pred=auto has the most gains in multipass encodung and the performance hit isn't massive.
+		local X264OPTS="${X264OPTS}:turbo=2:direct_pred=auto"
 		local LAVCOPTS="${LAVCOPTS}:turbo=1"
 	fi
 	if [ -n "$CARTOON" -a -z "$LIVEACTION" ]; then
