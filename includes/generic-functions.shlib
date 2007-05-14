@@ -11,6 +11,8 @@ warn() {
 
 cddb_extract_info() {
 	cddb_query $CDDBQUERY_OPTS read > $TMPDIR/cddb_query.txt
+	sed -i -e "s/\[instrumental.*\]/(Instrumental Track)/gI" \
+		-e "s/\[bonus.*\]/(Bonus Track)/gI" $TMPDIR/cddb_query.txt	
 	if [ -z $TRACKS ]; then
 	 export TRACKS="`cat $TMPDIR/cddb_query.txt | grep tracks | cut -d' ' -f1`"
 	fi
@@ -25,7 +27,7 @@ cddb_extract_info() {
 		echo -n "$N:" >> ${TMPDIR}/artists.txt
 		cat ${TMPDIR}/cddb_query.txt | grep "\[$N\]" | tail -n 1 | cut -d']' -f2 | \
 			sed 's/\s//' | sed 's: by :%:' | sed "s:'::g" | cut -d'%' -f1 >> ${TMPDIR}/songs.txt
-		cat ${TMPDIR}/cddb_query.txt | grep "[$N]" | tail -n 1 | cut -d']' -f2 | \
+		cat ${TMPDIR}/cddb_query.txt | grep "\[$N\]" | tail -n 1 | cut -d']' -f2 | \
 			sed 's/\s//' | sed 's: by :%:' | cut -d'%' -f2 | sed 's: (:@:' | cut -d'@' -f1 >> ${TMPDIR}/artists.txt
 	done
 }
