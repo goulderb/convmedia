@@ -11,10 +11,10 @@ warn() {
 
 cddb_extract_info() {
 	cddb_query $CDDBQUERY_OPTS read > $TMPDIR/cddb_query.txt
-	sed -i -e "s/\[instrumental.*\]/(Instrumental Track)/gI" \
-		-e "s/\[bonus.*\]/(Bonus Track)/gI" $TMPDIR/cddb_query.txt	
+	sed -i -e 's:+::g' -e 's:"::g' $TMPDIR/cddb_query.txt
+	sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' $TMPDIR/cddb_query.txt
 	if [ -z $TRACKS ]; then
-	 export TRACKS="`cat $TMPDIR/cddb_query.txt | grep tracks | cut -d' ' -f1`"
+	 export TRACKS="`cat $TMPDIR/cddb_query.txt | grep tracks | cut -d' ' -f1 | tail -n 1`"
 	fi
 	cat ${TMPDIR}/cddb_query.txt | grep Title | cut -d: -f2 | sed 's:\s\s\s\s::' >> ${TMPDIR}/title.txt
 	for i in `seq $TRACKS`; do
