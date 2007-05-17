@@ -32,6 +32,7 @@ help() {
 	echo "-n: When encoding to AAC-LC (either -f aac or -f aac-lc), prefer Nero's encoder over faac if available."
 	echo "-d: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
+	rm -rf $TMPDIR
 	exit 0
 }
 

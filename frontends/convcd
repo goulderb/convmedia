@@ -44,6 +44,7 @@ help() {
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
 	echo "-b: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
+	rm -rf $TMPDIR
 	exit 0
 }
 
