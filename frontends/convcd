@@ -27,6 +27,25 @@ else
 	exit 1
 fi
 
+set_masks() {
+	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
+	export TITLE="`grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2`"
+	export ARTIST="`grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2`"
+	export ALBUM="`cat ${TMPDIR}/album.txt`"
+	export TRACKNUM="$I"
+	export ORIG_FMASK="$FILE_MASK"
+	export ORIG_DMASK="$DIR_MASK"
+	export FILE_MASK="`echo "$FILE_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
+		sed 's:/: - :g'`"
+	export DIR_MASK="`echo "$DIR_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
+		sed 's:/: - :g'`"
+}
+
+restore_masks() {
+	export FILE_MASK="$ORIG_FMASK"
+	export DIR_MASK="$ORIG_DMASK"
+}
+
 help() {
 	echo "convcd: An extra-sane audio CD ripper."
 	echo
@@ -42,13 +61,14 @@ help() {
 	echo "-n: When encoding to AAC-LC, prefer Nero's encoder over faac if available."
 	echo "-d: CD-Rom device node to use."
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
+	echo "-m: Multi-artist mode, use this for CD's that have multiple artists rather than one."
 	echo "-b: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
 	rm -rf $TMPDIR
 	exit 0
 }
 
-while getopts 'f:a:q:r:d:nbhi' z; do
+while getopts 'f:a:q:r:d:nbhmi' z; do
 	case "$z" in
 	f)
 		export ACODEC="$OPTARG"
@@ -74,6 +94,9 @@ while getopts 'f:a:q:r:d:nbhi' z; do
 	i)
 		export INTERACTIVE="1"
 	;;
+	m)
+		export MULTI_ARTIST="1"
+	;;
 	h)
 		help
 	;;
@@ -96,42 +119,53 @@ elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
 fi
 
 export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE"
-export CDDBQUERY_OPTS="-i $CD_DEVICE"
+export CDDISCID_OPTS="$CD_DEVICE"
 
-cddb_extract_info
-if [ -n "$INTERACTIVE" ]; then
-	echo -n "Do you want to edit the song titles, artist(s) and album name information now? (y/n) "; read answer
-	if [ "$answer" = "y" ]; then
-		$EDITOR ${TMPDIR}/songs.txt
-		$EDITOR ${TMPDIR}/artists.txt
-		$EDITOR ${TMPDIR}/title.txt
-	fi
-fi
-
-for i in `seq $TRACKS`; do
-	if [ ! "`echo "$i" | wc -m`" = 3 ]; then
+echo "Retrieving information about this CD from CDDB..."
+cddb_query_info
+set_masks
+echo "Album: $ALBUM" >> $TMPDIR/album-info.txt
+restore_masks
+for i in `seq 0 $TRACKS`; do
+	if [ ! "`echo -n "$i" | wc -m`" = "2" ]; then
 		export N="0${i}"
 	else
 		export N="$i"
 	fi
+	set_masks
+	echo "Track $N: $TITLE by $ARTIST" >> $TMPDIR/album-info.txt
+	restore_masks
+done
+cat $TMPDIR/album-info.txt
 
-	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
-	export TITLE="`grep "${N}:" ${TMPDIR}/songs.txt | cut -d: -f2`"
-	export ARTIST="`grep "${N}:" ${TMPDIR}/artists.txt | cut -d: -f2`"
-	export ALBUM="`cat ${TMPDIR}/title.txt`"
-	export TRACKNUM="$N"
-	export ORIG_FMASK="$FILE_MASK"
-	export ORIG_DMASK="$DIR_MASK"
-	export FILE_MASK="`echo "$FILE_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
-		sed 's:/: - :g'`"
-	export DIR_MASK="`echo "$DIR_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
-		sed 's:/: - :g'`"
+if [ -n "$INTERACTIVE" ]; then
+	echo -n "Do you want to edit the song titles, artist(s) and album name information now? (y/n) "; read answer
+	if [ "$answer" = "y" ]; then
+		$EDITOR ${TMPDIR}/tracks.txt
+		$EDITOR ${TMPDIR}/tracks-artists.txt
+		$EDITOR ${TMPDIR}/album.txt
+	fi
+fi
+
+for i in `seq 0 $TRACKS`; do
+	if [ ! "`echo -n "$i" | wc -m`" = "2" -a ! "$i" = "9" ]; then
+		export I="$i"
+		((I++))
+		export I="0${I}"
+		export N="0${i}"
+	else
+		export I="${i}"
+		((I++))
+		export N="$i"
+	fi
+
+	set_masks
 
 	if [ ! -d "$DIR_MASK" ]; then
 		mkdir -p "$DIR_MASK"
 	fi
 
-	cdparanoia_extract $i
+	cdparanoia_extract $I
 	mv "${TMPDIR}/cdda.wav" "${TMPDIR}/$FILE_MASK.wav"
 
 	case $ACODEC in
@@ -168,8 +202,7 @@ for i in `seq $TRACKS`; do
 		rm "${TMPDIR}/${FILE_MASK}.wav"
 	;;
 	esac
-	export FILE_MASK="$ORIG_FMASK"
-	export DIR_MASK="$ORIG_DMASK"
+	restore_masks
 done
 
 rm -rf "$TMPDIR"
