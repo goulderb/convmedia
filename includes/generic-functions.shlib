@@ -14,14 +14,28 @@ cddb_query_info() {
 	local SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
 	local HELLO="nobody+localhost+convcd+0.1"
 	wget -q -O - "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5" | sed 's:\r:\n:g' | tr -s '\n' | \
-		sed 's:^ ::g' > $TMPDIR/cddb_query_results.txt
-	local GENRE="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f2`"
-	local DISCID="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f3`"
+		sed 's:^ ::g' | grep "`echo $DISCINFO | cut -d+ -f1`" | sed 's:200 ::' > $TMPDIR/cddb_query_results.txt
+	if [ "`cat $TMPDIR/cddb_query_results.txt | wc -l`" -gt "1" ]; then
+		local CNT="`cat $TMPDIR/cddb_query_results.txt | wc -l`"	
+		for i in `seq 1 $CNT`; do
+			if [ "$i" = "1" ]; then
+				echo "1: `cat $TMPDIR/cddb_query_results.txt | head -n1`" >> $TMPDIR/cddb_query_results_2.txt
+			else
+				echo "$i: `cat $TMPDIR/cddb_query_results.txt | head -n$i | tail -n1`" >> $TMPDIR/cddb_query_results_2.txt
+			fi
+		done
+		cat $TMPDIR/cddb_query_results_2.txt
+		echo -n "Please pick one of the above entries from the CDDB database by number and then hit enter: "; read entry
+		grep "${entry}:" $TMPDIR/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > $TMPDIR/cddb_query_results.txt
+		rm $TMPDIR/cddb_query_results_2.txt
+	fi
+	local GENRE="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f1`"
+	local DISCID="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f2`"
 	wget -q -O $TMPDIR/cddb_read_results.txt "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
 	sed -i -e 's:+::g' -e 's:"::g' $TMPDIR/cddb_read_results.txt
 	sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' $TMPDIR/cddb_read_results.txt
 
-	unset GENRE DISCID SERVER HELLO DISCINFO
+	unset entry CNT GENRE DISCID SERVER HELLO DISCINFO
 
 	local READFILE="$TMPDIR/cddb_read_results.txt"
 	local ARTISTALBUM="`grep ^DTITLE= "$READFILE" | cut -f2 -d= | sed 's: / :%:' | tr -d \[:cntrl:\]`"

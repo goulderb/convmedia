@@ -73,7 +73,7 @@ upgrade)
 		 mkdir -p /etc/convmedia
 		fi
 		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
-		cp config/* /etc/convmedia/
+		cp -i config/* /etc/convmedia/
 		for i in frontends/*; do
 		 cp $i /usr/local/bin/
 		 chmod +x /usr/local/bin/`basename $i`
