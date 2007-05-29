@@ -29,9 +29,9 @@ fi
 
 set_masks() {
 	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
-	export TITLE="`grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2`"
-	export ARTIST="`grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2`"
-	export ALBUM="`cat ${TMPDIR}/album.txt`"
+	export TITLE="`grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2 | sed 's:&:And:g'`"
+	export ARTIST="`grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2 | sed 's:&:And:g'`"
+	export ALBUM="`cat ${TMPDIR}/album.txt | sed 's:&:And:g'`"
 	export TRACKNUM="$I"
 	export ORIG_FMASK="$FILE_MASK"
 	export ORIG_DMASK="$DIR_MASK"

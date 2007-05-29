@@ -31,6 +31,10 @@ checkdeps()	{
 		echo "bc is not installed, bc is required for on-the-fly bitrate calculation."
 		die
 	fi
+	if [ -z "`which cd-discid`" ]; then
+		echo "cd-discid is not installed, cd-discid is required for CDDB retrieval in convcd."
+		die
+	fi
 }
 
 if [ ! `whoami` = "root" ]; then
