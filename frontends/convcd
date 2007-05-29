@@ -63,13 +63,12 @@ help() {
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
 	echo "-m: Multi-artist mode, use this for CD's that have multiple artists rather than one."
 	echo "-b: Enable debugging mode (set -e -x)."
-	echo "-f: On-the-fly encoding, rips the track from the disc and encodes at the same time."
 	echo "-h: Print this help."
 	rm -rf $TMPDIR
 	exit 0
 }
 
-while getopts 'f:a:q:r:d:nfbhmi' z; do
+while getopts 'f:a:q:r:d:nbhmi' z; do
 	case "$z" in
 	f)
 		export ACODEC="$OPTARG"
@@ -98,9 +97,6 @@ while getopts 'f:a:q:r:d:nfbhmi' z; do
 	m)
 		export MULTI_ARTIST="1"
 	;;
-	f)
-		export ON_THE_FLY="1"
-	;;
 	h)
 		help
 	;;
@@ -110,10 +106,6 @@ shift $(($OPTIND-1))
 
 if [ -z $ACODEC ]; then
 	help
-fi
-
-if [ -n "$ON_THE_FLY" ]; then
-	export MPLAYER_OPTS="-cdda paranoia=2:noskip -cd-device $CD_DEVICE"	
 fi
 
 if [ -n "$RESAMPLE" -a -n "$AF" ]; then
@@ -173,67 +165,41 @@ for i in `seq 0 $TRACKS`; do
 		mkdir -p "$DIR_MASK"
 	fi
 
-	if [ -z "$ON_THE_FLY" ]; then
-		cdparanoia_extract $I
-		mv "${TMPDIR}/cdda.wav" "${TMPDIR}/$FILE_MASK.wav"
-	fi
+	cdparanoia_extract $I
+	mv "${TMPDIR}/cdda.wav" "${TMPDIR}/$FILE_MASK.wav"
 
 	case $ACODEC in
 	vorbis)
 		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
-		if [ -z "$ON_THE_FLY" ]; then
-			audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.ogg"
-		else
-			audio_encode $ACODEC "cdda://${I}" "${DIR_MASK}/${FILE_MASK}.ogg"
-		fi
+		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.ogg"
 		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
 		set_common_metatags ogg "${DIR_MASK}/${FILE_MASK}.ogg"
 		echo
-		if [ -z "$ON_THE_FLY" ]; then
-			rm "${TMPDIR}/${FILE_MASK}.wav"
-		fi
+		rm "${TMPDIR}/${FILE_MASK}.wav"
 	;;
 	aac-*)
 		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
-		if [ -z "$ON_THE_FLY" ]; then
-			audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp4"
-		else
-			audio_encode $ACODEC "cdda://${I}" "${DIR_MASK}/${FILE_MASK}.mp4"
-		fi
+		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp4"
 		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
 		set_common_metatags mp4 "${DIR_MASK}/${FILE_MASK}.mp4"
 		echo
-		if [ -z "$ON_THE_FLY" ]; then
-			rm "${TMPDIR}/${FILE_MASK}.wav"
-		fi
+		rm "${TMPDIR}/${FILE_MASK}.wav"
 	;;
 	mp3)
 		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
-		if [ -z "$ON_THE_FLY" ]; then
-			audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp3"
-		else
-			audio_encode $ACODEC "cdda://${I}" "${DIR_MASK}/${FILE_MASK}.mp3"
-		fi
+		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp3"
 		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
 		set_common_metatags id3 "${DIR_MASK}/${FILE_MASK}.mp3"
 		echo
-		if [ -z "$ON_THE_FLY" ]; then
-			rm "${TMPDIR}/${FILE_MASK}.wav"
-		fi
+		rm "${TMPDIR}/${FILE_MASK}.wav"
 	;;
 	flac)
 		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
-		if [ -z "$ON_THE_FLY" ]; then
-			audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.flac"
-		else
-			audio_encode $ACODEC "cdda://${I}" "${DIR_MASK}/${FILE_MASK}.flac"
-		fi
+		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.flac"
 		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
 		set_common_metatags flac "${DIR_MASK}/${FILE_MASK}.flac"
 		echo
-		if [ -z "$ON_THE_FLY" ]; then
-			rm "${TMPDIR}/${FILE_MASK}.wav"
-		fi
+		rm "${TMPDIR}/${FILE_MASK}.wav"
 	;;
 	esac
 	restore_masks
