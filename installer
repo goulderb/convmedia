@@ -10,30 +10,38 @@ else
 fi
 
 checkdeps()	{
-	if [ -z "`which MP4Box`" ]; then
-		die "Please install gpac, it is required for muxing of MP4 streams."
-	fi
-	if [ -z "`which mplayer`" -a -z "`which mencoder`" ]; then
+	if [ -z "`which mplayer 2>/dev/null`" -a -z "`which mencoder 2>/dev/null`" ]; then
 		die "Mplayer isn't installed or wasn't built with mencoder enabled."
 	fi
-	if [ -z "`which mkvmerge`" ]; then
+	if [ -z "`which MP4Box 2>/dev/null`" ]; then
+		warn "Gpac is not installed, this is required for muxing of MP4 streams."
+	fi
+	if [ -z "`which mkvmerge 2>/dev/null`" ]; then
 		warn "mkvtoolnix is not installed, this provides convmedia with the ability to mux Matroska files. Please install mkvtoolnix for Matroska support, please note that this does not require reinstalling convmedia."
 	fi
-	if [ -z "`which oggenc`" ]; then
-		echo "Vorbis-tools is not installed, this provides oggenc which is required for audio encoding."
-		die
+	if [ -z "`which oggenc 2>/dev/null`" ]; then
+		warn "Vorbis-tools is not installed, this provides oggenc which is required for encoding Ogg Vorbis files."
 	fi
-	if [ -z "`which mp4tags`" ]; then
-		echo "MPEG4Ip (or at least, MPEG4Ip with all the required tools) is not installed, this provides support for MP4 tagging, please ensure that your distribution builds it with all the tools enabled, especially mp4tags."
-		die
+	if [ -z "`which lame 2>/dev/null`" ]; then
+		warn "LAME is not installed, this provides lame, which is required for encoding MP3 files."
 	fi
-	if [ -z "`which bc`" ]; then
-		echo "bc is not installed, bc is required for on-the-fly bitrate calculation."
-		die
+	if [ -z "`which flac 2>/dev/null`" ]; then
+		warn "FLAC is not installed, this provides flac, which is required for encoding FLAC files."
 	fi
-	if [ -z "`which cd-discid`" ]; then
-		echo "cd-discid is not installed, cd-discid is required for CDDB retrieval in convcd."
-		die
+	if [ -z "`which faac 2>/dev/null`" ]; then
+		warn "FAAC is not installed, this provides faac, which is required for encoding AAC files (LC/Main/LTP profile)."
+	fi
+	if [ -z "`which mp4tags 2>/dev/null`" ]; then
+		warn "MPEG4Ip (or at least, MPEG4Ip with all the required tools) is not installed, this provides support for MP4 tagging, please ensure that your distribution builds it with all the tools enabled, especially mp4tags."
+	fi
+	if [ -z "`which bc 2>/dev/null`" ]; then
+		warn "bc is not installed, bc is required for on-the-fly bitrate calculation."
+	fi
+	if [ -z "`which cd-discid 2>/dev/null`" ]; then
+		warn "cd-discid is not installed, cd-discid is required for CDDB retrieval in convcd."
+	fi
+	if [ -z "`which cdparanoia 2>/dev/null`" ]; then
+		warn "cdparanoia is not installed, cdparanoia is required for ripping CD's with convcd."
 	fi
 }
 
