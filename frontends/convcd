@@ -109,10 +109,10 @@ if [ -z $ACODEC ]; then
 fi
 
 if [ -n "$RESAMPLE" -a -n "$AF" ]; then
-	local AF="$AF,lavcresample=$RESAMPLE"
+	AF="$AF,resample=$RESAMPLE"
 	export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
 elif [ -n "$RESAMPLE" -a -z "$AF" ]; then
-	local AF="-af lavcresample=$RESAMPLE"
+	AF="-af resample=$RESAMPLE"
 	export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
 elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
 	export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
@@ -165,8 +165,7 @@ for i in `seq 0 $TRACKS`; do
 		mkdir -p "$DIR_MASK"
 	fi
 
-	cdparanoia_extract $I
-	mv "${TMPDIR}/cdda.wav" "${TMPDIR}/$FILE_MASK.wav"
+	cdparanoia ${PARANOIA_OPTS} $I "${TMPDIR}/${FILE_MASK}.wav"
 
 	case $ACODEC in
 	vorbis)

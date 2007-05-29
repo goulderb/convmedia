@@ -11,16 +11,6 @@ decode_audio_file() {
 	fi
 }
 
-cdparanoia_extract() {
-	if [ -n "$1" ]; then
-		export CWD="$PWD"
-		cd ${TMPDIR}
-		cdparanoia ${PARANOIA_OPTS} "${1}"
-		cd "$CWD"
-		unset CWD
-	fi
-}
-
 get_qualitymap() {
 	case "$1" in
 	bitrate)
