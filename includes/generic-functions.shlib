@@ -11,6 +11,8 @@ warn() {
 
 cddb_query_info() {
 	local DISCINFO="`cd-discid $CDDISCID_OPTS | sed 's: :+:g'`"
+	export TRACKS="`echo $DISCINFO | cut -d+ -f2`"
+	export TRACKS="`expr $TRACKS - 1`"
 	local SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
 	local HELLO="nobody+localhost+convcd+0.1"
 	wget -q -O - "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5" | sed 's:\r:\n:g' | tr -s '\n' | \
@@ -29,30 +31,44 @@ cddb_query_info() {
 		grep "${entry}:" $TMPDIR/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > $TMPDIR/cddb_query_results.txt
 		rm $TMPDIR/cddb_query_results_2.txt
 	fi
+	case "`head -n 1 $TMPDIR/cddb_query_results.txt | cut -f1 -d' '`" in
+	202)
+		export UNKNOWN_DISC=1
+	;;
+	esac
 	local GENRE="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f1`"
 	local DISCID="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f2`"
-	wget -q -O $TMPDIR/cddb_read_results.txt "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
-	sed -i -e 's:+::g' -e 's:"::g' $TMPDIR/cddb_read_results.txt
-	sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' $TMPDIR/cddb_read_results.txt
+	if [ -z "$UNKNOWN_DISC" ]; then
+		wget -q -O $TMPDIR/cddb_read_results.txt "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
+		sed -i -e 's:+::g' -e 's:"::g' $TMPDIR/cddb_read_results.txt
+		sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' $TMPDIR/cddb_read_results.txt
+	fi
 
 	unset entry CNT GENRE DISCID SERVER HELLO DISCINFO
 
-	local READFILE="$TMPDIR/cddb_read_results.txt"
-	local ARTISTALBUM="`grep ^DTITLE= "$READFILE" | cut -f2 -d= | sed 's: / :%:' | tr -d \[:cntrl:\]`"
-	local ARTIST="`echo "$ARTISTALBUM" | cut -f1 -d'%'`"
-	local ALBUM="`echo "$ARTISTALBUM" | cut -f2 -d'%'`"
-	unset ARTISTALBUM
+	if [ -z "$UNKNOWN_DISC" ]; then
+		local READFILE="$TMPDIR/cddb_read_results.txt"
+		local ARTISTALBUM="`grep ^DTITLE= "$READFILE" | cut -f2 -d= | sed 's: / :%:' | tr -d \[:cntrl:\]`"
+		local ARTIST="`echo "$ARTISTALBUM" | cut -f1 -d'%'`"
+		local ALBUM="`echo "$ARTISTALBUM" | cut -f2 -d'%'`"
+		unset ARTISTALBUM
+	else
+		local ARTIST="Unknown Artist"
+		local ALBUM="Unknown Album"
+	fi
 
 	echo "$ALBUM" >> $TMPDIR/album.txt
-	export TRACKS="`grep -E '^TTITLE[0-9]+=' "$READFILE" | wc -l`"
-	export TRACKS="`echo "$TRACKS - 1" | bc`"
 	for i in `seq 0 $TRACKS`; do
-		if [ "`echo "$i" | wc -m`" -lt 3 ]; then
+		if [ "`echo -n "$i" | wc -m`" -lt 2 ]; then
 			export N="0${i}"
 		else
 			export N="${i}"
 		fi
-		local TRACK="`grep ^TTITLE${i}= "$READFILE" | cut -f2 -d= | sed 's:\r::g'`"
+		if [ -z "$UNKNOWN_DISC" ]; then
+			local TRACK="`grep ^TTITLE${i}= "$READFILE" | cut -f2 -d= | sed 's:\r::g'`"
+		else
+			local TRACK="Track ${N}"
+		fi
 		if [ -z "`echo $TRACK | grep -x -i 'Data'`" -a -z "`echo $TRACK | grep -x -i 'Data track'`" ]; then
 			if [ -n "$MULTI_ARTIST" ]; then
 				# Assume the split is Artist / Track name
@@ -66,7 +82,9 @@ cddb_query_info() {
 			((TRACKS--))
 		fi
 	done
-	rm $TMPDIR/cddb_read_results.txt
+	if [ -z "$UNKNOWN_DISC" ]; then
+		rm $TMPDIR/cddb_read_results.txt
+	fi
 	rm $TMPDIR/cddb_query_results.txt
 }
 
