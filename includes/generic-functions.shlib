@@ -26,8 +26,13 @@ cddb_query_info() {
 				echo "$i: `cat $TMPDIR/cddb_query_results.txt | head -n$i | tail -n1`" >> $TMPDIR/cddb_query_results_2.txt
 			fi
 		done
-		cat $TMPDIR/cddb_query_results_2.txt
-		echo -n "Please pick one of the above entries from the CDDB database by number and then hit enter: "; read entry
+		# If we're allowed to be interactive query the user on which to use, otherwise use first-hit mode.
+		if [ -z $INTERACTIVE ]; then
+			cat $TMPDIR/cddb_query_results_2.txt
+			echo -n "Please pick one of the above entries from the CDDB database by number and then hit enter: "; read entry
+		else
+			local entry="1"
+		fi
 		grep "${entry}:" $TMPDIR/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > $TMPDIR/cddb_query_results.txt
 		rm $TMPDIR/cddb_query_results_2.txt
 	fi
@@ -59,10 +64,10 @@ cddb_query_info() {
 
 	echo "$ALBUM" >> $TMPDIR/album.txt
 	for i in `seq 0 $TRACKS`; do
-		if [ "`echo -n "$i" | wc -m`" -lt 2 ]; then
-			export N="0${i}"
+		if [ ! "`echo -n "$i" | wc -m`" = "2" ]; then
+			local N="0${i}"
 		else
-			export N="${i}"
+			local N="${i}"
 		fi
 		if [ -z "$UNKNOWN_DISC" ]; then
 			local TRACK="`grep ^TTITLE${i}= "$READFILE" | cut -f2 -d= | sed 's:\r::g'`"
@@ -82,6 +87,7 @@ cddb_query_info() {
 			((TRACKS--))
 		fi
 	done
+	unset ALBUM ARTIST TRACK MULTI_ARTIST N
 	if [ -z "$UNKNOWN_DISC" ]; then
 		rm $TMPDIR/cddb_read_results.txt
 	fi
