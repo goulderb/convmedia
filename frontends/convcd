@@ -29,14 +29,14 @@ fi
 
 set_masks() {
 	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
-	export TITLE="`grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2 | sed 's:&:And:g'`"
-	export ARTIST="`grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2 | sed 's:&:And:g'`"
-	export ALBUM="`cat ${TMPDIR}/album.txt | sed 's:&:And:g'`"
+	export TITLE="`grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2 | sed 's^&^And^g'`"
+	export ARTIST="`grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2 | sed 's^&^And^g'`"
+	export ALBUM="`cat ${TMPDIR}/album.txt | sed 's^&^And^g'`"
 	export TRACKNUM="$I"
 	export ORIG_FMASK="$FILE_MASK"
 	export ORIG_DMASK="$DIR_MASK"
-	export FILE_MASK="`echo "$FILE_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g"`"
-	export DIR_MASK="`echo "$DIR_MASK" | sed "s:%TITLE:$TITLE:g" | sed "s:%ARTIST:$ARTIST:g" | sed "s:%ALBUM:$ALBUM:g" | sed "s:%TRACKNUM:$TRACKNUM:g"`"
+	export FILE_MASK="`echo "$FILE_MASK" | sed "s^%TITLE^$TITLE^g" | sed "s^%ARTIST^$ARTIST^g" | sed "s^%ALBUM^$ALBUM^g" | sed "s:%TRACKNUM:$TRACKNUM:g"`"
+	export DIR_MASK="`echo "$DIR_MASK" | sed "s^%TITLE^$TITLE^g" | sed "s^%ARTIST^$ARTIST^g" | sed "s^%ALBUM^$ALBUM^g" | sed "s:%TRACKNUM:$TRACKNUM:g"`"
 }
 
 restore_masks() {
