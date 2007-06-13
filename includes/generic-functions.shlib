@@ -15,8 +15,27 @@ cddb_query_info() {
 	export TRACKS="`expr $TRACKS - 1`"
 	local SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
 	local HELLO="nobody+localhost+convcd+0.1"
-	wget -q -O - "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5" | sed 's:\r:\n:g' | tr -s '\n' | \
-		sed 's:^ ::g' | grep "`echo $DISCINFO | cut -d+ -f1`" | sed 's:200 ::' > $TMPDIR/cddb_query_results.txt
+	
+	wget -q -O $TMPDIR/cddb_query_results.txt "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5"
+	
+	export RETURNCODE="`cat $TMPDIR/cddb_query_results.txt | head -n1 | cut -d' ' -f1`"
+
+	case $RETURNCODE in
+	211)
+		export NUM="`cat $TMPDIR/cddb_query_results.txt | wc -l`"
+		export NUM="`expr $NUM - 1`"
+		export RESULTS="`cat $TMPDIR/cddb_query_results.txt | sed 's:\r:\n:g' | tr -s '\n' | tr '\n' '+'`"
+		for i in `seq 2 $NUM`; do
+			echo "`echo $RESULTS | cut -d'+' -f$i`" > $TMPDIR/cddb_query_results.txt
+		done
+	;;
+	*)
+		cat $TMPDIR/cddb_query_results.txt | sed 's:\r:\n:g' | tr -s '\n' | sed 's:^ ::g' | \
+			grep "`echo $DISCINFO | cut -d+ -f1`" | sed 's:200 ::' > $TMPDIR/cddb_query_results_2.txt
+		mv $TMPDIR/cddb_query_results_2.txt $TMPDIR/cddb_query_results.txt
+	;;
+	esac
+
 	if [ "`cat $TMPDIR/cddb_query_results.txt | wc -l`" -gt "1" ]; then
 		local CNT="`cat $TMPDIR/cddb_query_results.txt | wc -l`"	
 		for i in `seq 1 $CNT`; do
@@ -36,13 +55,16 @@ cddb_query_info() {
 		grep "${entry}:" $TMPDIR/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > $TMPDIR/cddb_query_results.txt
 		rm $TMPDIR/cddb_query_results_2.txt
 	fi
-	case "`head -n 1 $TMPDIR/cddb_query_results.txt | cut -f1 -d' '`" in
+
+	case $RETURNCODE in
 	202)
 		export UNKNOWN_DISC=1
 	;;
 	esac
+
 	local GENRE="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f1`"
 	local DISCID="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f2`"
+	
 	if [ -z "$UNKNOWN_DISC" ]; then
 		wget -q -O $TMPDIR/cddb_read_results.txt "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
 		sed -i -e 's:+::g' -e 's:"::g' $TMPDIR/cddb_read_results.txt
@@ -87,7 +109,9 @@ cddb_query_info() {
 			((TRACKS--))
 		fi
 	done
+	
 	unset ALBUM ARTIST TRACK MULTI_ARTIST N
+	
 	if [ -z "$UNKNOWN_DISC" ]; then
 		rm $TMPDIR/cddb_read_results.txt
 	fi
