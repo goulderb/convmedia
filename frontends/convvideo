@@ -51,7 +51,7 @@ help() {
 	echo
 	echo "Codec options:"
 	echo "-C: Codec selection (Format: h264/vorbis)"
-	echo "-n: When encoding to AAC-LC, prefer the Nero AAC encoder if it's available."
+	echo "-w: When encoding, use fasters (or better) encoders only available through the usage of wine, if available."
 	echo "-A: Anime/Cartoon mode for MPEG-4 ASP (XVID/DIVX), this tweaks the encoder for Anime/Cartoons."
 	echo "-l: Live action mode for MPEG-4 ASP (XVID/DIVX), this tweaks the encoder for Live Action material at the cost of speed."
 	echo "-q: Audio quality (default 3)."
@@ -85,7 +85,7 @@ help() {
 	exit 0
 }
 
-while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::nlADhVT' z; do
+while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::wlADhVT' z; do
 	case "$z" in
 	o)
 		if [ -n "$OPTARG" ]; then
@@ -208,7 +208,7 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r::nlADhVT' z; do
 	l)
 		export LIVEACTION="1"
 	;;
-	r)
+	w)
 		if [ -n "$OPTARG" ]; then
 			export RESAMPLE="$OPTARG"
 		else

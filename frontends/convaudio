@@ -29,14 +29,14 @@ help() {
 	echo "-q: Quality scale, highest quality is 10, lowest is 1."
 	echo "-a: Audio filters to use."
 	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
-	echo "-n: When encoding to AAC-LC (either -f aac or -f aac-lc), prefer Nero's encoder over faac if available."
+	echo "-w: When encoding, use fasters (or better) encoders only available through the usage of wine, if available."
 	echo "-d: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
 	rm -rf $TMPDIR
 	exit 0
 }
 
-while getopts 'f:a:q:r:ndh' z; do
+while getopts 'f:a:q:r:wdh' z; do
 	case "$z" in
 	f)
 		export OUTPUTFORMAT="$OPTARG"
@@ -53,8 +53,9 @@ while getopts 'f:a:q:r:ndh' z; do
 	r)
 	  export RESAMPLE="$OPTARG"
 	;;
-	n)
+	w)
 		export USENEROAAC="1"
+		export USEOGGENC2="1"
 	;;
 	h)
 		help

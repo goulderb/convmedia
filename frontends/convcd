@@ -62,7 +62,7 @@ help() {
 	echo "-q: Encoding quality, highest quality is 10, lowest is 1."
 	echo "-a: Audio filters to use."
 	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
-	echo "-n: When encoding to AAC-LC, prefer Nero's encoder over faac if available."
+	echo "-w: When encoding, use fasters (or better) encoders only available through the usage of wine, if available."
 	echo "-d: CD-Rom device node to use."
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
 	echo "-m: Multi-artist mode, use this for CD's that have multiple artists rather than one."
@@ -72,7 +72,7 @@ help() {
 	exit 0
 }
 
-while getopts 'f:a:q:r:d:nbhmi' z; do
+while getopts 'f:a:q:r:d:wbhmi' z; do
 	case "$z" in
 	f)
 		export ACODEC="$OPTARG"
@@ -92,7 +92,7 @@ while getopts 'f:a:q:r:d:nbhmi' z; do
 	r)
 		export RESAMPLE="$OPTARG"
 	;;
-	n)
+	w)
 		export USENEROAAC="1"
 		export USEOGGENC2="1"
 	;;
