@@ -44,24 +44,28 @@ get_common_metatags() {
 			export ALBUM="`get_metatag_data id3 "$2" album`"
 			export TITLE="`get_metatag_data id3 "$2" songname`"
 			export TRACKNUM="`get_metatag_data id3 "$2" "Track Number"`"
+			export YEAR="`get_metatag_data id3 "$2" year`"
 		;;
 		ogg)
 			export ARTIST="`get_metatag_data ogg "$2" artist`"
 			export ALBUM="`get_metatag_data ogg "$2" album`"
 			export TITLE="`get_metatag_data ogg "$2" title`"
 			export TRACKNUM="`get_metatag_data ogg "$2" tracknumber`"
+			export YEAR="`get_metatag_data ogg "$2" date`"
 		;;
 		flac)
 			export ARTIST="`get_metatag_data flac "$2" artist`"
 			export ALBUM="`get_metatag_data flac "$2" album`"
 			export TITLE="`get_metatag_data flac "$2" title`"
 			export TRACKNUM="`get_metatag_data flac "$2" tracknumber`"
+			export YEAR="`get_metatag_data flac "$2" date`"
 		;;
 		mp4)
 			export ARTIST="`get_metatag_data mp4 "$2" artist`"
 			export ALBUM="`get_metatag_data mp4 "$2" album`"
 			export TITLE="`get_metatag_data mp4 "$2" title`"
 			export TRACKNUM="`get_metatag_data mp4 "$2" track`"
+			export YEAR="`get_metatag data mp4 "$2" date`"
 		;;
 		esac
 	fi
@@ -83,19 +87,25 @@ set_common_metatags() {
 			if [ -n "$TRACKNUM" ]; then
 				set_metatag flac TRACKNUMBER "$TRACKNUM" "$2"
 			fi
+			if [ -n "$YEAR" ]; then
+				set_metatag flac DATE "$YEAR" "$2"
+			fi
 		;;
 		id3)
 			if [ -n "$ARTIST" ]; then
-				set_metatag mp3 a "$ARTIST" "$2"
+				set_metatag id3 a "$ARTIST" "$2"
 			fi
 			if [ -n "$ALBUM" ]; then
-				set_metatag mp3 A "$ALBUM" "$2"
+				set_metatag id3 A "$ALBUM" "$2"
 			fi
 			if [ -n "$TITLE" ]; then
-				set_metatag mp3 s "$TITLE" "$2"
+				set_metatag id3 s "$TITLE" "$2"
 			fi
 			if [ -n "$TRACKNUM" ]; then
-				set_metatag mp3 t "$TRACKNUM" "$2"
+				set_metatag id3 t "$TRACKNUM" "$2"
+			fi
+			if [ -n "$YEAR" ]; then
+				set_metatag id3 y "$YEAR" "$2"
 			fi
 		;;
 		ogg)
@@ -111,6 +121,9 @@ set_common_metatags() {
 			if [ -n "$TRACKNUM" ]; then
 				set_metatag ogg TRACKNUMBER "$TRACKNUM" "$2"
 			fi
+			if [ -n "$YEAR" ]; then
+				set_metatag ogg DATE "$YEAR" "$2"
+			fi
 		;;
 		mp4)
 			if [ -n "$ARTIST" ]; then
@@ -124,6 +137,9 @@ set_common_metatags() {
 			fi
 			if [ -n "$TRACKNUM" ]; then
 				set_metatag mp4 t "$TRACKNUM" "$2"
+			fi
+			if [ -n "$YEAR" ]; then
+				set_metatag mp4 y "$YEAR" "$2"
 			fi
 		;;
 		esac

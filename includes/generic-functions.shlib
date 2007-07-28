@@ -78,13 +78,15 @@ cddb_query_info() {
 		local ARTISTALBUM="`grep ^DTITLE= "$READFILE" | cut -f2 -d= | sed 's: / :%:' | tr -d \[:cntrl:\]`"
 		local ARTIST="`echo "$ARTISTALBUM" | cut -f1 -d'%'`"
 		local ALBUM="`echo "$ARTISTALBUM" | cut -f2 -d'%'`"
+		local YEAR="`grep ^DYEAR= "$READFILE" | cut -f2 -d= | sed 's:\r::g'`"
 		unset ARTISTALBUM
 	else
 		local ARTIST="Unknown Artist"
 		local ALBUM="Unknown Album"
 	fi
 
-	echo "$ALBUM" >> $TMPDIR/album.txt
+	echo "album:${ALBUM}" >> $TMPDIR/album.txt
+	echo "year:${YEAR}" >> $TMPDIR/album.txt
 	for i in `seq 0 $TRACKS`; do
 		if [ ! "`echo -n "$i" | wc -m`" = "2" ]; then
 			local N="0${i}"
@@ -92,7 +94,7 @@ cddb_query_info() {
 			local N="${i}"
 		fi
 		if [ -z "$UNKNOWN_DISC" ]; then
-			local TRACK="`grep ^TTITLE${i}= "$READFILE" | cut -f2 -d= | sed 's:\r::g'`"
+			local TRACK="`grep ^TTITLE${i}= "$READFILE" | cut -f2 -d= | sed 's:\r::g' | sed 's:/: - :g'`"
 		else
 			local TRACK="Track ${N}"
 		fi

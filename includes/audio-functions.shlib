@@ -59,58 +59,128 @@ get_qualitymap() {
 }
 
 audio_encode() {
+	if [ -z "$INPUT_IS_WAV" ]; then
+		export ENC_FILE="$TMPDIR/audio_enc.wav"
+	else
+		export ENC_FILE="$2"
+	fi
+
 	case "$1" in
 	vorbis)
-		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
-		oggenc -Q -q "$AQUALITY" -o "$3" "$TMPDIR/audio_enc.wav"
+		if [ -z "$INPUT_IS_WAV" ]; then
+			decode_audio_pipe "$2" "$ENC_FILE"
+		fi
+
+		if [ -n "$USEOGGENC2" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/oggenc2.exe -a -z "$VERBOSE" ]; then
+			wine /usr/local/share/convmedia/bin/oggenc2.exe -Q -q "$AQUALITY" -o "$3" "$ENC_FILE"
+		elif [ -n "$USEOGGENC2" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/oggenc2.exe -a -n "$VERBOSE" ]; then
+			wine /usr/local/share/convmedia/bin/oggenc2.exe -q "$AQUALITY" -o "$3" "$ENC_FILE"
+		elif [ -z "$VERBOSE" ]; then
+			oggenc -Q -q "$AQUALITY" -o "$3" "$ENC_FILE"
+		else
+			oggenc -q "$AQUALITY" -o "$3" "$ENC_FILE"
+		fi
 		# We might not have Vorbisgain, make sure we do otherwise DON'T try to call it.
 		if [ -n "`which vorbisgain`" ]; then
-			vorbisgain -q -f "$3"
+			if [ -z "$VERBOSE" ]; then
+				vorbisgain -q -f "$3"
+			else
+				vorbisgain -f "$3"
+			fi
 		fi
-		rm "$TMPDIR/audio_enc.wav"
+		rm "$ENC_FILE"
 	;;
 	flac)
-		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
-		flac -s -`get_qualitymap invertq` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
-		metaflac --add-replay-gain "$3" &> /dev/null
-		rm "$TMPDIR/audio_enc.wav"
+		if [ -z "$INPUT_IS_WAV" ]; then
+			decode_audio_pipe "$2" "$ENC_FILE"
+		fi
+
+		if [ -z "$VERBOSE" ]; then
+			flac -s -`get_qualitymap invertq` -o "$3" "$ENC_FILE" &> /dev/null
+			metaflac --add-replay-gain "$3" &> /dev/null
+		else
+			flac -s -`get_qualitymap invertq` -o "$3" "$ENC_FILE"
+			metaflac --add-replay-gain "$3"
+		fi
+		rm "$ENC_FILE"
 	;;
 	aac-lc)
-		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
-		if [ -n "$USENEROAAC" -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe ]; then
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -lc -br $BR -if "$TMPDIR/audio_enc.wav" -of "$3" &> /dev/null
-		else
-			faac --obj-type LC -w -b `get_qualitymap bitrate` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+		if [ -z "$INPUT_IS_WAV" ]; then
+			decode_audio_pipe "$2" "$ENC_FILE"
 		fi
-		rm "$TMPDIR/audio_enc.wav"
+
+		if [ -n "$USENEROAAC" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
+			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -lc -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
+		elif [ -n "$USENEROAAC" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -n "$VERBOSE" ]; then
+			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -lc -br $BR -if "$ENC_FILE" -of "$3"
+		elif [ -z "$VERBOSE" ]; then
+			faac --obj-type LC -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE" &> /dev/null
+		else
+			faac --obj-type LC -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE"
+		fi
+		rm "$ENC_FILE"
 	;;
 	aac-main)
-		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
-		faac --obj-type Main -w -b `get_qualitymap bitrate` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
-		rm "$TMPDIR/audio_enc.wav"
+		if [ -z "$INPUT_IS_WAV" ]; then
+			decode_audio_pipe "$2" "$ENC_FILE"
+		fi
+
+		if [ -z "$VERBOSE" ]; then
+			faac --obj-type Main -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE" &> /dev/null
+		else
+			faac --obj-type Main -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE"
+		fi
+		rm "$ENC_FILE"
 	;;
 	aac-ltp)
-		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
-		faac --obj-type LTP -w -b `get_qualitymap bitrate` -o "$3" "$TMPDIR/audio_enc.wav" &> /dev/null
+		if [ -z "$INPUT_IS_WAV" ]; then
+			decode_audio_pipe "$2" "$ENC_FILE"
+		fi
+
+		if [ -z "$VERBOSE" ]; then
+			faac --obj-type LTP -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE" &> /dev/null
+		else
+			faac --obj-type LTP -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE"
+		fi
 	;;
 	aac-hev1)
-		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		if [ -z "$INPUT_IS_WAV" ]; then
+			decode_audio_pipe "$2" "$ENC_FILE"
+		fi
+
 		export BR="$((`get_qualitymap bitrate` * 1024))"
-		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe ]; then
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -he -br $BR -if "$TMPDIR/audio_enc.wav" -of "$3" &> /dev/null
+		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
+			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -he -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
+		else
+			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -he -br $BR -if "$ENC_FILE" -of "$3"
 		fi
 	;;
 	aac-hev2)
-		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
+		if [ -z "$INPUT_IS_WAV" ]; then
+			decode_audio_pipe "$2" "$ENC_FILE"
+		fi
+
 		export BR="$((`get_qualitymap bitrate` * 1024))"
-		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe ]; then
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -hev2 -br $BR -if "$TMPDIR/audio_enc.wav" -of "$3" &> /dev/null
+		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
+			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -hev2 -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
+		else
+			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -hev2 -br $BR -if "$ENC_FILE" -of "$3"
 		fi
 	;;
 	mp3)
-		decode_audio_pipe "$2" "$TMPDIR/audio_enc.wav"
-		lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$TMPDIR/audio_enc.wav" "$3" &> /dev/null
-		rm "$TMPDIR/audio_enc.wav"
+		if [ -z "$INPUT_IS_WAV" ]; then
+			decode_audio_pipe "$2" "$ENC_FILE"
+			export ENC_FILE="$ENC_FILE"
+		else
+			export ENC_FILE="$2"
+		fi
+
+		if [ -z "$VERBOSE" ]; then
+			lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$ENC_FILE" "$3" &> /dev/null
+		else
+			lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$ENC_FILE" "$3"
+		fi
+		rm "$ENC_FILE"
 	;;
 	esac
 }
