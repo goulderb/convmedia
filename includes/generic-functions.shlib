@@ -10,68 +10,83 @@ warn() {
 }
 
 cddb_query_info() {
+	if [ -n "$CDDB_CACHE_DIR" -a ! -d "$CDDB_CACHE_DIR" ]; then
+		mkdir -p "$CDDB_CACHE_DIR"
+	fi
+
 	local DISCINFO="`cd-discid $CDDISCID_OPTS | sed 's: :+:g'`"
 	export TRACKS="`echo $DISCINFO | cut -d+ -f2`"
 	export TRACKS="`expr $TRACKS - 1`"
 	local SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
 	local HELLO="nobody+localhost+convcd+0.1"
-	
-	wget -q -O $TMPDIR/cddb_query_results.txt "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5"
-	
-	export RETURNCODE="`cat $TMPDIR/cddb_query_results.txt | head -n1 | cut -d' ' -f1`"
 
-	case $RETURNCODE in
-	211)
-		export NUM="`cat $TMPDIR/cddb_query_results.txt | wc -l`"
-		export NUM="`expr $NUM - 1`"
-		export RESULTS="`cat $TMPDIR/cddb_query_results.txt | sed 's:\r:\n:g' | tr -s '\n' | tr '\n' '+'`"
-		for i in `seq 2 $NUM`; do
-			echo "`echo $RESULTS | cut -d'+' -f$i`" > $TMPDIR/cddb_query_results.txt
-		done
-	;;
-	*)
-		cat $TMPDIR/cddb_query_results.txt | sed 's:\r:\n:g' | tr -s '\n' | sed 's:^ ::g' | \
-			grep "`echo $DISCINFO | cut -d+ -f1`" | sed 's:200 ::' > $TMPDIR/cddb_query_results_2.txt
-		mv $TMPDIR/cddb_query_results_2.txt $TMPDIR/cddb_query_results.txt
-	;;
-	esac
-
-	if [ "`cat $TMPDIR/cddb_query_results.txt | wc -l`" -gt "1" ]; then
-		local CNT="`cat $TMPDIR/cddb_query_results.txt | wc -l`"	
-		for i in `seq 1 $CNT`; do
-			if [ "$i" = "1" ]; then
-				echo "1: `cat $TMPDIR/cddb_query_results.txt | head -n1`" >> $TMPDIR/cddb_query_results_2.txt
-			else
-				echo "$i: `cat $TMPDIR/cddb_query_results.txt | head -n$i | tail -n1`" >> $TMPDIR/cddb_query_results_2.txt
-			fi
-		done
-		# If we're allowed to be interactive query the user on which to use, otherwise use first-hit mode.
-		if [ -z $INTERACTIVE ]; then
-			cat $TMPDIR/cddb_query_results_2.txt
-			echo -n "Please pick one of the above entries from the CDDB database by number and then hit enter: "; read entry
-		else
-			local entry="1"
+	if [ -n "$CDDB_CACHE_DIR" ]; then
+		local DISCID_TEMP="`echo $DISCINFO | cut -d'+' -f1`"
+		if [ -d "${CDDB_CACHE_DIR}/${DISCID_TEMP}" ]; then
+			cp "${CDDB_CACHE_DIR}/${DISCID_TEMP}/cddb_query_results.txt" "$TMPDIR"/cddb_read_results.txt
+			cp "${CDDB_CACHE_DIR}/${DISCID_TEMP}/cddb_read_results.txt" "$TMPDIR"/cddb_read_results.txt
+			export CDDB_CACHE_HIT=1
 		fi
-		grep "${entry}:" $TMPDIR/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > $TMPDIR/cddb_query_results.txt
-		rm $TMPDIR/cddb_query_results_2.txt
 	fi
 
-	case $RETURNCODE in
-	202)
-		export UNKNOWN_DISC=1
-	;;
-	esac
+	if [ -z "$CDDB_CACHE_HIT" ]; then
+		wget -q -O "$TMPDIR"/cddb_query_results.txt "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5"
 
-	local GENRE="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f1`"
-	local DISCID="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f2`"
+		export RETURNCODE="`cat "$TMPDIR"/cddb_query_results.txt | head -n1 | cut -d' ' -f1`"
+
+		case $RETURNCODE in
+		211)
+			export NUM="`cat "$TMPDIR"/cddb_query_results.txt | wc -l`"
+			export NUM="`expr $NUM - 1`"
+			export RESULTS="`cat "$TMPDIR"/cddb_query_results.txt | sed 's:\r:\n:g' | tr -s '\n' | tr '\n' '+'`"
+			for i in `seq 2 $NUM`; do
+				echo "`echo "$RESULTS" | cut -d'+' -f$i`" > "$TMPDIR"/cddb_query_results.txt
+			done
+		;;
+		*)
+			cat "$TMPDIR"/cddb_query_results.txt | sed 's:\r:\n:g' | tr -s '\n' | sed 's:^ ::g' | \
+				grep "`echo $DISCINFO | cut -d+ -f1`" | sed 's:200 ::' > "$TMPDIR"/cddb_query_results_2.txt
+			mv "$TMPDIR"/cddb_query_results_2.txt "$TMPDIR"/cddb_query_results.txt
+		;;
+		esac
+
+		if [ "`cat "$TMPDIR"/cddb_query_results.txt | wc -l`" -gt "1" ]; then
+			local CNT="`cat "$TMPDIR"/cddb_query_results.txt | wc -l`"	
+			for i in `seq 1 $CNT`; do
+				if [ "$i" = "1" ]; then
+					echo "1: `cat "$TMPDIR"/cddb_query_results.txt | head -n1`" >> "$TMPDIR"/cddb_query_results_2.txt
+				else
+					echo "$i: `cat "$TMPDIR"/cddb_query_results.txt | head -n$i | tail -n1`" >> "$TMPDIR"/cddb_query_results_2.txt
+				fi
+			done
+			# If we're allowed to be interactive query the user on which to use, otherwise use first-hit mode.
+			if [ -z $INTERACTIVE ]; then
+				cat "$TMPDIR"/cddb_query_results_2.txt
+				echo -n "Please pick one of the above entries from the CDDB database by number and then hit enter: "; read entry
+			else
+				local entry="1"
+			fi
+			grep "${entry}:" "$TMPDIR"/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > $TMPDIR/cddb_query_results.txt
+			rm "$TMPDIR"/cddb_query_results_2.txt
+		fi
+
+		case $RETURNCODE in
+		202)
+			export UNKNOWN_DISC=1
+		;;
+		esac
+
+		local GENRE="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f1`"
+		local DISCID="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f2`"
 	
-	if [ -z "$UNKNOWN_DISC" ]; then
-		wget -q -O $TMPDIR/cddb_read_results.txt "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
-		sed -i -e 's:+::g' -e 's:"::g' $TMPDIR/cddb_read_results.txt
-		sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' $TMPDIR/cddb_read_results.txt
-	fi
+		if [ -z "$UNKNOWN_DISC" ]; then
+			wget -q -O "$TMPDIR"/cddb_read_results.txt "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
+			sed -i -e 's:+::g' -e 's:"::g' $TMPDIR/cddb_read_results.txt
+			sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' $TMPDIR/cddb_read_results.txt
+		fi
 
-	unset entry CNT GENRE DISCID SERVER HELLO DISCINFO
+		unset entry CNT GENRE SERVER HELLO DISCINFO
+	fi
 
 	if [ -z "$UNKNOWN_DISC" ]; then
 		local READFILE="$TMPDIR/cddb_read_results.txt"
@@ -114,10 +129,15 @@ cddb_query_info() {
 	
 	unset ALBUM ARTIST TRACK MULTI_ARTIST N
 	
-	if [ -z "$UNKNOWN_DISC" ]; then
-		rm $TMPDIR/cddb_read_results.txt
+	if [ -n "$CDDB_CACHE_DIR"  -a -z "$UNKNOWN_DISC" ]; then
+		mkdir -p "${CDDB_CACHE_DIR}/${DISCID}"
+		cp "$TMPDIR"/cddb_read_results.txt "${CDDB_CACHE_DIR}/${DISCID}/"
+		cp "$TMPDIR"/cddb_query_results.txt "${CDDB_CACHE_DIR}/${DISCID}/"
 	fi
-	rm $TMPDIR/cddb_query_results.txt
+	if [ -z "$UNKNOWN_DISC" ]; then
+		rm "$TMPDIR"/cddb_read_results.txt
+	fi
+	rm "$TMPDIR"/cddb_query_results.txt
 }
 
 mplayer_retrieve_info()	{

@@ -5,6 +5,7 @@ export INCDIR="/usr/local/share/convmedia/includes"
 export CHARSET="UTF-8"
 export VERBOSE="1"
 export INPUT_IS_WAV="1"
+export CDDB_CACHE_DIR="${HOME}/.convmedia/cddb_cache"
 
 if [ ! -d $TMPDIR ]; then
 	mkdir $TMPDIR
@@ -125,6 +126,12 @@ fi
 
 export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE"
 export CDDISCID_OPTS="$CD_DEVICE"
+
+cd-discid $CDDISCID_OPTS &> /dev/null
+
+if [ "$?" = "1" ]; then
+	die "There is no CD in the drive to rip."
+fi
 
 echo "Retrieving information about this CD from CDDB..."
 cddb_query_info
