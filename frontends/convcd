@@ -133,8 +133,13 @@ if [ "$?" = "1" ]; then
 	die "There is no CD in the drive to rip."
 fi
 
-echo "Retrieving information about this CD from CDDB..."
+echo -n "Retrieving information about this CD from CDDB..."
 cddb_query_info
+if [ -n "$CDDB_CACHE_HIT" ]; then
+	echo " cache hit, done."
+else
+	echo " done."
+fi
 export ALBUM="`cat ${TMPDIR}/album.txt | grep "album:" | cut -d: -f2 | sed 's^&^And^g'`"
 export YEAR="`cat ${TMPDIR}/album.txt | grep "year:" | cut -d: -f2`"
 echo "Album: $ALBUM" >> $TMPDIR/album-info.txt

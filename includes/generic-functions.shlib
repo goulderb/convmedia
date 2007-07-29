@@ -129,15 +129,17 @@ cddb_query_info() {
 	
 	unset ALBUM ARTIST TRACK MULTI_ARTIST N
 	
-	if [ -n "$CDDB_CACHE_DIR"  -a -z "$UNKNOWN_DISC" ]; then
+	if [ -n "$CDDB_CACHE_DIR"  -a -z "$UNKNOWN_DISC" -a -z "$CDDB_CACHE_HIT" ]; then
 		mkdir -p "${CDDB_CACHE_DIR}/${DISCID}"
 		cp "$TMPDIR"/cddb_read_results.txt "${CDDB_CACHE_DIR}/${DISCID}/"
 		cp "$TMPDIR"/cddb_query_results.txt "${CDDB_CACHE_DIR}/${DISCID}/"
 	fi
-	if [ -z "$UNKNOWN_DISC" ]; then
+	if [ -z "$UNKNOWN_DISC" -a -f "$TMPDIR"/cddb_read_results.txt ]; then
 		rm "$TMPDIR"/cddb_read_results.txt
 	fi
-	rm "$TMPDIR"/cddb_query_results.txt
+	if [ -f "$TMPDIR"/cddb_query_results.txt ]; then
+		rm "$TMPDIR"/cddb_query_results.txt
+	fi
 }
 
 mplayer_retrieve_info()	{
