@@ -109,7 +109,7 @@ cddb_query_info() {
 			local N="${i}"
 		fi
 		if [ -z "$UNKNOWN_DISC" ]; then
-			local TRACK="`grep ^TTITLE${i}= "$READFILE" | cut -f2 -d= | sed 's:\r::g' | sed 's:/: - :g'`"
+			local TRACK="`grep ^TTITLE${i}= "$READFILE" | cut -f2 -d= | sed 's:\r::g'`"
 		else
 			local TRACK="Track ${N}"
 		fi
