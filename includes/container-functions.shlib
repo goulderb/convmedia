@@ -65,7 +65,7 @@ get_common_metatags() {
 			export ALBUM="`get_metatag_data mp4 "$2" album`"
 			export TITLE="`get_metatag_data mp4 "$2" title`"
 			export TRACKNUM="`get_metatag_data mp4 "$2" track`"
-			export YEAR="`get_metatag data mp4 "$2" date`"
+			export YEAR="`get_metatag_data mp4 "$2" date`"
 		;;
 		esac
 	fi

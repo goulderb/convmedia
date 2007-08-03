@@ -5,7 +5,7 @@ findinputformat() {
 		export INPUTFORMAT=ogg
 	elif [ -n "`echo "$1" | grep -i '\.flac'`" ]; then
 		export INPUTFORMAT=flac
-	elif  [ -n "`echo "$1" | grep -i '\.m4a'`" -a -n "`echo "$1" | grep -i '\.mp4'`" ]; then
+	elif  [ -n "`echo "$1" | grep -i '\.m4a'`" -o -n "`echo "$1" | grep -i '\.mp4'`" ]; then
 		export INPUTFORMAT=aac
 	else
 		die "No supported format found, exiting."
