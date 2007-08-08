@@ -1,13 +1,18 @@
 decode_audio_pipe() {
-	if [ -n "$1" -a -n "$2" ]; then
+	if [ -n "$1" -a -n "$2" -a -z "$VERBOSE" ]; then
 		mkfifo "$2"
 		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null &
+	elif [ -n "$1" -a -n "$2" -a -n "$VERBOSE" ]; then
+		mkfifo "$2"
+		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark
 	fi
 }
 
 decode_audio_file() {
-	if [ -n "$1" -a -n "$2" ]; then
+	if [ -n "$1" -a -n "$2" -a -z "$VERBOSE" ]; then
 		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null
+	elif [ -n "$1" -a -n "$2" -a -n "$VERBOSE" ]; then
+		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark
 	fi
 }
 
@@ -65,14 +70,16 @@ audio_encode() {
 		export ENC_FILE="$2"
 	fi
 
+	if [ -z "$INPUT_IS_WAV" -a -z "$DECODE_FIRST" ]; then
+		decode_audio_pipe "$2" "$ENC_FILE"
+	elif [ -z "$INPUT_IS_WAV" -a -n "$DECODE_FIRST" ]; then
+		decode_audio_file "$2" "$ENC_FILE"
+	fi
+
 	case "$1" in
 	vorbis)
-		if [ -z "$INPUT_IS_WAV" ]; then
-			decode_audio_pipe "$2" "$ENC_FILE"
-		fi
-
 		if [ -n "$USEOGGENC2" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/oggenc2.exe -a -z "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/oggenc2.exe -Q -q "$AQUALITY" -o "$3" "$ENC_FILE"
+			wine /usr/local/share/convmedia/bin/oggenc2.exe -Q -q "$AQUALITY" -o "$3" $ENC_FILE
 		elif [ -n "$USEOGGENC2" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/oggenc2.exe -a -n "$VERBOSE" ]; then
 			wine /usr/local/share/convmedia/bin/oggenc2.exe -q "$AQUALITY" -o "$3" "$ENC_FILE"
 		elif [ -z "$VERBOSE" ]; then
@@ -91,10 +98,6 @@ audio_encode() {
 		rm "$ENC_FILE"
 	;;
 	flac)
-		if [ -z "$INPUT_IS_WAV" ]; then
-			decode_audio_pipe "$2" "$ENC_FILE"
-		fi
-
 		if [ -z "$VERBOSE" ]; then
 			flac -s -`get_qualitymap invertq` -o "$3" "$ENC_FILE" &> /dev/null
 			metaflac --add-replay-gain "$3" &> /dev/null
@@ -105,10 +108,6 @@ audio_encode() {
 		rm "$ENC_FILE"
 	;;
 	aac-lc)
-		if [ -z "$INPUT_IS_WAV" ]; then
-			decode_audio_pipe "$2" "$ENC_FILE"
-		fi
-
 		if [ -n "$USENEROAAC" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
 			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -lc -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
 		elif [ -n "$USENEROAAC" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -n "$VERBOSE" ]; then
@@ -121,10 +120,6 @@ audio_encode() {
 		rm "$ENC_FILE"
 	;;
 	aac-main)
-		if [ -z "$INPUT_IS_WAV" ]; then
-			decode_audio_pipe "$2" "$ENC_FILE"
-		fi
-
 		if [ -z "$VERBOSE" ]; then
 			faac --obj-type Main -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE" &> /dev/null
 		else
@@ -133,10 +128,6 @@ audio_encode() {
 		rm "$ENC_FILE"
 	;;
 	aac-ltp)
-		if [ -z "$INPUT_IS_WAV" ]; then
-			decode_audio_pipe "$2" "$ENC_FILE"
-		fi
-
 		if [ -z "$VERBOSE" ]; then
 			faac --obj-type LTP -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE" &> /dev/null
 		else
@@ -144,10 +135,6 @@ audio_encode() {
 		fi
 	;;
 	aac-hev1)
-		if [ -z "$INPUT_IS_WAV" ]; then
-			decode_audio_pipe "$2" "$ENC_FILE"
-		fi
-
 		export BR="$((`get_qualitymap bitrate` * 1024))"
 		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
 			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -he -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
@@ -156,10 +143,6 @@ audio_encode() {
 		fi
 	;;
 	aac-hev2)
-		if [ -z "$INPUT_IS_WAV" ]; then
-			decode_audio_pipe "$2" "$ENC_FILE"
-		fi
-
 		export BR="$((`get_qualitymap bitrate` * 1024))"
 		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
 			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -hev2 -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
@@ -168,13 +151,6 @@ audio_encode() {
 		fi
 	;;
 	mp3)
-		if [ -z "$INPUT_IS_WAV" ]; then
-			decode_audio_pipe "$2" "$ENC_FILE"
-			export ENC_FILE="$ENC_FILE"
-		else
-			export ENC_FILE="$2"
-		fi
-
 		if [ -z "$VERBOSE" ]; then
 			lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$ENC_FILE" "$3" &> /dev/null
 		else

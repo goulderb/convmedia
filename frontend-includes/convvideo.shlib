@@ -35,7 +35,7 @@ convertvideo() {
 	elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
 		export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
 	fi
-	echo -n "Encoding audio..."
+	echo "Entering audio phase..."
 	case $ACODEC in
 	vorbis)
 		export EXT="ogg"
@@ -54,10 +54,13 @@ convertvideo() {
 	if [ -n "$MULTI_TRACK" -a -z "$DONT_ENCODE" ]; then
 		for i in $ATRACKS; do
 		 ((ANUMB++))
-		 export AUDIO_OPTS="-alang $i"
+		 echo $i
+		 export MPLAYER_OPTS="-alang $i"
 		 audio_encode $ACODEC "$1" "$TMPDIR/audio${ANUMB}.$EXT"
 		done
 	elif [ -z "$DONT_ENCODE" ]; then
+		export MPLAYER_OPTS="$ATRACK"
+		echo $ATRACK
 		audio_encode $ACODEC "$1" "$TMPDIR/audio.$EXT"
 	fi
 	echo " DONE"
@@ -122,7 +125,7 @@ convertvideo() {
 		 mux_file mp4 $TMPDIR/video.x264 $TMPDIR/video.mp4
 		fi
 		export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
-		if [ -n "$MULTI_TRACK" ]; then
+		if [ -n "$ATRACKS" ]; then
 		 for i in $ATRACKS; do
 		  ((ANUMB++))
 		  export FILEMERGE_ARGS="$FILEMERGE_ARGS --language 0:$i $TMPDIR/audio${ANUMB}.$EXT"
@@ -130,6 +133,7 @@ convertvideo() {
 		else
 		 export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
 		fi
+		echo $FILEMERGE_ARGS
 		merge_files mkv "$OUTPUT"
 	;;
 	mp4)
@@ -146,6 +150,7 @@ convertvideo() {
 		elif [ -f "$TMPDIR/audio.$EXT" ]; then
 		 export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT"
 		fi
+		echo $FILEMERGE_ARGS
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac
