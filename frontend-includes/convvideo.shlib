@@ -133,7 +133,6 @@ convertvideo() {
 		else
 		 export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
 		fi
-		echo $FILEMERGE_ARGS
 		merge_files mkv "$OUTPUT"
 	;;
 	mp4)
@@ -150,7 +149,6 @@ convertvideo() {
 		elif [ -f "$TMPDIR/audio.$EXT" ]; then
 		 export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT"
 		fi
-		echo $FILEMERGE_ARGS
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac

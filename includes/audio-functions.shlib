@@ -76,10 +76,12 @@ audio_encode() {
 		decode_audio_file "$2" "$ENC_FILE"
 	fi
 
+	export BR="$((`get_qualitymap bitrate` * 1024))"
+
 	case "$1" in
 	vorbis)
 		if [ -n "$USEOGGENC2" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/oggenc2.exe -a -z "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/oggenc2.exe -Q -q "$AQUALITY" -o "$3" $ENC_FILE
+			wine /usr/local/share/convmedia/bin/oggenc2.exe -Q -q "$AQUALITY" -o "$3" "$ENC_FILE"
 		elif [ -n "$USEOGGENC2" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/oggenc2.exe -a -n "$VERBOSE" ]; then
 			wine /usr/local/share/convmedia/bin/oggenc2.exe -q "$AQUALITY" -o "$3" "$ENC_FILE"
 		elif [ -z "$VERBOSE" ]; then
@@ -135,7 +137,6 @@ audio_encode() {
 		fi
 	;;
 	aac-hev1)
-		export BR="$((`get_qualitymap bitrate` * 1024))"
 		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
 			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -he -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
 		else
@@ -143,7 +144,6 @@ audio_encode() {
 		fi
 	;;
 	aac-hev2)
-		export BR="$((`get_qualitymap bitrate` * 1024))"
 		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
 			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -hev2 -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
 		else
