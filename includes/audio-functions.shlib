@@ -18,30 +18,30 @@ decode_audio_file() {
 
 rip_track() {
 	mkdir -p "$TMPDIR/rip-tmp"
-	cd $TMPDIR/rip-tmp
 	echo "Doing first rip..."
-	cdparanoia ${PARANOIA_OPTS} "$1" 1.wav
+	cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/1.wav"
 	echo "Doing second rip..."
-	cdparanoia ${PARANOIA_OPTS} "$1" 2.wav
+	cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/2.wav"
 
 	echo -n "Comparing files..."
-	cmp 1.wav 2.wav &> /dev/null
+	cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
 	if [ "$?" = "1" ]; then
 		echo " difference found."
-		rm 1.wav 2.wav
+		rm "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav"
 		for i in `seq 1 $MAX_RERIPS`; do
 			echo
 			echo "Rerip $i..."
 			echo
 			echo "Doing first rip..."
-			cdparanoia ${PARANOIA_OPTS} "$1" 1.wav
+			cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/1.wav"
 			echo "Doing second rip..."
-			cdparanoia ${PARANOIA_OPTS} "$1" 2.wav
+			cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/2.wav"
 			
 			echo -n "Comparing files..."
-			cmp 1.wav 2.wav &> /dev/null
+			cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
 			if [ "$?" = "1" ]; then
 				echo " difference found, retrying."
+				rm "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav"
 				continue
 			else
 				echo " match"
@@ -56,7 +56,7 @@ rip_track() {
 		echo " match."
 	fi
 
-	mv 1.wav "$2"
+	mv "$TMPDIR/rip-tmp/1.wav" "$2"
 }
 
 get_qualitymap() {
