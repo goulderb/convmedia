@@ -6,6 +6,7 @@ export CHARSET="UTF-8"
 export VERBOSE="1"
 export INPUT_IS_WAV="1"
 export CDDB_CACHE_DIR="${HOME}/.convmedia/cddb_cache"
+export MAX_RERIPS=10
 
 if [ ! -d $TMPDIR ]; then
 	mkdir $TMPDIR
@@ -187,7 +188,9 @@ for i in `seq 0 $TRACKS`; do
 		mkdir -p "$DIR_MASK"
 	fi
 
-	cdparanoia ${PARANOIA_OPTS} $I "${TMPDIR}/${FILE_MASK}.wav"
+	echo
+	echo "Ripping ${FILE_MASK}..."
+	rip_track "$I" "${TMPDIR}/${FILE_MASK}.wav"
 
 	case $ACODEC in
 	vorbis)
