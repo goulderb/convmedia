@@ -6,7 +6,7 @@ export CHARSET="UTF-8"
 export VERBOSE="1"
 export INPUT_IS_WAV="1"
 export CDDB_CACHE_DIR="${HOME}/.convmedia/cddb_cache"
-export MAX_RERIPS=10
+export MAX_RERIPS=20
 
 if [ ! -d $TMPDIR ]; then
 	mkdir $TMPDIR
