@@ -1,0 +1,98 @@
+#!/bin/bash
+
+export TMPDIR="/tmp/burncd-$$"
+export INCDIR="/usr/local/share/convmedia/includes"
+export CHARSET="UTF-8"
+export CD_DEVICE="/dev/cdrom"
+
+if [ ! -d $TMPDIR ]; then
+	mkdir $TMPDIR
+else
+	rm -rf $TMPDIR
+	mkdir $TMPDIR
+fi
+
+if [ -f /etc/convmedia/burncd.conf ]; then
+	source /etc/convmedia/burncd.conf
+else
+	echo "Can't load configuration, exiting."
+	exit 1
+fi
+
+if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/audio-functions.shlib ]; then
+  source $INCDIR/generic-functions.shlib
+  source $INCDIR/audio-functions.shlib
+else
+  echo "Can't load functions, exiting."
+  exit 1
+fi
+
+help() {
+  echo "burnaudiocd: An extra-sane audio CD burning application."
+  echo
+  echo "Usage: $0 [OPTIONS]"
+  echo
+  echo "Supported audio formats: vorbis, mp3, aac-lc, aac-main, aac-ltp, aac-hev1, aac-hev2, flac"
+  echo
+  echo "Options:"
+	echo "-a: Audio filters to use."
+	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
+	echo "-d: CD-Rom device node to use (default /dev/cdrom)."
+	echo "-h: Print this help."
+	rm -rf $TMPDIR
+	exit 0
+}
+
+while getopts 'a:r:d:h' z; do
+  case "$z" in
+  a)
+    export AF="-af $OPTARG"
+  ;;
+  d)
+    export CD_DEVICE="$OPTARG"
+  ;;
+  r)
+    export RESAMPLE="$OPTARG"
+  ;;
+	h)
+		help
+	;;
+	esac
+done
+shift $(($OPTIND-1))
+
+if [ -z $CD_DEVICE ]; then
+	help
+fi
+
+if [ -n "$RESAMPLE" -a -n "$AF" ]; then
+	AF="$AF,resample=$RESAMPLE"
+	export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
+elif [ -n "$RESAMPLE" -a -z "$AF" ]; then
+	AF="-af resample=$RESAMPLE"
+	export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
+elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
+	export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
+fi
+
+for i in "$@"; do
+	if [ -f "$i" ]; then
+		((N++))
+		echo "Decoding ${i}..."
+		decode_audio_file $i "${TMPDIR}"/${N}.wav
+	elif [ -b "$i" ]; then
+		export CWD="$PWD"
+		cd $TMPDIR
+		cdparanoia -B -d $i
+		if [ "$i" = "$CD_DEVICE" ]; then
+			echo "Ejecting drive, please insert blank CD and hit enter."
+			eject $i
+			read keypress
+			unset keypress
+		fi
+	fi
+done
+
+cdrecord dev=$CD_DEVICE -v -audio "${TMPDIR}"/*.wav
+
+rm -rf "$TMPDIR"
