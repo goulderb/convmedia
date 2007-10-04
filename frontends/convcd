@@ -62,8 +62,6 @@ help() {
 	echo "Options:"
 	echo "-f: Format you want the CD to be ripped to."
 	echo "-q: Encoding quality, highest quality is 10, lowest is 1."
-	echo "-a: Audio filters to use."
-	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
 	echo "-w: When encoding, use fasters (or better) encoders only available through the usage of wine, if available."
 	echo "-d: CD-Rom device node to use."
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
@@ -79,9 +77,6 @@ while getopts 'f:a:q:r:d:wbhmi' z; do
 	f)
 		export ACODEC="$OPTARG"
 	;;
-	a)
-		export AF="-af $OPTARG"
-	;;
 	q)
 		export AQUALITY="$OPTARG"
 	;;
@@ -90,9 +85,6 @@ while getopts 'f:a:q:r:d:wbhmi' z; do
 	;;
 	b)
 		set -e -x
-	;;
-	r)
-		export RESAMPLE="$OPTARG"
 	;;
 	w)
 		export USENEROAAC="1"
@@ -113,16 +105,6 @@ shift $(($OPTIND-1))
 
 if [ -z $ACODEC ]; then
 	help
-fi
-
-if [ -n "$RESAMPLE" -a -n "$AF" ]; then
-	AF="$AF,resample=$RESAMPLE"
-	export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
-elif [ -n "$RESAMPLE" -a -z "$AF" ]; then
-	AF="-af resample=$RESAMPLE"
-	export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
-elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
-	export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
 fi
 
 export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE"
