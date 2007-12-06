@@ -62,7 +62,7 @@ help() {
 	echo "Options:"
 	echo "-f: Format you want the CD to be ripped to."
 	echo "-q: Encoding quality, highest quality is 10, lowest is 1."
-	echo "-w: When encoding, use fasters (or better) encoders only available through the usage of wine, if available."
+	echo "-w: When encoding, use faster (or better) encoders only available through the usage of wine, if available."
 	echo "-d: CD-Rom device node to use."
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
 	echo "-m: Multi-artist mode, use this for CD's that have multiple artists rather than one."

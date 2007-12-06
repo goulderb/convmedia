@@ -52,7 +52,7 @@ help() {
 	echo
 	echo "Codec options:"
 	echo "-C: Codec selection (Format: h264/vorbis)"
-	echo "-w: When encoding, use fasters (or better) encoders only available through the usage of wine, if available."
+	echo "-w: When encoding, use faster (or better) encoders only available through the usage of wine, if available."
 	echo "-A: Anime/Cartoon mode for MPEG-4 ASP (XVID/DIVX), this tweaks the encoder for Anime/Cartoons."
 	echo "-l: Live action mode for MPEG-4 ASP (XVID/DIVX), this tweaks the encoder for Live Action material at the cost of speed."
 	echo "-q: Audio quality (default 3)."
