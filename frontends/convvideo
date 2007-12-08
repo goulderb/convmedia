@@ -223,7 +223,7 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
 		export USENEROAAC="1"
 		export USEOGGENC2="1"
 		# Oggenc2 has issues with things decoded on-the-fly, force decoding first.
-		export DECODE_FIRST="1"
+		#export DECODE_FIRST="1"
 	;;
 	h)
 		help
