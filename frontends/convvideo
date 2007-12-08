@@ -86,7 +86,7 @@ help() {
 	exit 0
 }
 
-while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVT' z; do
+while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
 	case "$z" in
 	z)
 		set -e -x
