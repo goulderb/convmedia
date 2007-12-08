@@ -88,6 +88,9 @@ help() {
 
 while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVT' z; do
 	case "$z" in
+	z)
+		set -e -x
+	;;
 	o)
 		if [ -n "$OPTARG" ]; then
 			export OUTPUT="$OPTARG"
