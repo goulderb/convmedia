@@ -24,8 +24,8 @@ rip_track() {
 	cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
 	if [ "$?" = "1" ]; then
 		echo " difference found."
-		rm "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav"
 		for i in `seq 1 $MAX_RERIPS`; do
+			rm "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav"
 			echo
 			echo "Rerip $i..."
 			echo
@@ -38,7 +38,6 @@ rip_track() {
 			cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
 			if [ "$?" = "1" ]; then
 				echo " difference found, retrying."
-				rm "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav"
 				continue
 			else
 				echo " match"

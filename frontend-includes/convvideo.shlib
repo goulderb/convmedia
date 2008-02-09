@@ -2,6 +2,7 @@ convertvideo() {
 	# Misc stuff, mostly dealing with variables.
 	export VIDEO_FPS=`mplayer_retrieve_info grep "$1" ID_VIDEO_FPS`
 	export VIDEO_LENGTH=`mplayer_retrieve_info grep "$1" ID_LENGTH`
+	export MENCODER_OPTS="$MENCODER_OPTS -ofps $VIDEO_FPS"
 	if [ -z "$VIDEO_FPS" -a -z "$VIDEO_LENGTH" ]; then
 		die "Can't get the input video's framerate or length!"
 	fi

@@ -66,13 +66,14 @@ help() {
 	echo "-d: CD-Rom device node to use."
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
 	echo "-m: Multi-artist mode, use this for CD's that have multiple artists rather than one."
+	echo "-n: Maximum number of rerips to perform before accepting a possibly imperfect result."
 	echo "-b: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
 	rm -rf $TMPDIR
 	exit 0
 }
 
-while getopts 'f:a:q:r:d:wbhmi' z; do
+while getopts 'f:a:q:r:d:n:wbhmi' z; do
 	case "$z" in
 	f)
 		export ACODEC="$OPTARG"
@@ -95,6 +96,9 @@ while getopts 'f:a:q:r:d:wbhmi' z; do
 	;;
 	m)
 		export MULTI_ARTIST="1"
+	;;
+	n)
+		export MAX_RERIPS="$OPTARG"
 	;;
 	h)
 		help
