@@ -243,6 +243,14 @@ if [ $CONTAINER = "mp4" -a $ACODEC = "vorbis" ]; then
 	die "MP4 files with Vorbis audio cannot be played back properly on standards-compliant software or hardware!"
 fi
 
+if [ -n "$DVDMODE" ]; then
+	export DVD_TITLE="echo "$1" | cut -d/ -f3"
+	if [ ! isnumber $DVD_TITLE ]; then
+		echo "Couldn't determine DVD title to rip chapter information from, disabling DVD mode."
+		unset DVDMODE DVD_TITLE
+	fi
+fi
+
 if [ -n "$SPOS" -a -n "$EPOS" ]; then
 	echo "Splitting video..."
 	if [ -n "$MULTI_TRACK" ]; then

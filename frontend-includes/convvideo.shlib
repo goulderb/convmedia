@@ -21,7 +21,7 @@ convertvideo() {
 	
 	if [ -n "$DVDMODE" ]; then
 		echo -n "Exporting DVD Chapters..."
-		dvdxchap $DVD_DEVICE > "$TMPDIR/dvdchaps.txt"
+		dvdxchap -t $DVD_TITLE $DVD_DEVICE > "$TMPDIR/dvdchaps.txt"
 		echo " DONE"
 		echo
 	fi
@@ -125,7 +125,13 @@ convertvideo() {
 		elif [ -f "$TMPDIR/video.x264" ]; then
 		 mux_file mp4 $TMPDIR/video.x264 $TMPDIR/video.mp4
 		fi
+
 		export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
+
+		if [ -n "$DVDMODE" -a -f "$TMPDIR/dvdchaps.txt" ]; then
+			export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/dvdchaps.txt"
+		fi
+
 		if [ -n "$ATRACKS" ]; then
 		 for i in $ATRACKS; do
 		  ((ANUMB++))
@@ -134,6 +140,7 @@ convertvideo() {
 		else
 		 export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
 		fi
+
 		merge_files mkv "$OUTPUT"
 	;;
 	mp4)

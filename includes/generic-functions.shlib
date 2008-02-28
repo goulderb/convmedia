@@ -9,6 +9,14 @@ warn() {
 	echo "$1"
 }
 
+isnumber() {
+	if [ `echo $1 | sed 's/^[0-9]*\.[0-9]*$//' | wc -c` -eq 1 ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 cddb_query_info() {
 	if [ -n "$CDDB_CACHE_DIR" -a ! -d "$CDDB_CACHE_DIR" ]; then
 		mkdir -p "$CDDB_CACHE_DIR"
