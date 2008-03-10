@@ -96,12 +96,12 @@ convertvideo() {
 	h264)
 		export OVC="x264"
 		if [ $PASS -ge 2 ]; then
-		 export OVCOPTS="-x264encopts ${X264OPTS}:pass=2"
+		 export OVCOPTS="-x264encopts ${X264OPTS}:pass=2:ratetol=50"
 		else
-		 export OVCOPTS="-x264encopts ${X264OPTS}"
+		 export OVCOPTS="-x264encopts ${X264OPTS}:ratetol=50"
 		fi
-		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:bitrate=3200:pass=1"
-		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:bitrate=3200:pass=3"
+		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:pass=1"
+		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:pass=3"
 		video_encode "$1" "$TMPDIR/video.x264"
 	;;
 	mpeg4)
