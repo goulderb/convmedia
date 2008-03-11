@@ -128,5 +128,6 @@ convertavs() {
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac
-	echo " DONE"
+	echo "DONE"
+	rm -rf $TMPDIR
 }
