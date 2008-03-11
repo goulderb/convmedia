@@ -63,7 +63,7 @@ convertvideo() {
 		echo $ATRACK
 		audio_encode $ACODEC "$1" "$TMPDIR/audio.$EXT"
 	fi
-	echo " DONE"
+	echo "DONE"
 
 	# Handle encoding options.
 	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp"
@@ -101,7 +101,7 @@ convertvideo() {
 		fi
 		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:pass=1"
 		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:pass=3"
-		video_encode "$1" "$TMPDIR/video.x264"
+		video_encode "$1" "$TMPDIR/video.h264"
 	;;
 	mpeg4)
 		export OVC="lavc"
@@ -121,8 +121,8 @@ convertvideo() {
 	mkv)
 		if [ -f "$TMPDIR/video.m4v" ]; then
 		 mux_file mp4 $TMPDIR/video.m4v $TMPDIR/video.mp4
-		elif [ -f "$TMPDIR/video.x264" ]; then
-		 mux_file mp4 $TMPDIR/video.x264 $TMPDIR/video.mp4
+		elif [ -f "$TMPDIR/video.h264" ]; then
+		 mux_file mp4 $TMPDIR/video.h264 $TMPDIR/video.mp4
 		fi
 
 		export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
@@ -145,8 +145,8 @@ convertvideo() {
 	mp4)
 		if [ -f "$TMPDIR/video.m4v" ]; then
 		 export FILEMERGE_ARGS="-add $TMPDIR/video.m4v"
-		elif [ -f "$TMPDIR/video.x264" ]; then
-		 export FILEMERGE_ARGS="-add $TMPDIR/video.x264"
+		elif [ -f "$TMPDIR/video.h264" ]; then
+		 export FILEMERGE_ARGS="-add $TMPDIR/video.h264"
 		fi
 		if [ -n "$SUBTITLE" ]; then
 		 export FILEMERGE_ARGS="-add $SUBTITLE"
@@ -159,6 +159,6 @@ convertvideo() {
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac
-	echo " DONE"
+	echo "DONE"
 	rm -rf "$TMPDIR"
 }

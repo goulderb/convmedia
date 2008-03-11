@@ -64,7 +64,7 @@ convertavs() {
 		fi
 		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:pass=1"
 		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:pass=3"
-		video_encode_avs "$1" "$TMPDIR/video.x264"
+		video_encode_avs "$1" "$TMPDIR/video.h264"
 	;;
 	mpeg4)
 		export OVC="lavc"
@@ -79,52 +79,35 @@ convertavs() {
 	;;
 	esac
 
-	if [ -f "$TMPDIR/video.x264" ]; then
-		local VIDEO_FPS="`mplayer_retrieve_info grep "$TMPDIR/video.x264" ID_VIDEO_FPS`"
-	elif [ -f "$TMPDIR/video.m4v" ]; then
+	if [ -f "$TMPDIR/video.m4v" ]; then
 		local VIDEO_FPS="`mplayer_retrieve_info grep "$TMPDIR/video.m4v" ID_VIDEO_FPS`"
+	elif [ -f "$TMPDIR/video.h264" ]; then
+		local VIDEO_FPS="`mplayer_retrieve_info grep "$TMPDIR/video.h264" ID_VIDEO_FPS`"
 	fi
 
 	echo -n "Merging files into a $CONTAINER file..."
 	case $CONTAINER in
 	mkv)
 		if [ -f "$TMPDIR/video.m4v" ]; then
-		 mux_file mp4 $TMPDIR/video.m4v $TMPDIR/video.mp4
-		elif [ -f "$TMPDIR/video.x264" ]; then
-		 mux_file mp4 $TMPDIR/video.x264 $TMPDIR/video.mp4
+		 mux_file mp4 "$TMPDIR/video.m4v" "$TMPDIR/video.mp4"
+		elif [ -f "$TMPDIR/video.h264" ]; then
+		 mux_file mp4 "$TMPDIR/video.h264" "$TMPDIR/video.mp4"
 		fi
 
 		export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
-
-		if [ -n "$DVDMODE" -a -f "$TMPDIR/dvdchaps.txt" ]; then
-			export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/dvdchaps.txt"
-		fi
-
-		if [ -n "$ATRACKS" ]; then
-		 for i in $ATRACKS; do
-		  ((ANUMB++))
-		  export FILEMERGE_ARGS="$FILEMERGE_ARGS --language 0:$i $TMPDIR/audio${ANUMB}.$EXT"
-		 done
-		else
-		 export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
-		fi
-
+		export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
 		merge_files mkv "$OUTPUT"
 	;;
 	mp4)
 		if [ -f "$TMPDIR/video.m4v" ]; then
 		 export FILEMERGE_ARGS="-add $TMPDIR/video.m4v"
-		elif [ -f "$TMPDIR/video.x264" ]; then
-		 export FILEMERGE_ARGS="-add $TMPDIR/video.x264"
+		elif [ -f "$TMPDIR/video.h264" ]; then
+		 export FILEMERGE_ARGS="-add $TMPDIR/video.h264"
 		fi
 		if [ -n "$SUBTITLE" ]; then
 		 export FILEMERGE_ARGS="-add $SUBTITLE"
 		fi
-		if [ -f "$TMPDIR/audio1.$EXT" ]; then
-		 export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio1.$EXT"
-		elif [ -f "$TMPDIR/audio.$EXT" ]; then
-		 export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT"
-		fi
+		export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT"
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac
