@@ -1,25 +1,62 @@
 # DEPENDS: audio-functions
 
+avs2yuv() {
+	wine /usr/local/share/convmedia/bin/avs2yuv.exe "$@"
+}
+
+video_encode_avs() {
+	case $PASS in
+	1)
+		mkfifo "$TMPDIR/avs2yuv.y4m"
+		mencoder -audiofile "$AUDIO_FILE" $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2" \
+			&> $TMPDIR/encoding.log &
+		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+	;;
+	2)
+		mkfifo "$TMPDIR/avs2yuv.y4m"
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF \
+			-of rawvideo=1 -o /dev/null &> $TMPDIR/encoding.log &
+		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -oac pcm -ovc $OVC $OVCOPTS $VF \
+			-of rawvideo=1 -o "$2" &> $TMPDIR/encoding.log &
+		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+	;;
+	3)
+		mkfifo "$TMPDIR/avs2yuv.y4m"
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF \
+			-of rawvideo=1 -o /dev/null &> $TMPDIR/encoding.log &
+		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS2 $VF \
+			-of rawvideo=1 -o /dev/null &> $TMPDIR/encoding.log &
+		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -oac pcm -ovc $OVC $OVCOPTS $VF \
+			-of rawvideo=1 -o "$2" &> $TMPDIR/encoding.log &
+		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+	;;
+	esac
+}
+
+
 video_encode() {
 	case $PASS in
 	1)
-		mencoder $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o $2
+		mencoder $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
 	;;
 	2)
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o $2
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
 	;;
 	3)
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -nosound -ovc $OVC $OVCOPTS_PASS2 $VF -of rawvideo=1 -o /dev/null
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS -ofps $VIDEO_FPS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o $2
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS2 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
 	;;
 	esac
 }
 
 video_cropdetect() {
 	export CROPARGS="-chapter 2 -endpos 5 -ovc lavc -nosound"
-	echo "`mencoder $MENCODER_OPTS $1 $CROPARGS -vf cropdetect -o /dev/null 2>&1 | grep vf | tail -n 1 | cut -d "=" -f 2 | tr -d ')' | sed 's/\.//'`"
+	echo "`mencoder $MENCODER_OPTS "$1" $CROPARGS -vf cropdetect -o /dev/null 2>&1 | grep vf | tail -n 1 | cut -d "=" -f 2 | tr -d ')' | sed 's/\.//'`"
 	unset CROPARGS
 }
 

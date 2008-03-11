@@ -1,0 +1,214 @@
+#!/bin/bash
+
+export TMPDIR="/tmp/convavs-$$"
+export INCDIR="/usr/local/share/convmedia/includes"
+export CHARSET="UTF-8"
+export VERBOSE="1"
+
+if [ -f /etc/convmedia/convavs.conf ]; then
+	source /etc/convmedia/convavs.conf
+else
+	echo "Can't load configuration, exiting."
+	exit 1
+fi
+
+if [ -d "$TMPDIR" ]; then
+	rm -rf "$TMPDIR"
+	mkdir -p "$TMPDIR"
+else
+	mkdir -p "$TMPDIR"
+fi
+
+# Load required functions and the configuration file.
+if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib \
+	-a -f $INCDIR/audio-functions.shlib -a -f $INCDIR/video-functions.shlib \
+	-a -f /usr/local/share/convmedia/frontend-includes/convavs.shlib ]; then
+		source $INCDIR/generic-functions.shlib
+		source $INCDIR/container-functions.shlib
+		source $INCDIR/audio-functions.shlib
+		source $INCDIR/video-functions.shlib
+		source /usr/local/share/convmedia/frontend-includes/convavs.shlib
+else
+		echo "Can't load functions, exiting."
+		exit 1
+fi
+
+help() {
+	echo "convavs: An extra-insane Video transcoding application that works with AviSynth through wine."
+	echo
+	echo "Usage: $0 [OPTIONS] FILE"
+	echo
+	echo "Supported video codecs: h264, mpeg4"
+	echo "Supported audio codecs: vorbis, mp3, aac-lc (Low complexity), aac-main, aac-ltp (Long Term Predicter), aac-hev1, aac-hev2, flac"
+	echo
+	echo "Input/output handling options:"
+	echo "-o: Output filename (required)"
+	echo "-f: Container selection (Supported containers: mkv, mp4)"
+	echo "-s: Subtitle file to include (container must be able to support the file format)"
+	echo "-t: Audio track to include, followed by any delay required in ms, format is file:delay (required)"
+	echo
+	echo "Codec options:"
+	echo "-c: Codec selection (Format: h264/vorbis)"
+	echo "-w: When encoding, use faster (or better) encoders only available through the usage of wine, if available."
+	echo "-A: Anime/Cartoon mode for MPEG-4 ASP (XVID/DIVX), this tweaks the encoder for Anime/Cartoons."
+	echo "-l: Live action mode for MPEG-4 ASP (XVID/DIVX), this tweaks the encoder for Live Action material at the cost of speed."
+	echo "-q: Audio quality (default 3)."
+	echo "-b: Video bitrate (default 900)."
+	echo "-m: Use multipass encoding, specifying the number of passes up to a maximum of three."
+	echo "-T: Turbo mode, decreases quality but might increase speed."
+	echo
+	echo "Audio and video manipulation options:"
+	echo "-r: Resample input audio to the specified audio sampling rate, such as 44100"
+	echo "-a: Allows the usage of mplayer audio filters."
+	echo "-v: Allows the usage of mplayer video filters."
+	echo
+	echo "Misc options:" 
+	echo "-h: Print this help."
+	echo
+	echo "Notes:"
+	echo "convavs requires avs2yuv.exe (http://akuvian.org/src/avisynth/avs2yuv/) to be placed in /usr/local/share/convmedia/bin in"
+	echo "order to operate."
+	echo
+	echo "You should really use AviSynth filters, as most tend to be much more flexible and powerful than mplayer filters."
+	echo
+	echo "MP4 does NOT support multiple audio tracks, do not bother ripping the extract tracks as only the first will be used."
+	echo "MP4 does NOT support Vorbis audio tracks, this is due to the MP4 standard and only certain software/hardware would be"
+	echo "able to play such files, so Vorbis audio tracks will throw an error when used with MP4."
+	echo
+	echo "AAC-HEv1 and AAC-HEv2 require the Nero Digital AAC encoder to be placed in /usr/local/share/convmedia/bin as neroAacEnc.exe."
+	echo "You are free to use either the non-SSE2 encoder or the SSE2 encoder, both work. In addition, Wine is also required in order to"
+	echo "use the Nero encoder."
+	echo
+	echo "Splitting the video requires extra disc space to store the splitted video file, by default the temporary directory used"
+	echo "is /tmp/convvideo/. Also, please ensure that the audio and video you're trying to split can be contained in AVI, otherwise"
+	echo "the video cannot be split because the video file is split into an AVI file."
+	rm -rf $TMPDIR
+	exit 0
+}
+
+while getopts 'o:f:s:t:c:q:b:m:r:a:v:hAwTlz' z; do
+	case "$z" in
+	z)
+		set -e -x
+	;;
+	o)
+		if [ -n "$OPTARG" ]; then
+			export OUTPUT="$OPTARG"
+		else
+			die "No output filename given, exiting."
+		fi
+	;;
+	A)
+		export CARTOON=1
+	;;
+	C)
+		if [ -n "$OPTARG" ]; then
+			if [ -n  "`echo "$OPTARG" | cut -d/ -f2`" ]; then
+				export VCODEC="$(echo "$OPTARG" | cut -d/ -f1)"
+				export ACODEC="$(echo "$OPTARG" | cut -d/ -f2)"
+			fi
+		else
+			die "Please supply an argument to -C."
+		fi
+	;;
+	s)
+		if [ -n "$OPTARG" ]; then
+			export SUBTITLE="$OPTARG"
+		else
+			die "Please supply an argument to -s."
+		fi
+	;;
+	a)
+		if [ -n "$OPTARG" ]; then
+			export AF="-af $OPTARG"
+		else
+			die "Please supply an argument to -a."
+		fi
+	;;
+	v)
+		if [ -n "$OPTARG" ]; then
+			export VF="-vf $OPTARG"
+		else
+			die "Please supply an argument to -v."
+		fi
+	;;
+	b)
+		if [ -n "$OPTARG" ]; then
+			export VBITRATE="$OPTARG"
+		else
+			die "Please supply an argument to -b."
+		fi
+	;;
+	q)
+		if [ -n "$OPTARG" ]; then
+			export AQUALITY="$OPTARG"
+	else
+			die "Please supply an argument to -q."
+	fi
+	;;
+	m)
+		if [ -n "$OPTARG" ]; then
+			export PASS="$OPTARG"
+		else
+			die "Please supply an argument to -m."
+		fi
+	;;
+	t)
+		if [ -n "$OPTARG" ]; then
+			export AUDIO_FILE="`echo $OPTARG | cut -d: -f1`"
+			export AUDIO_DELAY="$(echo $OPTARG | cut -d: -f2 | sed "s:$AUDIO_FILE::g")"
+			if [ -n "$AUDIO_DELAY" ]; then
+				export MPLAYER_OPTS="$MPLAYER_OPTS -delay -${AUDIO_DELAY}"
+				export MENCODER_OPTS="$MENCODER_OPTS -delay -${AUDIO_DELAY}"
+			fi
+		else
+			die "Please supply an argument to -t"
+		fi
+	;;
+	T)
+		export TURBO=1
+	;;
+	f)
+		if [ -n "$OPTARG" ]; then
+			export CONTAINER="$OPTARG"
+		else
+			die "Please supply an argument to -f."
+		fi
+	;;
+	l)
+		export LIVEACTION="1"
+	;;
+	r)
+		if [ -n "$OPTARG" ]; then
+			export RESAMPLE="$OPTARG"
+		else
+			die "Please supply an argument to -r."
+		fi
+	;;
+	w)
+		export USENEROAAC="1"
+		export USEOGGENC2="1"
+		# Oggenc2 has issues with things decoded on-the-fly, force decoding first.
+		#export DECODE_FIRST="1"
+	;;
+	h)
+		help
+	;;
+	esac
+done
+shift $(($OPTIND-1))
+
+if [ -z "$OUTPUT" ]; then
+	help
+elif [ -z "$AUDIO_FILE" ]; then
+	help
+elif [ -z "$1" ]; then
+	help
+fi
+
+if [ $CONTAINER = "mp4" -a $ACODEC = "vorbis" ]; then
+	echo "Please select another audio codec besides Vorbis!"
+	die "MP4 files with Vorbis audio cannot be played back properly on standards-compliant software or hardware!"
+fi
+
+convertavs "$1"

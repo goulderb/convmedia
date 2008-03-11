@@ -1,30 +1,4 @@
-convertvideo() {
-	# Misc stuff, mostly dealing with variables.
-	export VIDEO_FPS=`mplayer_retrieve_info grep "$1" ID_VIDEO_FPS`
-	export VIDEO_LENGTH=`mplayer_retrieve_info grep "$1" ID_LENGTH`
-	if [ -z "$VIDEO_FPS" -a -z "$VIDEO_LENGTH" ]; then
-		die "Can't get the input video's framerate or length!"
-	fi
-
-	if [ -n "$TARGET_FILESIZE" ]; then
-		echo "Calculated nominal bitrate to make a ${TARGET_FILESIZE}MB file:"
-		video_calculate_bitrate $TARGET_FILESIZE
-		export VBITRATE=`video_calculate_bitrate $TARGET_FILESIZE`
-	fi
-
-	if [ -n "$CROPDETECT" ]; then
-		echo -n "Detecting crop parameters..."
-		local CROP="`video_cropdetect $1`"
-		echo " DONE"
-	fi
-	
-	if [ -n "$DVDMODE" ]; then
-		echo -n "Exporting DVD Chapters..."
-		dvdxchap -t $DVD_TITLE $DVD_DEVICE > "$TMPDIR/dvdchaps.txt"
-		echo " DONE"
-		echo
-	fi
-
+convertavs() {
 	# Here we do audio encoding and export the extension based on codec.
 	if [ -n "$RESAMPLE" -a -n "$AF" ]; then
 		local AF="$AF,lavcresample=$RESAMPLE"
@@ -51,23 +25,12 @@ convertvideo() {
 	;;
 	esac
 
-	if [ -n "$MULTI_TRACK" -a -z "$DONT_ENCODE" ]; then
-		for i in $ATRACKS; do
-		 ((ANUMB++))
-		 echo $i
-		 export MPLAYER_OPTS="-alang $i"
-		 audio_encode $ACODEC "$1" "$TMPDIR/audio${ANUMB}.$EXT"
-		done
-	elif [ -z "$DONT_ENCODE" ]; then
-		export MPLAYER_OPTS="$ATRACK"
-		echo $ATRACK
-		audio_encode $ACODEC "$1" "$TMPDIR/audio.$EXT"
-	fi
-	echo " DONE"
+	#audio_encode $ACODEC "$AUDIO_FILE" "$TMPDIR/audio.$EXT"
+	echo "DONE"
 
 	# Handle encoding options.
 	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp"
-	local X264OPTS="bitrate=$VBITRATE:bframes=16:b_adapt=1:b_pyramid=1:weight_b=1:threads=auto"
+	local X264OPTS="bitrate=$VBITRATE:qcomp=0.8:bframes=16:b_adapt=1:b_pyramid=1:weight_b=1:threads=auto"
 
 	if [ -n "$TURBO" -a "$PASS" = 1 ]; then
 		# Note: pass=1/vpass=1 is a trick to get mencoder to make use of turbo.
@@ -90,7 +53,7 @@ convertvideo() {
 	fi
 
 	# Video encoding, reference docs on the specifics of how the shit is encoded.
-	echo "Encoding video:"
+	echo "Encoding video (logfile $TMPDIR/encoding.log)..."
 	case $VCODEC in
 	h264)
 		export OVC="x264"
@@ -101,7 +64,7 @@ convertvideo() {
 		fi
 		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:pass=1"
 		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:pass=3"
-		video_encode "$1" "$TMPDIR/video.x264"
+		video_encode_avs "$1" "$TMPDIR/video.x264"
 	;;
 	mpeg4)
 		export OVC="lavc"
@@ -112,9 +75,15 @@ convertvideo() {
 		fi
 		export OVCOPTS_PASS1="-lavcopts ${LAVCOPTS}:vbitrate=3200:vpass=1"
 		export OVCOPTS_PASS2="-lavcopts ${LAVCOPTS}:vbitrate=3200:vpass=3"
-		video_encode "$1" "$TMPDIR/video.m4v"
+		video_encode_avs "$1" "$TMPDIR/video.m4v"
 	;;
 	esac
+
+	if [ -f "$TMPDIR/video.x264" ]; then
+		local VIDEO_FPS="`mplayer_retrieve_info grep "$TMPDIR/video.x264" ID_VIDEO_FPS`"
+	elif [ -f "$TMPDIR/video.m4v" ]; then
+		local VIDEO_FPS="`mplayer_retrieve_info grep "$TMPDIR/video.m4v" ID_VIDEO_FPS`"
+	fi
 
 	echo -n "Merging files into a $CONTAINER file..."
 	case $CONTAINER in
@@ -160,5 +129,4 @@ convertvideo() {
 	;;
 	esac
 	echo " DONE"
-	rm -rf "$TMPDIR"
 }
