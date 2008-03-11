@@ -82,7 +82,7 @@ help() {
 	echo "Splitting the video requires extra disc space to store the splitted video file, by default the temporary directory used"
 	echo "is /tmp/convvideo/. Also, please ensure that the audio and video you're trying to split can be contained in AVI, otherwise"
 	echo "the video cannot be split because the video file is split into an AVI file."
-	rm -rf $TMPDIR
+	rm -rf "$TMPDIR"
 	exit 0
 }
 

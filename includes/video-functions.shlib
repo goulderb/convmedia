@@ -9,29 +9,35 @@ video_encode_avs() {
 	1)
 		mkfifo "$TMPDIR/avs2yuv.y4m"
 		mencoder -audiofile "$AUDIO_FILE" $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2" \
-			&> $TMPDIR/encoding.log &
+			&> "$TMPDIR/encoding.log" &
 		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+		rm "$TMPDIR/encoding.log"
 	;;
 	2)
 		mkfifo "$TMPDIR/avs2yuv.y4m"
-		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF \
-			-of rawvideo=1 -o /dev/null &> $TMPDIR/encoding.log &
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF \
+			-of rawvideo=1 -o /dev/null &> "$TMPDIR/encoding.log" &
 		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
-		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -oac pcm -ovc $OVC $OVCOPTS $VF \
-			-of rawvideo=1 -o "$2" &> $TMPDIR/encoding.log &
+		rm "$TMPDIR/encoding.log"
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -oac pcm -ovc $OVC $OVCOPTS $VF \
+			-of rawvideo=1 -o "$2" &> "$TMPDIR/encoding.log" &
 		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+		rm "$TMPDIR/encoding.log"
 	;;
 	3)
 		mkfifo "$TMPDIR/avs2yuv.y4m"
-		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF \
-			-of rawvideo=1 -o /dev/null &> $TMPDIR/encoding.log &
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF \
+			-of rawvideo=1 -o /dev/null &> "$TMPDIR/encoding.log" &
 		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
-		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS2 $VF \
-			-of rawvideo=1 -o /dev/null &> $TMPDIR/encoding.log &
+		rm "$TMPDIR/encoding.log"
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -nosound -ovc $OVC $OVCOPTS_PASS2 $VF \
+			-of rawvideo=1 -o /dev/null &> "$TMPDIR/encoding.log" &
 		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
-		mencoder -audiofile "$AUDIO_FILE" -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -oac pcm -ovc $OVC $OVCOPTS $VF \
-			-of rawvideo=1 -o "$2" &> $TMPDIR/encoding.log &
+		rm "$TMPDIR/encoding.log"
+		mencoder -audiofile "$AUDIO_FILE" -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$TMPDIR/avs2yuv.y4m" -oac pcm -ovc $OVC $OVCOPTS $VF \
+			-of rawvideo=1 -o "$2" &> "$TMPDIR/encoding.log" &
 		avs2yuv "$1" -o "$TMPDIR/avs2yuv.y4m"
+		rm "$TMPDIR/encoding.log"
 	;;
 	esac
 }
@@ -43,13 +49,13 @@ video_encode() {
 		mencoder $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
 	;;
 	2)
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
+		mencoder -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
 	;;
 	3)
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS2 $VF -of rawvideo=1 -o /dev/null
-		mencoder -passlogfile $TMPDIR/passlog.log $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
+		mencoder -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS1 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$1" -nosound -ovc $OVC $OVCOPTS_PASS2 $VF -of rawvideo=1 -o /dev/null
+		mencoder -passlogfile "$TMPDIR/passlog.log" $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
 	;;
 	esac
 }

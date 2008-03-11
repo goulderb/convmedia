@@ -112,5 +112,5 @@ convertavs() {
 	;;
 	esac
 	echo "DONE"
-	rm -rf $TMPDIR
+	rm -rf "$TMPDIR"
 }

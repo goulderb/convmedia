@@ -74,7 +74,7 @@ cddb_query_info() {
 			else
 				local entry="1"
 			fi
-			grep "${entry}:" "$TMPDIR"/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > $TMPDIR/cddb_query_results.txt
+			grep "${entry}:" "$TMPDIR"/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > "$TMPDIR"/cddb_query_results.txt
 			rm "$TMPDIR"/cddb_query_results_2.txt
 		fi
 
@@ -84,13 +84,13 @@ cddb_query_info() {
 		;;
 		esac
 
-		local GENRE="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f1`"
-		local DISCID="`cat $TMPDIR/cddb_query_results.txt | cut -d' ' -f2`"
+		local GENRE="`cat "$TMPDIR"/cddb_query_results.txt | cut -d' ' -f1`"
+		local DISCID="`cat "$TMPDIR"/cddb_query_results.txt | cut -d' ' -f2`"
 	
 		if [ -z "$UNKNOWN_DISC" ]; then
 			wget -q -O "$TMPDIR"/cddb_read_results.txt "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
-			sed -i -e 's:+::g' -e 's:"::g' $TMPDIR/cddb_read_results.txt
-			sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' $TMPDIR/cddb_read_results.txt
+			sed -i -e 's:+::g' -e 's:"::g' "$TMPDIR"/cddb_read_results.txt
+			sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' "$TMPDIR"/cddb_read_results.txt
 		fi
 
 		unset entry CNT GENRE SERVER HELLO DISCINFO
@@ -108,8 +108,8 @@ cddb_query_info() {
 		local ALBUM="Unknown Album"
 	fi
 
-	echo "album:${ALBUM}" >> $TMPDIR/album.txt
-	echo "year:${YEAR}" >> $TMPDIR/album.txt
+	echo "album:${ALBUM}" >> "$TMPDIR"/album.txt
+	echo "year:${YEAR}" >> "$TMPDIR"/album.txt
 	for i in `seq 0 $TRACKS`; do
 		if [ ! "`echo -n "$i" | wc -m`" = "2" ]; then
 			local N="0${i}"
@@ -124,8 +124,8 @@ cddb_query_info() {
 		if [ -z "`echo $TRACK | grep -x -i 'Data'`" -a -z "`echo $TRACK | grep -x -i 'Data track'`" ]; then
 			if [ -n "$MULTI_ARTIST" ]; then
 				# Assume the split is Artist / Track name
-				echo "${N}:"`echo "$TRACK" | sed 's: / :%:' | cut -d'%' -f1`"" >> $TMPDIR/tracks-artists.txt
-				echo "${N}:"`echo "$TRACK" | sed 's: / :%:' | cut -d'%' -f2`"" >> $TMPDIR/tracks.txt
+				echo "${N}:"`echo "$TRACK" | sed 's: / :%:' | cut -d'%' -f1`"" >> "$TMPDIR"/tracks-artists.txt
+				echo "${N}:"`echo "$TRACK" | sed 's: / :%:' | cut -d'%' -f2`"" >> "$TMPDIR"/tracks.txt
 			else
 				echo "${N}:${ARTIST}" >> $TMPDIR/tracks-artists.txt
 				echo "${N}:$TRACK" >> $TMPDIR/tracks.txt
@@ -153,15 +153,15 @@ cddb_query_info() {
 mplayer_retrieve_info()	{
 	case $1 in
 	grep)
-	mplayer $MPLAYER_OPTS -vo null -ao null -frames 0 -identify "$2" 2>/dev/null 1> $TMPDIR/mplayer-info.txt
+	mplayer $MPLAYER_OPTS -vo null -ao null -frames 0 -identify "$2" 2>/dev/null 1> "$TMPDIR"/mplayer-info.txt
 	grep "^ID" /tmp/mplayer-info.txt | sed -e 's/[\`\\!$"]/\\&/g' | sed -e '/^ID_FILENAME/ { s/^ID_FILENAME=\(.*\)/ID_FILENAME="\1"/g; }' \
 		| grep $3 | cut -d= -f2
-	rm $TMPDIR/mplayer-info.txt
+	rm "$TMPDIR"/mplayer-info.txt
 	;;
 	all)
-	mplayer $MPLAYER_OPTS -vo null -ao null -frames 0 -identify "$2" 2>/dev/null 1> $TMPDIR/mplayer-info.txt
+	mplayer $MPLAYER_OPTS -vo null -ao null -frames 0 -identify "$2" 2>/dev/null 1> "$TMPDIR"/mplayer-info.txt
 	grep "^ID" /tmp/mplayer-info.txt | sed -e 's/[\`\\!$"]/\\&/g' | sed -e '/^ID_FILENAME/ { s/^ID_FILENAME=\(.*\)/ID_FILENAME="\1"/g; }'
-	rm $TMPDIR/mplayer-info.txt
+	rm "$TMPDIR"/mplayer-info.txt
 	;;
 	esac
 }

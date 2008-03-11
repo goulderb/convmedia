@@ -6,10 +6,10 @@ export CHARSET="UTF-8"
 export CD_DEVICE="/dev/cdrom"
 
 if [ ! -d $TMPDIR ]; then
-	mkdir $TMPDIR
+	mkdir "$TMPDIR"
 else
-	rm -rf $TMPDIR
-	mkdir $TMPDIR
+	rm -rf "$TMPDIR"
+	mkdir "$TMPDIR"
 fi
 
 if [ -f /etc/convmedia/burncd.conf ]; then
@@ -39,7 +39,7 @@ help() {
 	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
 	echo "-d: CD-Rom device node to use (default /dev/cdrom)."
 	echo "-h: Print this help."
-	rm -rf $TMPDIR
+	rm -rf "$TMPDIR"
 	exit 0
 }
 
@@ -79,11 +79,12 @@ for i in "$@"; do
 	if [ -f "$i" ]; then
 		((N++))
 		echo "Decoding ${i}..."
-		decode_audio_file $i "${TMPDIR}"/${N}.wav
+		decode_audio_file "$i" "${TMPDIR}"/${N}.wav
 	elif [ -b "$i" ]; then
 		export CWD="$PWD"
-		cd $TMPDIR
+		pushd "$TMPDIR"
 		cdparanoia -B -d $i
+		popd
 		if [ "$i" = "$CD_DEVICE" ]; then
 			echo "Ejecting drive, please insert blank CD and hit enter."
 			eject $i
@@ -93,6 +94,6 @@ for i in "$@"; do
 	fi
 done
 
-cdrecord dev=$CD_DEVICE -v -audio "${TMPDIR}"/*.wav
+cdrecord dev=$CD_DEVICE -v -audio -pad "${TMPDIR}"/*.wav
 
 rm -rf "$TMPDIR"
