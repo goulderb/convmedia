@@ -25,7 +25,7 @@ convertavs() {
 	;;
 	esac
 
-	#audio_encode $ACODEC "$AUDIO_FILE" "$TMPDIR/audio.$EXT"
+	audio_encode $ACODEC "$AUDIO_FILE" "$TMPDIR/audio.$EXT"
 	echo "DONE"
 
 	# Handle encoding options.
