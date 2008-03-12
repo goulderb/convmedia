@@ -67,7 +67,7 @@ convertvideo() {
 
 	# Handle encoding options.
 	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp"
-	local X264OPTS="bitrate=$VBITRATE:bframes=16:b_adapt=1:b_pyramid=1:weight_b=1:threads=auto"
+	local X264OPTS="bitrate=$VBITRATE:qcomp=0.8:bframes=5:b_adapt=1:b_pyramid=1:weight_b=1:bime=1:frameref=3:mixed_refs=1:8x8dct:threads=auto"
 
 	if [ -n "$TURBO" -a "$PASS" = 1 ]; then
 		# Note: pass=1/vpass=1 is a trick to get mencoder to make use of turbo.
@@ -110,8 +110,8 @@ convertvideo() {
 		else
 		 export OVCOPTS="-lavcopts ${LAVCOPTS}"
 		fi
-		export OVCOPTS_PASS1="-lavcopts ${LAVCOPTS}:vbitrate=3200:vpass=1"
-		export OVCOPTS_PASS2="-lavcopts ${LAVCOPTS}:vbitrate=3200:vpass=3"
+		export OVCOPTS_PASS1="-lavcopts ${LAVCOPTS}:vpass=1"
+		export OVCOPTS_PASS2="-lavcopts ${LAVCOPTS}:vpass=3"
 		video_encode "$1" "$TMPDIR/video.m4v"
 	;;
 	esac
