@@ -2,6 +2,7 @@ convertvideo() {
 	# Misc stuff, mostly dealing with variables.
 	export VIDEO_FPS=`mplayer_retrieve_info grep "$1" ID_VIDEO_FPS`
 	export VIDEO_LENGTH=`mplayer_retrieve_info grep "$1" ID_LENGTH`
+
 	if [ -z "$VIDEO_FPS" -a -z "$VIDEO_LENGTH" ]; then
 		die "Can't get the input video's framerate or length!"
 	fi
@@ -25,7 +26,7 @@ convertvideo() {
 		echo
 	fi
 
-	# Here we do audio encoding and export the extension based on codec.
+	# Audio encoding, handle filters and resampling, then export extension based on codec.
 	if [ -n "$RESAMPLE" -a -n "$AF" ]; then
 		local AF="$AF,lavcresample=$RESAMPLE"
 		export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
@@ -51,6 +52,7 @@ convertvideo() {
 	;;
 	esac
 
+	# Multi-track logic
 	if [ -n "$MULTI_TRACK" -a -z "$DONT_ENCODE" ]; then
 		for i in $ATRACKS; do
 		 ((ANUMB++))
@@ -89,15 +91,15 @@ convertvideo() {
 		export VF="$VF -vf-add harddup"
 	fi
 
-	# Video encoding, reference docs on the specifics of how the shit is encoded.
+	# Video encoding, reference docs on the specifics of the process
 	echo "Encoding video:"
 	case $VCODEC in
 	h264)
 		export OVC="x264"
 		if [ $PASS -ge 2 ]; then
-		 export OVCOPTS="-x264encopts ${X264OPTS}:pass=2:ratetol=50"
+			export OVCOPTS="-x264encopts ${X264OPTS}:pass=2:ratetol=50"
 		else
-		 export OVCOPTS="-x264encopts ${X264OPTS}:ratetol=50"
+			export OVCOPTS="-x264encopts ${X264OPTS}:ratetol=50"
 		fi
 		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:pass=1"
 		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:pass=3"
@@ -106,9 +108,9 @@ convertvideo() {
 	mpeg4)
 		export OVC="lavc"
 		if [ $PASS -ge 2 ]; then
-		 export OVCOPTS="-lavcopts ${LAVCOPTS}:vpass=2"
+			export OVCOPTS="-lavcopts ${LAVCOPTS}:vpass=2"
 		else
-		 export OVCOPTS="-lavcopts ${LAVCOPTS}"
+			export OVCOPTS="-lavcopts ${LAVCOPTS}"
 		fi
 		export OVCOPTS_PASS1="-lavcopts ${LAVCOPTS}:vpass=1"
 		export OVCOPTS_PASS2="-lavcopts ${LAVCOPTS}:vpass=3"
@@ -120,9 +122,9 @@ convertvideo() {
 	case $CONTAINER in
 	mkv)
 		if [ -f "$TMPDIR/video.m4v" ]; then
-		 mux_file mp4 $TMPDIR/video.m4v $TMPDIR/video.mp4
+			mux_file mp4 $TMPDIR/video.m4v $TMPDIR/video.mp4
 		elif [ -f "$TMPDIR/video.h264" ]; then
-		 mux_file mp4 $TMPDIR/video.h264 $TMPDIR/video.mp4
+			mux_file mp4 $TMPDIR/video.h264 $TMPDIR/video.mp4
 		fi
 
 		export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
@@ -132,33 +134,36 @@ convertvideo() {
 		fi
 
 		if [ -n "$ATRACKS" ]; then
-		 for i in $ATRACKS; do
-		  ((ANUMB++))
-		  export FILEMERGE_ARGS="$FILEMERGE_ARGS --language 0:$i $TMPDIR/audio${ANUMB}.$EXT"
-		 done
+			for i in $ATRACKS; do
+				((ANUMB++))
+				export FILEMERGE_ARGS="$FILEMERGE_ARGS --language 0:$i $TMPDIR/audio${ANUMB}.$EXT"
+			done
 		else
-		 export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
+			export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
 		fi
 
 		merge_files mkv "$OUTPUT"
 	;;
 	mp4)
 		if [ -f "$TMPDIR/video.m4v" ]; then
-		 export FILEMERGE_ARGS="-add $TMPDIR/video.m4v"
+			export FILEMERGE_ARGS="-add $TMPDIR/video.m4v"
 		elif [ -f "$TMPDIR/video.h264" ]; then
-		 export FILEMERGE_ARGS="-add $TMPDIR/video.h264"
+			export FILEMERGE_ARGS="-add $TMPDIR/video.h264"
 		fi
+
 		if [ -n "$SUBTITLE" ]; then
-		 export FILEMERGE_ARGS="-add $SUBTITLE"
+			export FILEMERGE_ARGS="-add $SUBTITLE"
 		fi
+
 		if [ -f "$TMPDIR/audio1.$EXT" ]; then
-		 export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio1.$EXT"
+			export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio1.$EXT"
 		elif [ -f "$TMPDIR/audio.$EXT" ]; then
-		 export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT"
+			export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT"
 		fi
+
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac
-	echo "DONE"
+	echo " DONE"
 	rm -rf "$TMPDIR"
 }

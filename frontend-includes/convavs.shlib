@@ -1,5 +1,5 @@
 convertavs() {
-	# Here we do audio encoding and export the extension based on codec.
+	# Audio encoding, handle filters and resampling, then export extension based on codec.
 	if [ -n "$RESAMPLE" -a -n "$AF" ]; then
 		local AF="$AF,lavcresample=$RESAMPLE"
 		export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
@@ -9,6 +9,7 @@ convertavs() {
 	elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
 		export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
 	fi
+
 	echo "Entering audio phase..."
 	case $ACODEC in
 	vorbis)
@@ -52,7 +53,7 @@ convertavs() {
 		export VF="$VF -vf-add harddup"
 	fi
 
-	# Video encoding, reference docs on the specifics of how the shit is encoded.
+	# Video encoding, reference docs on the specifics of the process
 	echo "Encoding video (logfile $TMPDIR/encoding.log)..."
 	case $VCODEC in
 	h264)
