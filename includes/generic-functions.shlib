@@ -154,13 +154,13 @@ mplayer_retrieve_info()	{
 	case $1 in
 	grep)
 	mplayer $MPLAYER_OPTS -vo null -ao null -frames 0 -identify "$2" 2>/dev/null 1> "$TMPDIR"/mplayer-info.txt
-	grep "^ID" /tmp/mplayer-info.txt | sed -e 's/[\`\\!$"]/\\&/g' | sed -e '/^ID_FILENAME/ { s/^ID_FILENAME=\(.*\)/ID_FILENAME="\1"/g; }' \
+	grep "^ID" "$TMPDIR"/mplayer-info.txt | sed -e 's/[\`\\!$"]/\\&/g' | sed -e '/^ID_FILENAME/ { s/^ID_FILENAME=\(.*\)/ID_FILENAME="\1"/g; }' \
 		| grep $3 | cut -d= -f2
 	rm "$TMPDIR"/mplayer-info.txt
 	;;
 	all)
 	mplayer $MPLAYER_OPTS -vo null -ao null -frames 0 -identify "$2" 2>/dev/null 1> "$TMPDIR"/mplayer-info.txt
-	grep "^ID" /tmp/mplayer-info.txt | sed -e 's/[\`\\!$"]/\\&/g' | sed -e '/^ID_FILENAME/ { s/^ID_FILENAME=\(.*\)/ID_FILENAME="\1"/g; }'
+	grep "^ID" "$TMPDIR"/mplayer-info.txt | sed -e 's/[\`\\!$"]/\\&/g' | sed -e '/^ID_FILENAME/ { s/^ID_FILENAME=\(.*\)/ID_FILENAME="\1"/g; }'
 	rm "$TMPDIR"/mplayer-info.txt
 	;;
 	esac

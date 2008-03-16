@@ -58,9 +58,9 @@ convertavs() {
 	h264)
 		export OVC="x264"
 		if [ $PASS -ge 2 ]; then
-		 export OVCOPTS="-x264encopts ${X264OPTS}:pass=2:ratetol=50"
+			export OVCOPTS="-x264encopts ${X264OPTS}:pass=2:ratetol=50"
 		else
-		 export OVCOPTS="-x264encopts ${X264OPTS}:ratetol=50"
+			export OVCOPTS="-x264encopts ${X264OPTS}:ratetol=50"
 		fi
 		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:pass=1"
 		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:pass=3"
@@ -69,9 +69,9 @@ convertavs() {
 	mpeg4)
 		export OVC="lavc"
 		if [ $PASS -ge 2 ]; then
-		 export OVCOPTS="-lavcopts ${LAVCOPTS}:vpass=2"
+			export OVCOPTS="-lavcopts ${LAVCOPTS}:vpass=2"
 		else
-		 export OVCOPTS="-lavcopts ${LAVCOPTS}"
+			export OVCOPTS="-lavcopts ${LAVCOPTS}"
 		fi
 		export OVCOPTS_PASS1="-lavcopts ${LAVCOPTS}:vpass=1"
 		export OVCOPTS_PASS2="-lavcopts ${LAVCOPTS}:vpass=3"
@@ -89,25 +89,25 @@ convertavs() {
 	case $CONTAINER in
 	mkv)
 		if [ -f "$TMPDIR/video.m4v" ]; then
-		 mux_file mp4 "$TMPDIR/video.m4v" "$TMPDIR/video.mp4"
+			mux_file mp4 "$TMPDIR/video.m4v" "$TMPDIR/video.mp4"
 		elif [ -f "$TMPDIR/video.h264" ]; then
-		 mux_file mp4 "$TMPDIR/video.h264" "$TMPDIR/video.mp4"
+			mux_file mp4 "$TMPDIR/video.h264" "$TMPDIR/video.mp4"
 		fi
 
 		export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
-		export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/audio.$EXT"
+		export FILEMERGE_ARGS="$FILEMERGE_ARGS --delay 0:${AUDIO_DELAY}ms $TMPDIR/audio.$EXT"
 		merge_files mkv "$OUTPUT"
 	;;
 	mp4)
 		if [ -f "$TMPDIR/video.m4v" ]; then
-		 export FILEMERGE_ARGS="-add $TMPDIR/video.m4v"
+			export FILEMERGE_ARGS="-add $TMPDIR/video.m4v"
 		elif [ -f "$TMPDIR/video.h264" ]; then
-		 export FILEMERGE_ARGS="-add $TMPDIR/video.h264"
+			export FILEMERGE_ARGS="-add $TMPDIR/video.h264"
 		fi
 		if [ -n "$SUBTITLE" ]; then
-		 export FILEMERGE_ARGS="-add $SUBTITLE"
+			export FILEMERGE_ARGS="-add $SUBTITLE"
 		fi
-		export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT"
+		export FILEMERGE_ARGS="$FILEMERGE_ARGS -add $TMPDIR/audio.$EXT:delay=${AUDIO_DELAY}"
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac

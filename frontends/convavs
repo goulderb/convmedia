@@ -45,7 +45,7 @@ help() {
 	echo "-o: Output filename (required)"
 	echo "-f: Container selection (Supported containers: mkv, mp4)"
 	echo "-s: Subtitle file to include (container must be able to support the file format)"
-	echo "-t: Audio track to include, followed by any delay required in ms, format is file:delay (required)"
+	echo "-t: Audio track to include, followed by any delay required in seconds, format is file:delay (required)"
 	echo
 	echo "Codec options:"
 	echo "-c: Codec selection (Format: h264/vorbis)"
@@ -156,11 +156,15 @@ while getopts 'o:f:s:t:c:q:b:m:r:a:v:hAwTlz' z; do
 	t)
 		if [ -n "$OPTARG" ]; then
 			export AUDIO_FILE="`echo $OPTARG | cut -d: -f1`"
-			export AUDIO_DELAY="$(echo $OPTARG | cut -d: -f2 | sed "s:$AUDIO_FILE::g")"
-			if [ -n "$AUDIO_DELAY" ]; then
-				export MPLAYER_OPTS="$MPLAYER_OPTS -delay -${AUDIO_DELAY}"
-				export MENCODER_OPTS="$MENCODER_OPTS -delay -${AUDIO_DELAY}"
+			export DELAY="$(echo $OPTARG | cut -d: -f2 | sed "s/$OPTARG//g")"
+			if [ -n "$DELAY" ]; then
+				export AUDIO_DELAY="$(echo "$DELAY * 1000" | bc)"
+				unset DELAY
+			else
+				export AUDIO_DELAY="0"
+				unset DELAY
 			fi
+			echo $AUDIO_DELAY
 		else
 			die "Please supply an argument to -t"
 		fi
