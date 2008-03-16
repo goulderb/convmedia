@@ -164,7 +164,6 @@ while getopts 'o:f:s:t:c:q:b:m:r:a:v:hAwTlz' z; do
 				export AUDIO_DELAY="0"
 				unset DELAY
 			fi
-			echo $AUDIO_DELAY
 		else
 			die "Please supply an argument to -t"
 		fi
