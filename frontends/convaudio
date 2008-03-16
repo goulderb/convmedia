@@ -82,7 +82,7 @@ fi
 for i in "$@"; do
 	if [ -f "$i" ]; then
 		findinputformat "$i"
-		convert_audio "$i"
+		convertaudio "$i"
 	fi
 done
 rm -rf "$TMPDIR"

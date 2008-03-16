@@ -119,8 +119,8 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
 	C)
 		if [ -n "$OPTARG" ]; then
 			if [ -n  "`echo "$OPTARG" | cut -d/ -f2`" ]; then
-				export VCODEC="`echo "$OPTARG" | cut -d/ -f1`"
-				export ACODEC="`echo "$OPTARG" | cut -d/ -f2`"
+				export VCODEC="$(echo "$OPTARG" | cut -d/ -f1)"
+				export ACODEC="$(echo "$OPTARG" | cut -d/ -f2)"
 			fi
 		else
 			die "Please supply an argument to -C."
@@ -222,8 +222,6 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
 	w)
 		export USENEROAAC="1"
 		export USEOGGENC2="1"
-		# Oggenc2 has issues with things decoded on-the-fly, force decoding first.
-		#export DECODE_FIRST="1"
 	;;
 	h)
 		help
@@ -239,14 +237,14 @@ elif [ -z "$1" ]; then
 fi
 
 if [ $CONTAINER = "mp4" -a $ACODEC = "vorbis" ]; then
-	echo "Please select another audio codec besides Vorbis!"
+	error "Please select another audio codec besides Vorbis!"
 	die "MP4 files with Vorbis audio cannot be played back properly on standards-compliant software or hardware!"
 fi
 
 if [ -n "$DVDMODE" ]; then
 	export DVD_TITLE="echo "$1" | cut -d/ -f3"
 	if [ ! isnumber $DVD_TITLE ]; then
-		echo "Couldn't determine DVD title to rip chapter information from, disabling DVD mode."
+		warn "Couldn't determine DVD title to rip chapter information from, disabling DVD mode."
 		unset DVDMODE DVD_TITLE
 	fi
 fi
@@ -254,7 +252,7 @@ fi
 if [ -n "$SPOS" -a -n "$EPOS" ]; then
 	echo "Splitting video..."
 	if [ -n "$MULTI_TRACK" ]; then
-		echo "Multiple audios need to be split out, will encode each before proceeding to encoding video."
+		info "Multiple audio streams need to be split out, will encode each before proceeding to encoding video."
 		for i in $ATRACKS; do
 			((ANUMB++))
 			mencoder $SPOS $EPOS -alang $i -ovc copy -oac copy -o "$TMPDIR/video-cut${ANUMB}.avi" "$1"

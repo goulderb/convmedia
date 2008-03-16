@@ -12,7 +12,7 @@ findinputformat() {
 	fi
 }
 
-convert_audio()	{
+convertaudio()	{
 	case $INPUTFORMAT in
 	ogg)
 		get_common_metatags ogg "$1"

@@ -54,7 +54,8 @@ convertavs() {
 	fi
 
 	# Video encoding, reference docs on the specifics of the process
-	echo "Encoding video (logfile $TMPDIR/encoding.log)..."
+	info "Encoding log is at $TMPDIR/encoding.log"
+	echo "Encoding video..."
 	case $VCODEC in
 	h264)
 		export OVC="x264"

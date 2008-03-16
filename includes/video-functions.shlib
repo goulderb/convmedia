@@ -1,10 +1,20 @@
 # DEPENDS: audio-functions
 
 avs2yuv() {
-	wine /usr/local/share/convmedia/bin/avs2yuv.exe "$@"
+	if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/avs2yuv.exe ]; then
+		wine /usr/local/share/convmedia/bin/avs2yuv.exe "$@"
+	elif [ -z "`which wine`" ]; then
+		die "Wine is not installed, avs2yuv requires wine to function."
+	elif [ ! -f /usr/local/share/convmedia/bin/avs2yuv.exe ]; then
+		die "The avs2yuv binary is not present in /usr/local/share/convmedia/bin/."
+	fi
 }
 
 video_encode_avs() {
+	if [ -z "`which wine`" ]; then
+		die "Wine is not installed, encoding from an AviSynth script requires wine to function."
+	fi
+
 	case $PASS in
 	1)
 		mkfifo "$TMPDIR/avs2yuv.y4m"

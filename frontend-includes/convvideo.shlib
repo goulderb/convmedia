@@ -8,9 +8,8 @@ convertvideo() {
 	fi
 
 	if [ -n "$TARGET_FILESIZE" ]; then
-		echo "Calculated nominal bitrate to make a ${TARGET_FILESIZE}MB file:"
-		video_calculate_bitrate $TARGET_FILESIZE
-		export VBITRATE=`video_calculate_bitrate $TARGET_FILESIZE`
+		export VBITRATE="`video_calculate_bitrate $TARGET_FILESIZE`"
+		info "Calculated nominal bitrate to make a ${TARGET_FILESIZE}MB file: $VBITRATE"
 	fi
 
 	if [ -n "$CROPDETECT" ]; then
@@ -92,7 +91,7 @@ convertvideo() {
 	fi
 
 	# Video encoding, reference docs on the specifics of the process
-	echo "Encoding video:"
+	echo "Encoding video..."
 	case $VCODEC in
 	h264)
 		export OVC="x264"

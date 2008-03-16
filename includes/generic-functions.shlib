@@ -1,12 +1,18 @@
 die() {
-	echo -n "ERROR: "
-	echo "$1"
+	echo "ERROR: $@"
 	exit 1
 }
 
+error() {
+	echo "ERROR: $@"
+}
+
 warn() {
-	echo -n "WARNING: "
-	echo "$1"
+	echo "WARNING: $@"
+}
+
+info() {
+	echo "INFO: $@"
 }
 
 isnumber() {
