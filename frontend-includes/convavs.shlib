@@ -38,8 +38,7 @@ convertavs() {
 		local X264OPTS="${X264OPTS}:pass=1:turbo=1"
 		local LAVCOPTS="${LAVCOPTS}:vpass=1:turbo=1"
 	elif [ -n "$TURBO" -a "$PASS" -ge 2 ]; then
-		# direct_pred=auto has the most gains in multipass encodung and the performance hit isn't massive.
-		local X264OPTS="${X264OPTS}:turbo=1:direct_pred=auto"
+		local X264OPTS="${X264OPTS}:turbo=1"
 		local LAVCOPTS="${LAVCOPTS}:turbo=1"
 	fi
 	if [ -n "$CARTOON" -a -z "$LIVEACTION" ]; then
