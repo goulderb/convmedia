@@ -79,21 +79,19 @@ for i in "$@"; do
 	if [ -f "$i" ]; then
 		((N++))
 		echo "Decoding ${i}..."
-		decode_audio_file "$i" "${TMPDIR}"/${N}.wav
-	elif [ -b "$i" ]; then
-		export CWD="$PWD"
-		pushd "$TMPDIR"
-		cdparanoia -B -d $i
-		popd
-		if [ "$i" = "$CD_DEVICE" ]; then
-			echo "Ejecting drive, please insert blank CD and hit enter."
-			eject $i
-			read keypress
-			unset keypress
+		if [ -z "`file -b "$i" | grep "WAVE audio"`" ]; then
+			decode_audio_file "$i" "${TMPDIR}"/${N}.wav
+		else
+			cp "$i" "${TMPDIR}"/${N}.wav
 		fi
+		echo "${TMPDIR}"/${N}.wav >> "${TMPDIR}"/list.txt
 	fi
 done
 
-cdrecord dev=$CD_DEVICE -v -audio -pad "${TMPDIR}"/*.wav
+for i in `cat "${TMPDIR}"/list.txt`; do
+	export LIST="$LIST $i"
+done
+
+cdrecord dev=$CD_DEVICE -v -audio -pad $LIST
 
 rm -rf "$TMPDIR"
