@@ -15,6 +15,11 @@ video_encode_avs() {
 		die "Wine is not installed, encoding from an AviSynth script requires wine to function."
 	fi
 
+	# If schedtool is available, execute mencoder as SCHED_BATCH, as this provides some minor performance gains.
+	if [ -n "`which schedtool`" ]; then
+		alias mencoder="schedtool -B -e mencoder"
+	fi
+
 	case $PASS in
 	1)
 		mkfifo "$TMPDIR/avs2yuv.y4m"
@@ -54,6 +59,11 @@ video_encode_avs() {
 
 
 video_encode() {
+	# If schedtool is available, execute mencoder as SCHED_BATCH, as this provides some minor performance gains.
+	if [ -n "`which schedtool`" ]; then
+		alias mencoder="schedtool -B -e mencoder"
+	fi
+
 	case $PASS in
 	1)
 		mencoder $MENCODER_OPTS "$1" -oac pcm -ovc $OVC $OVCOPTS $VF -of rawvideo=1 -o "$2"
