@@ -1,13 +1,15 @@
 convertvideo() {
 	# Misc stuff, mostly dealing with variables.
-	export VIDEO_FPS=`mplayer_retrieve_info grep "$1" ID_VIDEO_FPS`
-	export VIDEO_LENGTH=`mplayer_retrieve_info grep "$1" ID_LENGTH`
+	if [ -z "$VIDEO_FPS" ]; then
+		export VIDEO_FPS="`mplayer_retrieve_info grep "$1" ID_VIDEO_FPS`"
+	fi
+	export VIDEO_LENGTH="`mplayer_retrieve_info grep "$1" ID_LENGTH`"
 
-	if [ -z "$VIDEO_FPS" -a -z "$VIDEO_LENGTH" ]; then
-		die "Can't get the input video's framerate or length!"
+	if [ -z "$VIDEO_FPS" ]; then
+		die "Can't get the input video's framerate!"
 	fi
 
-	if [ -n "$TARGET_FILESIZE" ]; then
+	if [ -n "$TARGET_FILESIZE" -a -n "$VIDEO_LENGTH" ]; then
 		export VBITRATE="`video_calculate_bitrate $TARGET_FILESIZE`"
 		info "Calculated nominal bitrate to make a ${TARGET_FILESIZE}MB file: $VBITRATE"
 	fi

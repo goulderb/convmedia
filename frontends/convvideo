@@ -62,6 +62,7 @@ help() {
 	echo "-c: On-the-fly bitrate calculation, specify a target size in megabytes for the output."
 	echo
 	echo "Audio and video manipulation options:"
+	echo "-F: Manual FPS setting, common values are 24000/1001 and 30000/1001, default is to autodetect based on the input's FPS."
 	echo "-V: Automatic crop detection, this will automatically crop the video while encoding."
 	echo "-r: Resample input audio to the specified audio sampling rate, such as 44100"
 	echo "-a: Allows the usage of mplayer audio filters."
@@ -204,6 +205,13 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
 			export CONTAINER="$OPTARG"
 		else
 			die "Please supply an argument to -f."
+		fi
+	;;
+	F)
+		if [ -n "$OPTARG" ]; then
+			export VIDEO_FPS="$OPTARG"
+		else
+			die "Please supply an argument to -F."
 		fi
 	;;
 	V)
