@@ -156,7 +156,7 @@ while getopts 'o:f:s:t:c:q:b:m:r:a:v:hAwTlz' z; do
 	t)
 		if [ -n "$OPTARG" ]; then
 			export AUDIO_FILE="`echo $OPTARG | cut -d: -f1`"
-			export DELAY="$(echo $OPTARG | cut -d: -f2 | sed "s/$OPTARG//g")"
+			export DELAY="$(echo $OPTARG | cut -d: -f2 | sed "s:$OPTARG::g")"
 			if [ -n "$DELAY" ]; then
 				export AUDIO_DELAY="$(echo "$DELAY * 1000" | bc)"
 				info "Audio delay set to $AUDIO_DELAY"

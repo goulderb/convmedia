@@ -47,7 +47,7 @@ convertaudio()	{
 	fi
 
 	case $OUTPUTFORMAT in
-	ogg)
+	vorbis)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.ogg" ]; then
 		 echo "Converting $1 to $OUTPUT_FILE_NOEXT.ogg"
 		 audio_encode vorbis "$1" "$OUTPUT_FILE_NOEXT.ogg"
