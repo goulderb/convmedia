@@ -58,11 +58,11 @@ convertvideo() {
 		for i in $ATRACKS; do
 		 ((ANUMB++))
 		 echo $i
-		 export MPLAYER_OPTS="-alang $i"
+		 export MPLAYER_OPTS="$MPLAYER_OPTS -alang $i"
 		 audio_encode $ACODEC "$1" "$TMPDIR/audio${ANUMB}.$EXT"
 		done
 	elif [ -z "$DONT_ENCODE" ]; then
-		export MPLAYER_OPTS="$ATRACK"
+		export MPLAYER_OPTS="$MPLAYER_OPTS $ATRACK"
 		echo $ATRACK
 		audio_encode $ACODEC "$1" "$TMPDIR/audio.$EXT"
 	fi
