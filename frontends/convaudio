@@ -24,6 +24,8 @@ help() {
 	echo
 	echo "Usage: $0 [OPTIONS] FILES"
 	echo
+	echo "Supported formats: vorbis, flac, mp3, aac, aac-lc, aac-hev1, aac-hev2"
+	echo
 	echo "Options:"
 	echo "-f: Format you want the files to be transcoded to."
 	echo "-q: Quality scale, highest quality is 10, lowest is 1."

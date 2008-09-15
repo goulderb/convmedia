@@ -98,5 +98,9 @@ convertaudio()	{
 		 die "A file named $OUTPUT_FILE_NOEXT.mp3 already exists, exiting."
 		fi
 	;;
+	*)
+	 info "Supported formats: vorbis, flac, mp3, aac, aac-lc, aac-hev1, aac-hev2"
+	 die "Unsupported format selected!"
+	;;
 	esac
 }
