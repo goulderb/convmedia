@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e -x
-
 export TMPDIR="/tmp/convavsbatch-$$"
 export INCDIR="/usr/local/share/convmedia/includes"
 export CHARSET="UTF-8"
@@ -129,5 +127,3 @@ for i in $@; do
 		die "No input video script or audio file!"
 	fi
 done
-
-rm -rf "$TMPDIR"
