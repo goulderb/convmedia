@@ -1,0 +1,11 @@
+INPUT="input.avs"
+CONTAINER="mkv"
+VCODEC="h264"
+ACODEC="vorbis"
+VBITRATE="900"
+AQUALITY="3"
+PASS="1"
+AUDIO_FILE="audio.ogg"
+DELAY="0"
+OUTPUT="output.mkv"
+
