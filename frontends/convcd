@@ -172,8 +172,6 @@ for i in `seq 0 $TRACKS`; do
 		export N="$i"
 	fi
 
-	set -e -x
-
 	set_masks
 
 	if [ ! -d "$DIR_MASK" ]; then
