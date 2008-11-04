@@ -33,9 +33,9 @@ fi
 
 set_masks() {
 	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
-	export TITLE="`grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2 | sed -e 's^&^And^g' -e 's^/^ - ^g'`"
-	export ARTIST="`grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2 | sed -e 's^&^And^g' -e 's^/^ - ^g'`"
-	export ALBUM="`cat ${TMPDIR}/album.txt | grep "album:" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^/^ - ^g'`"
+	export TITLE="`grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g'`"
+	export ARTIST="`grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g'`"
+	export ALBUM="`cat ${TMPDIR}/album.txt | grep "album:" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g'`"
 	export YEAR="`cat ${TMPDIR}/album.txt | grep "year:" | cut -d: -f2`"
 	export TRACKNUM="$I"
 	export ORIG_FMASK="$FILE_MASK"
@@ -157,16 +157,22 @@ if [ -n "$INTERACTIVE" ]; then
 fi
 
 for i in `seq 0 $TRACKS`; do
-	if [ ! "`echo -n "$i" | wc -m`" = "2" -a ! "$i" = "9" ]; then
+	if [ ! "`echo -n "$i" | wc -m`" = "2" -a "$i" != "9" ]; then
 		export I="$i"
 		((I++))
 		export I="0${I}"
+		export N="0${i}"
+	elif [ ! "`echo -n "$i" | wc -m`" = "2" -a "$i" = "9" ]; then
+		export I="$i"
+		((I++))
 		export N="0${i}"
 	else
 		export I="${i}"
 		((I++))
 		export N="$i"
 	fi
+
+	set -e -x
 
 	set_masks
 
