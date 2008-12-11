@@ -14,45 +14,49 @@ decode_audio_file() {
 }
 
 rip_track() {
-	mkdir -p "$TMPDIR/rip-tmp"
-	echo "Doing first rip..."
-	cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/1.wav"
-	echo "Doing second rip..."
-	cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/2.wav"
+	if [ "$MAX_RERIPS" != "0" ]; then
+		mkdir -p "$TMPDIR/rip-tmp"
+		echo "Doing first rip..."
+		cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/1.wav"
+		echo "Doing second rip..."
+		cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/2.wav"
 
-	echo -n "Comparing files..."
-	cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
-	if [ "$?" = "1" ]; then
-		echo " difference found."
-		for i in `seq 1 $MAX_RERIPS`; do
-			rm "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav"
-			echo
-			echo "Rerip $i..."
-			echo
-			echo "Doing first rip..."
-			cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/1.wav"
-			echo "Doing second rip..."
-			cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/2.wav"
+		echo -n "Comparing files..."
+		cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
+		if [ "$?" = "1" ]; then
+			echo " difference found."
+			for i in `seq 1 $MAX_RERIPS`; do
+				rm "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav"
+				echo
+				echo "Rerip $i..."
+				echo
+				echo "Doing first rip..."
+				cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/1.wav"
+				echo "Doing second rip..."
+				cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/2.wav"
 			
-			echo -n "Comparing files..."
-			cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
-			if [ "$?" = "1" ]; then
-				echo " difference found, retrying."
-				continue
-			else
-				echo " match"
-				export MATCH=1
-				break
+				echo -n "Comparing files..."
+				cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
+				if [ "$?" = "1" ]; then
+					echo " difference found, retrying."
+					continue
+				else
+					echo " match"
+					export MATCH=1
+					break
+				fi
+			done
+			if [ -z "$MATCH" ]; then
+				echo " hit max rerips."
 			fi
-		done
-		if [ -z "$MATCH" ]; then
-			echo " hit max rerips."
+		else
+			echo " match."
 		fi
-	else
-		echo " match."
-	fi
 
-	mv "$TMPDIR/rip-tmp/1.wav" "$2"
+		mv "$TMPDIR/rip-tmp/1.wav" "$2"
+	else
+		 cdparanoia ${PARANOIA_OPTS} "$1" "$2"
+	fi
 }
 
 get_qualitymap() {

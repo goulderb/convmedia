@@ -37,7 +37,7 @@ cddb_query_info() {
 	if [ -n "$CDDB_CACHE_DIR" ]; then
 		local DISCID_TEMP="`echo $DISCINFO | cut -d'+' -f1`"
 		if [ -d "${CDDB_CACHE_DIR}/${DISCID_TEMP}" ]; then
-			cp "${CDDB_CACHE_DIR}/${DISCID_TEMP}/cddb_query_results.txt" "$TMPDIR"/cddb_read_results.txt
+			cp "${CDDB_CACHE_DIR}/${DISCID_TEMP}/cddb_query_results.txt" "$TMPDIR"/cddb_query_results.txt
 			cp "${CDDB_CACHE_DIR}/${DISCID_TEMP}/cddb_read_results.txt" "$TMPDIR"/cddb_read_results.txt
 			export CDDB_CACHE_HIT=1
 		fi
