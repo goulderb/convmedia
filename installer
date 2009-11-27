@@ -17,7 +17,7 @@ checkdeps()	{
 		warn "Gpac is not installed, this is required for muxing of MP4 streams."
 	fi
 	if [ -z "`which mkvmerge 2>/dev/null`" ]; then
-		warn "mkvtoolnix is not installed, this provides convmedia with the ability to mux Matroska files. Please install mkvtoolnix for Matroska support, please note that this does not require reinstalling convmedia."
+		warn "mkvtoolnix is not installed, this provides convmedia with the ability to mux Matroska files."
 	fi
 	if [ -z "`which oggenc 2>/dev/null`" ]; then
 		warn "Vorbis-tools is not installed, this provides oggenc which is required for encoding Ogg Vorbis files."
@@ -28,8 +28,9 @@ checkdeps()	{
 	if [ -z "`which flac 2>/dev/null`" ]; then
 		warn "FLAC is not installed, this provides flac, which is required for encoding FLAC files."
 	fi
-	if [ -z "`which faac 2>/dev/null`" ]; then
-		warn "FAAC is not installed, this provides faac, which is required for encoding AAC files (LC/Main/LTP profile)."
+	if [ -z "`which neroAacEnc 2>/dev/null`" ]; then
+		warn "Nero Digital AAC is not installed, this provides neroAacEnc, which is required for encoding AAC (LC/HE/HEv2) files."
+		warn "Nero Digital AAC can be acquired from: http://www.nero.com/eng/downloads-nerodigital-nero-aac-codec.php"
 	fi
 	if [ -z "`which mp4tags 2>/dev/null`" ]; then
 		warn "MPEG4Ip (or at least, MPEG4Ip with all the required tools) is not installed, this provides support for MP4 tagging, please ensure that your distribution builds it with all the tools enabled, especially mp4tags."

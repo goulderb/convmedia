@@ -57,7 +57,7 @@ help() {
 	echo
 	echo "Usage: $0 [OPTIONS]"
 	echo
-	echo "Supported audio formats: vorbis, mp3, aac-lc, aac-main, aac-ltp, aac-hev1, aac-hev2, flac"
+	echo "Supported audio formats: vorbis, mp3, aac-lc, aac-hev1, aac-hev2, flac"
 	echo
 	echo "Options:"
 	echo "-f: Format you want the CD to be ripped to."
@@ -88,7 +88,6 @@ while getopts 'f:a:q:r:d:n:wbhmi' z; do
 		set -e -x
 	;;
 	w)
-		export USENEROAAC="1"
 		export USEOGGENC2="1"
 	;;
 	i)

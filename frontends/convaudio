@@ -56,7 +56,6 @@ while getopts 'f:a:q:r:wdh' z; do
 	  export RESAMPLE="$OPTARG"
 	;;
 	w)
-		export USENEROAAC="1"
 		export USEOGGENC2="1"
 	;;
 	h)

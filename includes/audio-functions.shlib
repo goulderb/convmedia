@@ -153,52 +153,28 @@ audio_encode() {
 		rm "$ENC_FILE"
 	;;
 	aac-lc)
-		if [ -n "$USENEROAAC" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -lc -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
-		elif [ -n "$USENEROAAC" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -n "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -lc -br $BR -if "$ENC_FILE" -of "$3"
-		elif [ -z "$VERBOSE" ]; then
-			faac --obj-type LC -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE" &> /dev/null
+		if [ -z "$VERBOSE" ]; then
+			neroAacEnc -lc -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
 		else
-			faac --obj-type LC -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE"
+			neroAacEnc -lc -br $BR -if "$ENC_FILE" -of "$3"
 		fi
 		rm "$ENC_FILE"
-	;;
-	aac-main)
-		if [ -z "$VERBOSE" ]; then
-			faac --obj-type Main -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE" &> /dev/null
-		else
-			faac --obj-type Main -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE"
-		fi
-		rm "$ENC_FILE"
-	;;
-	aac-ltp)
-		if [ -z "$VERBOSE" ]; then
-			faac --obj-type LTP -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE" &> /dev/null
-		else
-			faac --obj-type LTP -w -b `get_qualitymap bitrate` -o "$3" "$ENC_FILE"
-		fi
 	;;
 	aac-hev1)
-		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -he -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
+		if [ -z "$VERBOSE" ]; then
+			neroAacEnc -he -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
 		else
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -he -br $BR -if "$ENC_FILE" -of "$3"
+			neroAacEnc -he -br $BR -if "$ENC_FILE" -of "$3"
 		fi
+		rm "$ENC_FILE"
 	;;
 	aac-hev2)
-		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -hev2 -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
+		if [ -z "$VERBOSE" ]; then
+			neroAacEnc -hev2 -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
 		else
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -hev2 -br $BR -if "$ENC_FILE" -of "$3"
+			neroAacEnc -hev2 -br $BR -if "$ENC_FILE" -of "$3"
 		fi
-	;;
-	aac-auto)
-		if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/neroAacEnc.exe -a -z "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -br $BR -if "$ENC_FILE" -of "$3" &> /dev/null
-		else
-			wine /usr/local/share/convmedia/bin/neroAacEnc.exe -br $BR -if "$ENC_FILE" -of "$3"
-		fi
+		rm "$ENC_FILE"
 	;;
 	mp3)
 		if [ -z "$VERBOSE" ]; then

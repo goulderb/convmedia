@@ -1,9 +1,9 @@
 convertvideo() {
 	# Misc stuff, mostly dealing with variables.
 	if [ -z "$VIDEO_FPS" ]; then
-		export VIDEO_FPS="`mplayer_retrieve_info grep "$1" ID_VIDEO_FPS`"
+		export VIDEO_FPS="$(mplayer_retrieve_info grep "$1" ID_VIDEO_FPS)"
 	fi
-	export VIDEO_LENGTH="`mplayer_retrieve_info grep "$1" ID_LENGTH`"
+	export VIDEO_LENGTH="$(mplayer_retrieve_info grep "$1" ID_LENGTH)"
 
 	if [ -z "$VIDEO_FPS" ]; then
 		die "Can't get the input video's framerate!"
@@ -70,7 +70,7 @@ convertvideo() {
 
 	# Handle encoding options.
 	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp"
-	local X264OPTS="bitrate=$VBITRATE:subq=6:qcomp=0.8:bframes=5:b_adapt=1:b_pyramid=1:weight_b=1:frameref=3:mixed_refs=1:threads=auto"
+	local X264OPTS="bitrate=$VBITRATE:subq=7:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=auto"
 
 	if [ -n "$TURBO" -a "$PASS" = 1 ]; then
 		# Note: pass=1/vpass=1 is a trick to get mencoder to make use of turbo.

@@ -32,8 +32,6 @@ help() {
   echo
   echo "Usage: $0 [OPTIONS]"
   echo
-  echo "Supported audio formats: vorbis, mp3, aac-lc, aac-main, aac-ltp, aac-hev1, aac-hev2, flac"
-  echo
   echo "Options:"
 	echo "-a: Audio filters to use."
 	echo "-r: Resample input audio to the specified sampling rate, such as 44100."

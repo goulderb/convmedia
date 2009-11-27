@@ -25,7 +25,7 @@ help() {
 	echo "Usage: $0 [OPTIONS] FILE FILE FILE"
 	echo
 	echo "Supported video codecs: h264, mpeg4"
-	echo "Supported audio codecs: vorbis, mp3, aac-lc (Low complexity), aac-main, aac-ltp (Long Term Predicter), aac-hev1, aac-hev2, flac"
+	echo "Supported audio codecs: vorbis, mp3, aac-lc, aac-hev1, aac-hev2, flac"
 	echo "Supported container formats: mkv, mp4"
 	echo
 	echo "Script variables:"
@@ -47,7 +47,6 @@ help() {
 	echo "TURBO: Enable or disable turbo, decreased quality on in exchange for speed."
 	echo "LIVEACTION: Enable or disable live-action content mode with MPEG4."
 	echo "CARTOON: Enable or disable cartoon content mode with MPEG4."
-	echo "USENEROAAC: Enable or disable the usage of Nero's AAC encoder, if it exists."
 	echo "USEOGGENC2: Enable or disable the usage of Oggenc2, if it exists."
 	echo
 	echo "Notes:"
@@ -59,18 +58,20 @@ help() {
 	echo "MP4 does NOT support multiple audio tracks, do not bother ripping the extract tracks as only the first will be used."
 	echo "MP4 does NOT support Vorbis audio tracks, this is due to the MP4 standard and only certain software/hardware would be"
 	echo "able to play such files, so Vorbis audio tracks will throw an error when used with MP4."
-	echo
-	echo "AAC-HEv1 and AAC-HEv2 require the Nero Digital AAC encoder to be placed in /usr/local/share/convmedia/bin as neroAacEnc.exe."
-	echo "You are free to use either the non-SSE2 encoder or the SSE2 encoder, both work. In addition, Wine is also required in order to"
-	echo "use the Nero encoder."
-	echo
 	rm -rf "$TMPDIR"
 	exit 0
 }
 
-
 if [ -z "$1" ]; then
  help
+fi
+
+if [ -z "`which wine`" ]; then
+	die "Wine is not installed, convavs requires wine to be installed to operate."
+fi
+
+if [ ! -f /usr/local/share/convmedia/bin/avs2yuv.exe ]; then
+	die "Avs2yuv.exe is not in /usr/local/share/convmedia/bin, convavs requires avs2yuv to operate."
 fi
 
 for i in $@; do
@@ -79,10 +80,6 @@ for i in $@; do
 		mkdir -p "$TMPDIR"
 	else
 		mkdir -p "$TMPDIR"
-	fi
-
-	if [ -z "`which wine`" ]; then
-		die "Wine is not installed, convavs requires wine to be installed to operate."
 	fi
 
 	SUBTITLE=""
@@ -98,7 +95,6 @@ for i in $@; do
 	TURBO=""
 	LIVEACTION=""
 	CARTOON=""
-	USENEROAAC="1"
 	USEOGGENC2="1"
 	DELAY=""
 
