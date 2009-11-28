@@ -5,6 +5,16 @@ convertvideo() {
 	fi
 	export VIDEO_LENGTH="$(mplayer_retrieve_info grep "$1" ID_LENGTH)"
 
+	# Only autodetect if the video codec is MPEG-4, x264 autodetects on it's own.
+	if [ -z "$THREADS" -a "$VCODEC" = "mpeg4" ]; then
+		export THREADS="$(cat /proc/cpuinfo | grep processor | wc -l)"
+	fi
+
+	# Default to default preset.
+	if [ -z "$PRESET" ]; then
+		local PRESET="default"
+	fi
+
 	if [ -z "$VIDEO_FPS" ]; then
 		die "Can't get the input video's framerate!"
 	fi
@@ -15,19 +25,22 @@ convertvideo() {
 	fi
 
 	if [ -n "$CROPDETECT" ]; then
-		echo -n "Detecting crop parameters..."
+		info "Detecting crop parameters"
 		local CROP="`video_cropdetect $1`"
 		echo " DONE"
 	fi
 	
 	if [ -n "$DVDMODE" ]; then
-		echo -n "Exporting DVD Chapters..."
+		info "Exporting DVD Chapters"
 		dvdxchap -t $DVD_TITLE $DVD_DEVICE > "$TMPDIR/dvdchaps.txt"
 		echo " DONE"
 		echo
 	fi
 
-	# Audio encoding, handle filters and resampling, then export extension based on codec.
+	# Audio encoding
+	info "Encoding audio"
+
+	# Handle filters and resampling.
 	if [ -n "$RESAMPLE" -a -n "$AF" ]; then
 		local AF="$AF,lavcresample=$RESAMPLE"
 		export MPLAYER_OPTS="$MPLAYER_OPTS -srate $RESAMPLE $AF"
@@ -37,7 +50,8 @@ convertvideo() {
 	elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
 		export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
 	fi
-	echo "Entering audio phase..."
+
+	# Export extension based on codec.
 	case $ACODEC in
 	vorbis)
 		export EXT="ogg"
@@ -53,74 +67,43 @@ convertvideo() {
 	;;
 	esac
 
-	# Multi-track logic
+	# Multi-track logic, actually encode audio.
 	if [ -n "$MULTI_TRACK" -a -z "$DONT_ENCODE" ]; then
 		for i in $ATRACKS; do
 		 ((ANUMB++))
-		 echo $i
+		 info "Encoding audio track: $i"
 		 export MPLAYER_OPTS="$MPLAYER_OPTS -alang $i"
 		 audio_encode $ACODEC "$1" "$TMPDIR/audio${ANUMB}.$EXT"
 		done
 	elif [ -z "$DONT_ENCODE" ]; then
 		export MPLAYER_OPTS="$MPLAYER_OPTS $ATRACK"
-		echo $ATRACK
 		audio_encode $ACODEC "$1" "$TMPDIR/audio.$EXT"
 	fi
-	echo "DONE"
 
-	# Handle encoding options.
-	local LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:mbd=2:trell:vmax_b_frames=2:vb_strategy=1:aic:cbp"
-	local X264OPTS="bitrate=$VBITRATE:subq=7:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=auto"
-
-	if [ -n "$TURBO" -a "$PASS" = 1 ]; then
-		# Note: pass=1/vpass=1 is a trick to get mencoder to make use of turbo.
-		local X264OPTS="${X264OPTS}:pass=1:turbo=1"
-		local LAVCOPTS="${LAVCOPTS}:vpass=1:turbo=1"
-	elif [ -n "$TURBO" -a "$PASS" -ge 2 ]; then
-		local X264OPTS="${X264OPTS}:turbo=1"
-		local LAVCOPTS="${LAVCOPTS}:turbo=1"
-	fi
-	if [ -n "$CARTOON" -a -z "$LIVEACTION" ]; then
-		local LAVCOPTS="${LAVCOPTS}:cmp=2:subcmp=2:precmp=0"
-		local X264OPTS="${X264OPTS}:psy_rd=0.4,0:aq_strength=0.6:deblock=1,1:bframes=5:ref=6"
-	elif [ -z "$CARTOON" -a -n "$LIVEACTION" ]; then
-		local LAVCOPTS="${LAVCOPTS}:cmp=3:subcmp=3:precmp=0"
-		local X264OPTS="${X264OPTS}:psy_rd=1,0.15:deblock=-1,-1"
-	fi
 	if [ -n "$CROP" ]; then
 		export VF="$VF -vf-pre crop=${CROP} -vf-add harddup"
 	else
 		export VF="$VF -vf-add harddup"
 	fi
 
-	# Video encoding, reference docs on the specifics of the process
-	echo "Encoding video..."
+	# Video encoding.
+	echo
+	info "Encoding video"
+
+	# Use video_select_codec to define encoding options.
 	case $VCODEC in
 	h264)
-		export OVC="x264"
-		if [ $PASS -ge 2 ]; then
-			export OVCOPTS="-x264encopts ${X264OPTS}:pass=2:ratetol=50"
-		else
-			export OVCOPTS="-x264encopts ${X264OPTS}:ratetol=50"
-		fi
-		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:pass=1"
-		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:pass=3"
+		video_select_codec $VCODEC preset $PRESET
 		video_encode "$1" "$TMPDIR/video.h264"
 	;;
 	mpeg4)
-		export OVC="lavc"
-		if [ $PASS -ge 2 ]; then
-			export OVCOPTS="-lavcopts ${LAVCOPTS}:vpass=2"
-		else
-			export OVCOPTS="-lavcopts ${LAVCOPTS}"
-		fi
-		export OVCOPTS_PASS1="-lavcopts ${LAVCOPTS}:vpass=1"
-		export OVCOPTS_PASS2="-lavcopts ${LAVCOPTS}:vpass=3"
+		video_select_codec $VCODEC preset $PRESET
 		video_encode "$1" "$TMPDIR/video.m4v"
 	;;
 	esac
 
-	echo -n "Merging files into a $CONTAINER file..."
+	echo
+	info "Merging files into an $CONTAINER file"
 	case $CONTAINER in
 	mkv)
 		if [ -f "$TMPDIR/video.m4v" ]; then
@@ -166,6 +149,7 @@ convertvideo() {
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac
-	echo " DONE"
+
+	info "Finished encoding, cleaning up and exiting."
 	rm -rf "$TMPDIR"
 }

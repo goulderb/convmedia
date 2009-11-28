@@ -34,7 +34,7 @@ else
 fi
 
 help() {
-	echo "convavs: An extra-insane Video transcoding application that works with AviSynth through wine."
+	echo "convavs: A Video transcoding application that works with AviSynth through wine."
 	echo
 	echo "Usage: $0 [OPTIONS] FILE"
 	echo
@@ -49,13 +49,13 @@ help() {
 	echo
 	echo "Codec options:"
 	echo "-c: Codec selection (Format: h264/vorbis)"
-	echo "-w: When encoding, use faster (or better) encoders only available through the usage of wine, if available."
+	echo "-p: Select codec quality preset, options are lq (Low quality/High speed), default (Good quality/Medium speed), hq (High quality/Low speed)"	
 	echo "-A: Anime/Cartoon mode, this tweaks the encoder for Anime/Cartoon content."
 	echo "-l: Live action mode, this tweaks the encoder for Live Action content."
 	echo "-q: Audio quality (default 3)."
 	echo "-b: Video bitrate (default 900)."
 	echo "-m: Use multipass encoding, specifying the number of passes up to a maximum of three."
-	echo "-T: Turbo mode, decreases quality but might increase speed."
+	echo "-T: The number of threads to use for encoding video (default autodetect)."
 	echo
 	echo "Audio and video manipulation options:"
 	echo "-r: Resample input audio to the specified audio sampling rate, such as 44100"
@@ -78,7 +78,7 @@ help() {
 	exit 0
 }
 
-while getopts 'o:f:s:t:c:q:b:m:r:a:v:hAwTlz' z; do
+while getopts 'o:f:s:t:T:c:q:b:m:r:a:v:p:hAwlz' z; do
 	case "$z" in
 	z)
 		set -e -x
@@ -163,7 +163,11 @@ while getopts 'o:f:s:t:c:q:b:m:r:a:v:hAwTlz' z; do
 		fi
 	;;
 	T)
-		export TURBO=1
+		if [ -n "$OPTARG" ]; then
+			export THREADS="$OPTARG"
+		else
+			die "Please supply an argument to -T."
+		fi
 	;;
 	f)
 		if [ -n "$OPTARG" ]; then
@@ -182,8 +186,12 @@ while getopts 'o:f:s:t:c:q:b:m:r:a:v:hAwTlz' z; do
 			die "Please supply an argument to -r."
 		fi
 	;;
-	w)
-		export USEOGGENC2="1"
+	p)
+		if [ -n "$OPTARG" ]; then
+			export PRESET="$OPTARG"
+		else
+			die "Please supply an argument to -p."
+		fi
 	;;
 	h)
 		help

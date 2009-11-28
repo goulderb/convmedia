@@ -33,17 +33,17 @@ fi
 
 set_masks() {
 	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
-	export TITLE="`grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g'`"
-	export ARTIST="`grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g'`"
-	export ALBUM="`cat ${TMPDIR}/album.txt | grep "album:" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g'`"
-	export YEAR="`cat ${TMPDIR}/album.txt | grep "year:" | cut -d: -f2`"
+	export TITLE="$(grep "${N}:" ${TMPDIR}/tracks.txt | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')"
+	export ARTIST="$(grep "${N}:" ${TMPDIR}/tracks-artists.txt | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
+	export ALBUM="$(cat ${TMPDIR}/album.txt | grep "album:" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
+	export YEAR="$(cat ${TMPDIR}/album.txt | grep "year:" | cut -d: -f2)"
 	export TRACKNUM="$I"
 	export ORIG_FMASK="$FILE_MASK"
 	export ORIG_DMASK="$DIR_MASK"
-	export FILE_MASK="`echo "$FILE_MASK" | sed "s^%TITLE^$TITLE^g" | sed "s^%ARTIST^$ARTIST^g" | sed "s^%ALBUM^$ALBUM^g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
-		sed "s:%YEAR:$TRACK:g"`"
-	export DIR_MASK="`echo "$DIR_MASK" | sed "s^%TITLE^$TITLE^g" | sed "s^%ARTIST^$ARTIST^g" | sed "s^%ALBUM^$ALBUM^g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
-		sed "s:%YEAR:$TRACK:g"`"
+	export FILE_MASK="$(echo "$FILE_MASK" | sed "s^%TITLE^$TITLE^g" | sed "s^%ARTIST^$ARTIST^g" | sed "s^%ALBUM^$ALBUM^g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
+		sed "s:%YEAR:$TRACK:g")"
+	export DIR_MASK="$(echo "$DIR_MASK" | sed "s^%TITLE^$TITLE^g" | sed "s^%ARTIST^$ARTIST^g" | sed "s^%ALBUM^$ALBUM^g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
+		sed "s:%YEAR:$TRACK:g")"
 }
 
 restore_masks() {
@@ -53,7 +53,7 @@ restore_masks() {
 }
 
 help() {
-	echo "convcd: An extra-sane audio CD ripper."
+	echo "convcd: A secure Audio CD ripper."
 	echo
 	echo "Usage: $0 [OPTIONS]"
 	echo
@@ -62,7 +62,6 @@ help() {
 	echo "Options:"
 	echo "-f: Format you want the CD to be ripped to."
 	echo "-q: Encoding quality, highest quality is 10, lowest is 1."
-	echo "-w: When encoding, use faster (or better) encoders only available through the usage of wine, if available."
 	echo "-d: CD-Rom device node to use."
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
 	echo "-m: Multi-artist mode, use this for CD's that have multiple artists rather than one."
@@ -86,9 +85,6 @@ while getopts 'f:a:q:r:d:n:wbhmi' z; do
 	;;
 	b)
 		set -e -x
-	;;
-	w)
-		export USEOGGENC2="1"
 	;;
 	i)
 		export INTERACTIVE="1"
@@ -119,20 +115,20 @@ if [ "$?" = "1" ]; then
 	die "There is no CD in the drive to rip."
 fi
 
-echo -n "Retrieving information about this CD from CDDB..."
+info "Retrieving information about this CD from CDDB"
 cddb_query_info
 if [ -n "$CDDB_CACHE_HIT" ]; then
-	echo " cache hit, done."
+	info "Retrieved information from cache, done."
 else
-	echo " done."
+	info "Retrieved information from CDDB, done."
 fi
 export ALBUM="`cat "${TMPDIR}"/album.txt | grep "album:" | cut -d: -f2 | sed 's^&^And^g'`"
 export YEAR="`cat "${TMPDIR}"/album.txt | grep "year:" | cut -d: -f2`"
 echo "Album: $ALBUM" >> "${TMPDIR}"/album-info.txt
 echo "Year of release: $YEAR" >> "${TMPDIR}"/album-info.txt
 unset ALBUM
-for i in `seq 0 $TRACKS`; do
-	if [ ! "`echo -n "$i" | wc -m`" = "2" ]; then
+for i in $(seq 0 $TRACKS); do
+	if [ ! "$(echo -n "$i" | wc -m)" = "2" ]; then
 		export N="0${i}"
 	else
 		export N="$i"
@@ -150,18 +146,18 @@ if [ -n "$INTERACTIVE" ]; then
 		$EDITOR "${TMPDIR}"/tracks-artists.txt
 		$EDITOR "${TMPDIR}"/album.txt
 		# Recalculate number of tracks to rip by using tracks.txt.
-		export TRACKS="`cat "${TMPDIR}"/tracks.txt | wc -l`"
-		export TRACKS="`expr $TRACKS - 1`"
+		export TRACKS="$(cat "${TMPDIR}"/tracks.txt | wc -l)"
+		export TRACKS="$(expr $TRACKS - 1)"
 	fi
 fi
 
-for i in `seq 0 $TRACKS`; do
-	if [ ! "`echo -n "$i" | wc -m`" = "2" -a "$i" != "9" ]; then
+for i in $(seq 0 $TRACKS); do
+	if [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" != "9" ]; then
 		export I="$i"
 		((I++))
 		export I="0${I}"
 		export N="0${i}"
-	elif [ ! "`echo -n "$i" | wc -m`" = "2" -a "$i" = "9" ]; then
+	elif [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" = "9" ]; then
 		export I="$i"
 		((I++))
 		export N="0${i}"
@@ -178,35 +174,35 @@ for i in `seq 0 $TRACKS`; do
 	fi
 
 	echo
-	echo "Ripping ${FILE_MASK}..."
+	info "Ripping ${FILE_MASK}"
 	rip_track "$I" "${TMPDIR}/${FILE_MASK}.wav"
 
 	case $ACODEC in
 	vorbis)
-		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
+		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.ogg"
-		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
+		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
 		set_common_metatags ogg "${DIR_MASK}/${FILE_MASK}.ogg"
 		echo
 	;;
 	aac-*)
-		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
+		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp4"
-		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
+		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
 		set_common_metatags mp4 "${DIR_MASK}/${FILE_MASK}.mp4"
 		echo
 	;;
 	mp3)
-		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
+		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp3"
-		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
+		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
 		set_common_metatags id3 "${DIR_MASK}/${FILE_MASK}.mp3"
 		echo
 	;;
 	flac)
-		echo "Encoding ${FILE_MASK}.wav to ${ACODEC}..."
+		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.flac"
-		echo "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
+		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
 		set_common_metatags flac "${DIR_MASK}/${FILE_MASK}.flac"
 		echo
 	;;
@@ -214,7 +210,9 @@ for i in `seq 0 $TRACKS`; do
 	restore_masks
 done
 
+info "Finished ripping, cleaning up."
 rm -rf "$TMPDIR"
 if [ -n "$EJECT" ]; then
+	info "Ejecting CD."
 	eject "$CD_DEVICE"
 fi

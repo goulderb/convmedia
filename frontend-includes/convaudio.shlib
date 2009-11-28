@@ -1,11 +1,11 @@
 findinputformat() {
-	if [ -n "`echo "$1" | grep -i '\.mp3'`" ]; then
+	if [ -n "$(echo "$1" | grep -i '\.mp3')" ]; then
 		export INPUTFORMAT=mp3
-	elif [ -n "`echo "$1" | grep -i '\.ogg'`" ]; then
+	elif [ -n "$(echo "$1" | grep -i '\.ogg')" ]; then
 		export INPUTFORMAT=ogg
-	elif [ -n "`echo "$1" | grep -i '\.flac'`" ]; then
+	elif [ -n "$(echo "$1" | grep -i '\.flac')" ]; then
 		export INPUTFORMAT=flac
-	elif  [ -n "`echo "$1" | grep -i '\.m4a'`" -o -n "`echo "$1" | grep -i '\.mp4'`" ]; then
+	elif  [ -n "$(echo "$1" | grep -i '\.m4a')" -o -n "$(echo "$1" | grep -i '\.mp4')" ]; then
 		export INPUTFORMAT=aac
 	else
 		die "No supported format found, exiting."
@@ -16,23 +16,23 @@ convertaudio()	{
 	case $INPUTFORMAT in
 	ogg)
 		get_common_metatags ogg "$1"
-		local OUTPUT_FILE_NOEXT="`basename "$1" .ogg`"
+		local OUTPUT_FILE_NOEXT="$(basename "$1" .ogg)"
 	;;
 	mp3)
 		get_common_metatags id3 "$1"
-		local OUTPUT_FILE_NOEXT="`basename "$1" .mp3`"
+		local OUTPUT_FILE_NOEXT="$(basename "$1" .mp3)"
 	;;
 	aac)
 		get_common_metatags mp4 "$1"
-		if [ -n "`echo "$1" | grep -i '\.m4a'`" ]; then
-			local OUTPUT_FILE_NOEXT="`basename "$1" .m4a`"
+		if [ -n "$(echo "$1" | grep -i '\.m4a')" ]; then
+			local OUTPUT_FILE_NOEXT="$(basename "$1" .m4a)"
 		else
-			local OUTPUT_FILE_NOEXT="`basename "$1" .mp4`"
+			local OUTPUT_FILE_NOEXT="$(basename "$1" .mp4)"
 		fi
 	;;
 	flac)
 		get_common_metatags flac "$1"
-		local OUTPUT_FILE_NOEXT="`basename "$1" .flac`"
+		local OUTPUT_FILE_NOEXT="$(basename "$1" .flac)"
 	;;
 	esac
 
@@ -49,9 +49,9 @@ convertaudio()	{
 	case $OUTPUTFORMAT in
 	vorbis)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.ogg" ]; then
-		 echo "Converting $1 to $OUTPUT_FILE_NOEXT.ogg"
+		 info "Converting $1 to $OUTPUT_FILE_NOEXT.ogg"
 		 audio_encode vorbis "$1" "$OUTPUT_FILE_NOEXT.ogg"
-		 echo "Setting metatags for $OUTPUT_FILE_NOEXT.ogg"
+		 info "Setting metatags for $OUTPUT_FILE_NOEXT.ogg"
 		 set_common_metatags ogg "$OUTPUT_FILE_NOEXT.ogg"
 		else
 		 die "A file named $OUTPUT_FILE_NOEXT.ogg already exists, exiting."
@@ -59,30 +59,19 @@ convertaudio()	{
 	;;
 	flac)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.flac" ]; then
-		 echo "Converting $1 to $OUTPUT_FILE_NOEXT.flac"
+		 info "Converting $1 to $OUTPUT_FILE_NOEXT.flac"
 		 audio_encode flac "$1" "$OUTPUT_FILE_NOEXT.flac"
-		 echo "Setting metatags for $OUTPUT_FILE_NOEXT.flac"
+		 info "Setting metatags for $OUTPUT_FILE_NOEXT.flac"
 		 set_common_metatags flac "$OUTPUT_FILE_NOEXT.flac"
 		else
 		 die "A file named $OUTPUT_FILE_NOEXT.flac already exists, exiting."
 		fi
 	;;
-	# Backwards compatibility, we use the old AAC-LC ONLY.
-	aac)
-		if [ ! -f "$OUTPUT_FILE_NOEXT.mp4" ]; then
-			echo "Converting $1 to $OUTPUT_FILE_NOEXT.mp4"
-			audio_encode aac-lc "$1" "$OUTPUT_FILE_NOEXT.mp4"
-			echo "Setting metatags for $OUTPUT_FILE_NOEXT.mp4"
-			set_common_metatags mp4 "$OUTPUT_FILE_NOEXT.mp4"
-		else
-			die "A file named $OUTPUT_FILE_NOEXT.mp4 already exists, exiting."
-		fi
-	;;
 	aac-*)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.mp4" ]; then
-		 echo "Converting $1 to $OUTPUT_FILE_NOEXT.mp4"
+		 info "Converting $1 to $OUTPUT_FILE_NOEXT.mp4"
 		 audio_encode $OUTPUTFORMAT "$1" "$OUTPUT_FILE_NOEXT.mp4"
-		 echo "Setting metatags for $OUTPUT_FILE_NOEXT.mp4"
+		 info "Setting metatags for $OUTPUT_FILE_NOEXT.mp4"
 		 set_common_metatags mp4 "$OUTPUT_FILE_NOEXT.mp4"
 		else
 		 die "A file named $OUTPUT_FILE_NOEXT.mp4 already exists, exiting."
@@ -90,16 +79,16 @@ convertaudio()	{
 	;;
 	mp3)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.mp3" ]; then
-		 echo "Converting $1 to $OUTPUT_FILE_NOEXT.mp3"
+		 info "Converting $1 to $OUTPUT_FILE_NOEXT.mp3"
 		 audio_encode mp3 "$1" "$OUTPUT_FILE_NOEXT.mp3"
-		 echo "Setting metatags for $OUTPUT_FILE_NOEXT.mp3"
+		 info "Setting metatags for $OUTPUT_FILE_NOEXT.mp3"
 		 set_common_metatags id3 "$OUTPUT_FILE_NOEXT.mp3"
 		else
 		 die "A file named $OUTPUT_FILE_NOEXT.mp3 already exists, exiting."
 		fi
 	;;
 	*)
-	 info "Supported formats: vorbis, flac, mp3, aac, aac-lc, aac-hev1, aac-hev2"
+	 info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
 	 die "Unsupported format selected!"
 	;;
 	esac

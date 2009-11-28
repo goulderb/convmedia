@@ -1,15 +1,15 @@
 decode_audio_pipe() {
 	if [ -n "$1" -a -n "$2" ]; then
 		mkfifo "$2"
-		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null &
+		mplayer $MPLAYER_OPTS "$1" -nocache -vc ffsiff -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null &
 	fi
 }
 
 decode_audio_file() {
 	if [ -n "$1" -a -n "$2" -a -z "$VERBOSE" ]; then
-		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null
+		mplayer $MPLAYER_OPTS "$1" -nocache -vc ffsiff -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null
 	elif [ -n "$1" -a -n "$2" -a -n "$VERBOSE" ]; then
-		mplayer $MPLAYER_OPTS "$1" -nocache -vc null -vo null -ao pcm:file="$2":fast -benchmark
+		mplayer $MPLAYER_OPTS "$1" -nocache -vc ffsiff -vo null -ao pcm:file="$2":fast -benchmark
 	fi
 }
 
@@ -119,21 +119,17 @@ audio_encode() {
 		decode_audio_file "$2" "$ENC_FILE"
 	fi
 
-	export BR="$((`get_qualitymap bitrate` * 1024))"
+	local BR="$(( $(get_qualitymap bitrate) * 1024 ))"
 
 	case "$1" in
 	vorbis)
-		if [ -n "$USEOGGENC2" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/oggenc2.exe -a -z "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/oggenc2.exe -Q -q "$AQUALITY" -o "$3" "$ENC_FILE"
-		elif [ -n "$USEOGGENC2" -a -n "`which wine`" -a -f /usr/local/share/convmedia/bin/oggenc2.exe -a -n "$VERBOSE" ]; then
-			wine /usr/local/share/convmedia/bin/oggenc2.exe -q "$AQUALITY" -o "$3" "$ENC_FILE"
-		elif [ -z "$VERBOSE" ]; then
+		if [ -z "$VERBOSE" ]; then
 			oggenc -Q -q "$AQUALITY" -o "$3" "$ENC_FILE"
 		else
 			oggenc -q "$AQUALITY" -o "$3" "$ENC_FILE"
 		fi
 		# We might not have Vorbisgain, make sure we do otherwise DON'T try to call it.
-		if [ -n "`which vorbisgain`" ]; then
+		if [ -n "$(which vorbisgain)" ]; then
 			if [ -z "$VERBOSE" ]; then
 				vorbisgain -q -f "$3"
 			else
@@ -144,10 +140,10 @@ audio_encode() {
 	;;
 	flac)
 		if [ -z "$VERBOSE" ]; then
-			flac -s -`get_qualitymap invertq` -o "$3" "$ENC_FILE" &> /dev/null
+			flac -s -$(get_qualitymap invertq) -o "$3" "$ENC_FILE" &> /dev/null
 			metaflac --add-replay-gain "$3" &> /dev/null
 		else
-			flac -s -`get_qualitymap invertq` -o "$3" "$ENC_FILE"
+			flac -s -$(get_qualitymap invertq) -o "$3" "$ENC_FILE"
 			metaflac --add-replay-gain "$3"
 		fi
 		rm "$ENC_FILE"
@@ -178,9 +174,9 @@ audio_encode() {
 	;;
 	mp3)
 		if [ -z "$VERBOSE" ]; then
-			lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$ENC_FILE" "$3" &> /dev/null
+			lame --replaygain-accurate -S --abr $(get_qualitymap bitrate) "$ENC_FILE" "$3" &> /dev/null
 		else
-			lame --replaygain-accurate -S --abr `get_qualitymap bitrate` "$ENC_FILE" "$3"
+			lame --replaygain-accurate -S --abr $(get_qualitymap bitrate) "$ENC_FILE" "$3"
 		fi
 		rm "$ENC_FILE"
 	;;

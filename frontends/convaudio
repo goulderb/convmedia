@@ -31,7 +31,6 @@ help() {
 	echo "-q: Quality scale, highest quality is 10, lowest is 1."
 	echo "-a: Audio filters to use."
 	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
-	echo "-w: When encoding, use faster (or better) encoders only available through the usage of wine, if available."
 	echo "-d: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
 	rm -rf $TMPDIR
@@ -54,9 +53,6 @@ while getopts 'f:a:q:r:wdh' z; do
 	;;
 	r)
 	  export RESAMPLE="$OPTARG"
-	;;
-	w)
-		export USEOGGENC2="1"
 	;;
 	h)
 		help

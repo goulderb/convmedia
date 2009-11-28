@@ -1,9 +1,9 @@
 # DEPENDS: audio-functions
 
 avs2yuv() {
-	if [ -n "`which wine`" -a -f /usr/local/share/convmedia/bin/avs2yuv.exe ]; then
+	if [ -n "$(which wine)" -a -f /usr/local/share/convmedia/bin/avs2yuv.exe ]; then
 		wine /usr/local/share/convmedia/bin/avs2yuv.exe "$@"
-	elif [ -z "`which wine`" ]; then
+	elif [ -z "$(which wine)" ]; then
 		die "Wine is not installed, avs2yuv requires wine to function."
 	elif [ ! -f /usr/local/share/convmedia/bin/avs2yuv.exe ]; then
 		die "The avs2yuv binary is not present in /usr/local/share/convmedia/bin/."
@@ -11,12 +11,12 @@ avs2yuv() {
 }
 
 video_encode_avs() {
-	if [ -z "`which wine`" ]; then
+	if [ -z "$(which wine)" ]; then
 		die "Wine is not installed, encoding from an AviSynth script requires wine to function."
 	fi
 
 	# If schedtool is available, execute mencoder as SCHED_BATCH, as this provides some minor performance gains.
-	if [ -n "`which schedtool`" ]; then
+	if [ -n "$(which schedtool)" ]; then
 		alias mencoder="schedtool -B -e mencoder"
 	fi
 
@@ -60,7 +60,7 @@ video_encode_avs() {
 
 video_encode() {
 	# If schedtool is available, execute mencoder as SCHED_BATCH, as this provides some minor performance gains.
-	if [ -n "`which schedtool`" ]; then
+	if [ -n "$(which schedtool)" ]; then
 		alias mencoder="schedtool -B -e mencoder"
 	fi
 
@@ -81,12 +81,159 @@ video_encode() {
 }
 
 video_cropdetect() {
-	export CROPARGS="-chapter 2 -endpos 5 -ovc lavc -nosound"
-	echo "`mencoder $MENCODER_OPTS "$1" $CROPARGS -vf cropdetect -o /dev/null 2>&1 | grep vf | tail -n 1 | cut -d "=" -f 2 | tr -d ')' | sed 's/\.//'`"
-	unset CROPARGS
+	if [ -n "$2" ]; then
+		local CROPARGS="$2"
+	else
+		local CROPARGS="-chapter 2 -endpos 5 -ovc lavc -nosound"
+	fi
+	echo "$(mencoder $MENCODER_OPTS "$1" $CROPARGS -vf cropdetect -o /dev/null 2>&1 | grep vf | tail -n 1 | cut -d "=" -f 2 | tr -d ')' | sed 's/\.//')"
 }
 
 video_calculate_bitrate() {
 	local SIZE=`echo "((($1 * 1024) - (($VIDEO_FPS * $VIDEO_LENGTH * 24) / 1024)) * 1024) / 1000" | bc`
-	echo "($SIZE * 8) / $VIDEO_LENGTH - `get_qualitymap bitrate`" | bc
+	echo "($SIZE * 8) / $VIDEO_LENGTH - $(get_qualitymap bitrate)" | bc
+}
+
+video_codec_preset() {
+	case $1 in
+	h264)
+		case $2 in
+		lq)
+			if [ -n "$THREADS" ]; then
+				export X264OPTS="bitrate=$VBITRATE:subq=5:mixed_refs=0:ref=2:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=${THREADS}"
+			else
+				export X264OPTS="bitrate=$VBITRATE:subq=5:mixed_refs=0:ref=2:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=auto"
+			fi
+			export REF="2"
+		;;
+		hq)
+			if [ -n "$THREADS" ]; then
+				export X264OPTS="bitrate=$VBITRATE:subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:threads=${THREADS}"
+			else
+				export X264OPTS="bitrate=$VBITRATE:subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:threads=auto"
+			fi
+			export REF="5"
+		;;
+		default|*)
+			if [ -n "$THREADS" ]; then
+				export X264OPTS="bitrate=$VBITRATE:subq=7:ref=3:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=${THREADS}"
+			else
+				export X264OPTS="bitrate=$VBITRATE:subq=7:ref=3:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=auto"
+			fi
+			export REF="3"
+		;;
+		esac
+	;;
+	mpeg4)
+		case $2 in
+		lq)
+			if [ -n "$THREADS" ]; then
+				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:threads=${THREADS}"
+			else
+				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2"
+			fi
+		;;
+		hq)
+			if [ -n "$THREADS" ]; then
+				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:last_pred=3:predia=2:preme=2:dia=2:vmax_b_frames=2:vb_strategy=1:cbp:mv0:qns=2:threads=${THREADS}"
+			else
+				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:last_pred=2:predia=2:preme=2:dia=2:vmax_b_frames=2:vb_strategy=1:cbp:mv0:qns=2"
+			fi
+		;;
+		default|*)
+			if [ -n "$THREADS" ]; then
+				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:vqcomp=0.6:threads=${THREADS}"
+			else
+				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:vqcomp=0.6"
+			fi
+		;;
+		esac
+	esac
+}
+
+# Arguments: 1:vcodec 2:manual or preset 3:encoding opts or preset 4:x264 reference number, only used in manual & h264
+video_select_codec() {
+	case $1 in
+	h264)
+		# Define x264 options, if arg 2 is preset/manual utilize arg 3, else use default preset.
+		case $2 in
+		preset)
+			video_codec_preset h264 $3
+		;;
+		manual)
+			local X264OPTS="$3"
+			local REF="$4"
+		;;
+		*)
+			video_codec_preset h264 default
+		;;
+		esac
+
+		# Just to be safe, if the number of reference frames is not defined, default to 3.
+		if [ -z "$REF" ]; then
+			local REF="3"
+		fi
+
+		# Handle cartoon and live-action content modes.
+		if [ -n "$CARTOON" -a -z "$LIVEACTION" ]; then
+			if [ "$((REF * 2))" > "16" ]; then
+				export REF="16"
+			else
+				export REF="$((REF * 2))"
+			fi
+			local X264OPTS="${X264OPTS}:psy_rd=0.4,0:aq_strength=0.6:deblock=1,1:bframes=5:ref=$REF"
+		elif [ -z "$CARTOON" -a -n "$LIVEACTION" ]; then
+			local X264OPTS="${X264OPTS}:psy_rd=1,0.15:deblock=-1,-1"
+		fi
+
+		info "Encoding options for H264: $X264OPTS"
+
+		# Define our output video codec as x264
+		export OVC="x264"
+
+		# Handle multipass encoding. 
+		if [ $PASS -ge 2 ]; then
+			export OVCOPTS="-x264encopts ${X264OPTS}:pass=2:ratetol=50"
+		else
+			export OVCOPTS="-x264encopts ${X264OPTS}:ratetol=50"
+		fi
+		export OVCOPTS_PASS1="-x264encopts ${X264OPTS}:turbo=1:pass=1"
+		export OVCOPTS_PASS2="-x264encopts ${X264OPTS}:pass=3"
+	;;
+	mpeg4)
+		# Define MPEG-4 ASP (FFMpeg) options, if arg 2 is preset/manual utilize arg 3, else use default preset.
+		case $2 in
+		preset)
+			video_codec_preset mpeg4 $3
+		;;
+		manual)
+			local LAVCOPTS="vcodec=mpeg4:${3}"
+		;;
+		*)
+			video_codec_preset mpeg4 default
+		;;
+		esac
+
+		# Handle cartoon and live-action content modes.
+		if [ -n "$CARTOON" -a -z "$LIVEACTION" ]; then
+			local LAVCOPTS="${LAVCOPTS}:cmp=2:subcmp=2:precmp=0"
+		elif [ -z "$CARTOON" -a -n "$LIVEACTION" ]; then
+			local LAVCOPTS="${LAVCOPTS}:cmp=3:subcmp=3:precmp=0"
+		fi
+
+		info "Encoding options for MPEG-4 ASP: $LAVCOPTS"
+
+		# Define our output video codec as lavc (libavcodec)
+		export OVC="lavc"
+
+		# Handle multipass encoding, fast first pass is default and can't be overridden.
+		if [ $PASS -ge 2 ]; then
+			export OVCOPTS="-lavcopts ${LAVCOPTS}:vpass=2"
+		else
+			export OVCOPTS="-lavcopts ${LAVCOPTS}"
+		fi
+		export OVCOPTS_PASS1="-lavcopts ${LAVCOPTS}:turbo=1:vpass=1"
+		export OVCOPTS_PASS2="-lavcopts ${LAVCOPTS}:vpass=3"
+	;;
+	esac
 }

@@ -34,7 +34,7 @@ else
 fi
 
 help() {
-	echo "convvideo: An extra-insane Video transcoding application."
+	echo "convvideo: A Video transcoding application."
 	echo
 	echo "Usage: $0 [OPTIONS] FILE"
 	echo
@@ -52,13 +52,13 @@ help() {
 	echo
 	echo "Codec options:"
 	echo "-C: Codec selection (Format: h264/vorbis)"
-	echo "-w: When encoding, use faster (or better) encoders only available through the usage of wine, if available."
+	echo "-p: Select codec quality preset, options are lq (Low quality/High speed), default (Good quality/Medium speed), hq (High quality/Low speed)"
 	echo "-A: Anime/Cartoon mode, this tweaks the encoder for Anime/Cartoon content."
 	echo "-l: Live action mode, this tweaks the encoder for Live Action (film) content."
 	echo "-q: Audio quality (default 3)."
 	echo "-b: Video bitrate (default 900)."
 	echo "-m: Use multipass encoding, specifying the number of passes up to a maximum of three."
-	echo "-T: Turbo mode, decreases quality but might increase speed."
+	echo "-T: The number of threads to use for encoding video (default autodetect)."
 	echo "-c: On-the-fly bitrate calculation, specify a target size in megabytes for the output."
 	echo
 	echo "Audio and video manipulation options:"
@@ -77,13 +77,13 @@ help() {
 	echo "able to play such files, so Vorbis audio tracks will throw an error when used with MP4."
 	echo
 	echo "Splitting the video requires extra disc space to store the split video file, by default the temporary directory used"
-	echo "is /tmp/convvideo/. Also, please ensure that the audio and video you're trying to split can be contained in AVI, otherwise"
-	echo "the video cannot be split because the video file is split into an AVI file."
+	echo "is /tmp/convvideo-PID/. Also, please ensure that the audio and video you're trying to split can be contained in AVI, otherwise"
+	echo "the video cannot be split because the source is split into an intermediary AVI file."
 	rm -rf "$TMPDIR"
 	exit 0
 }
 
-while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
+while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:T:m:r:p:lhADVz' z; do
 	case "$z" in
 	z)
 		set -e -x
@@ -102,7 +102,7 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
 		if [ -n "`which dvdxchap`" ]; then
 			export DVDMODE=1
 		else
-			echo "ogmmerge is not installed, disabling DVD chapter extraction."
+			warn "ogmmerge is not installed, disabling DVD chapter extraction."
 		fi
 	;;
 	d)
@@ -194,7 +194,11 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
 		fi
 	;;
 	T)
-		export TURBO=1
+		if [ -n "$OPTARG" ]; then
+			export THREADS="$OPTARG"
+		else
+			die "Please supply an argument to -T."
+		fi
 	;;
 	f)
 		if [ -n "$OPTARG" ]; then
@@ -223,8 +227,12 @@ while getopts 'f:o:d:s:S:a:b:q:C:c:v:t:m:r:wlhADVTz' z; do
 			die "Please supply an argument to -r."
 		fi
 	;;
-	w)
-		export USEOGGENC2="1"
+	p)
+		if [ -n "$OPTARG" ]; then
+			export PRESET="$OPTARG"
+		else
+			die "Please supply an argument to -p."
+		fi
 	;;
 	h)
 		help
