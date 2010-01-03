@@ -108,9 +108,9 @@ video_codec_preset() {
 		;;
 		hq)
 			if [ -n "$THREADS" ]; then
-				export X264OPTS="bitrate=$VBITRATE:subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:threads=${THREADS}"
+				export X264OPTS="bitrate=$VBITRATE:subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:rc_lookahead=50:threads=${THREADS}"
 			else
-				export X264OPTS="bitrate=$VBITRATE:subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:threads=auto"
+				export X264OPTS="bitrate=$VBITRATE:subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:rc_lookahead=50:threads=auto"
 			fi
 			export REF="5"
 		;;

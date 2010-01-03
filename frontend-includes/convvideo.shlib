@@ -27,17 +27,15 @@ convertvideo() {
 	if [ -n "$CROPDETECT" ]; then
 		info "Detecting crop parameters"
 		local CROP="`video_cropdetect $1`"
-		echo " DONE"
 	fi
 	
 	if [ -n "$DVDMODE" ]; then
 		info "Exporting DVD Chapters"
 		dvdxchap -t $DVD_TITLE $DVD_DEVICE > "$TMPDIR/dvdchaps.txt"
-		echo " DONE"
-		echo
 	fi
 
 	# Audio encoding
+	echo
 	info "Encoding audio"
 
 	# Handle filters and resampling.
