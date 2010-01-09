@@ -64,9 +64,9 @@ install)
 		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
 		cp config/* /etc/convmedia/
 		for i in frontends/*; do
-			sed -i -e 's:#PREFIX#:/usr/local:g'
 			cp "$i" /usr/local/bin/
 			chmod +x /usr/local/bin/`basename "$i"`
+			sed -i -e 's:#PREFIX#:/usr/local:g' /usr/local/bin/`basename "$i"`
 		done
 		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
 		cp includes/* /usr/local/share/convmedia/includes/
@@ -89,9 +89,9 @@ upgrade)
 		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
 		cp -i config/* /etc/convmedia/
 		for i in frontends/*; do
-			sed -i -e 's:#PREFIX#:/usr/local:g' "$i"
 			cp "$i" /usr/local/bin/
 			chmod +x /usr/local/bin/`basename "$i"`
+			sed -i -e 's:#PREFIX#:/usr/local:g' /usr/local/bin/`basename "$i"`
 		done
 		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
 		cp includes/* /usr/local/share/convmedia/includes/

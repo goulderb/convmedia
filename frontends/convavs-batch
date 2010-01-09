@@ -1,19 +1,19 @@
 #!/bin/bash
 
 export TMPDIR="/tmp/convavsbatch-$$"
-export INCDIR="/usr/local/share/convmedia/includes"
+export INCDIR="#PREFIX#/share/convmedia/includes"
 export CHARSET="UTF-8"
 export VERBOSE="1"
 
 # Load required functions and the configuration file.
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib \
 	-a -f $INCDIR/audio-functions.shlib -a -f $INCDIR/video-functions.shlib \
-	-a -f /usr/local/share/convmedia/frontend-includes/convavs.shlib ]; then
+	-a -f #PREFIX#/share/convmedia/frontend-includes/convavs.shlib ]; then
 		source $INCDIR/generic-functions.shlib
 		source $INCDIR/container-functions.shlib
 		source $INCDIR/audio-functions.shlib
 		source $INCDIR/video-functions.shlib
-		source /usr/local/share/convmedia/frontend-includes/convavs.shlib
+		source #PREFIX#/share/convmedia/frontend-includes/convavs.shlib
 else
 		echo "Can't load functions, exiting."
 		exit 1
@@ -50,7 +50,7 @@ help() {
 	echo "CARTOON: Enable or disable cartoon content mode."
 	echo
 	echo "Notes:"
-	echo "convavs-batch requires avs2yuv.exe (http://akuvian.org/src/avisynth/avs2yuv/) to be placed in /usr/local/share/convmedia/bin in order to operate."
+	echo "convavs-batch requires avs2yuv.exe (http://akuvian.org/src/avisynth/avs2yuv/) to be placed in #PREFIX#/share/convmedia/bin in order to operate."
 	echo
 	echo "You should really use AviSynth filters, as most tend to be much more flexible and powerful than mplayer filters."
 	echo
@@ -69,8 +69,8 @@ if [ -z "$(which wine)" ]; then
 	die "Wine is not installed, convavs requires wine to be installed to operate."
 fi
 
-if [ ! -f /usr/local/share/convmedia/bin/avs2yuv.exe ]; then
-	die "Avs2yuv.exe is not in /usr/local/share/convmedia/bin, convavs requires avs2yuv to operate."
+if [ ! -f #PREFIX#/share/convmedia/bin/avs2yuv.exe ]; then
+	die "Avs2yuv.exe is not in #PREFIX#/share/convmedia/bin, convavs requires avs2yuv to operate."
 fi
 
 for i in $@; do

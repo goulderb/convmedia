@@ -3,7 +3,7 @@
 # Make sure we use UTF-8!
 export CHARSET="UTF-8"
 export TMPDIR="/tmp/convaudio-$$"
-export INCDIR="/usr/local/share/convmedia/includes"
+export INCDIR="#PREFIX#/share/convmedia/includes"
 
 if [ -f /etc/convmedia/convaudio.conf ]; then
 		source /etc/convmedia/convaudio.conf
@@ -62,11 +62,11 @@ done
 shift $(($OPTIND-1))
 
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib \
-	-a -f $INCDIR/audio-functions.shlib -a -f /usr/local/share/convmedia/frontend-includes/convaudio.shlib ]; then
+	-a -f $INCDIR/audio-functions.shlib -a -f #PREFIX#/share/convmedia/frontend-includes/convaudio.shlib ]; then
 		source $INCDIR/generic-functions.shlib
 		source $INCDIR/container-functions.shlib
 		source $INCDIR/audio-functions.shlib
-		source /usr/local/share/convmedia/frontend-includes/convaudio.shlib
+		source #PREFIX#/share/convmedia/frontend-includes/convaudio.shlib
 else
 		echo "Can't load functions, exiting."
 		exit 1
