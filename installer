@@ -56,16 +56,17 @@ install)
 	if [ ! -d /usr/local/share/convmedia ]; then
 		echo "Beginning convmedia installation."
 		if [ ! -d /usr/local/bin ]; then
-		 mkdir -p /usr/local/bin
+			mkdir -p /usr/local/bin
 		fi
 		if [ ! -d /etc/convmedia ]; then
-		 mkdir -p /etc/convmedia
+			mkdir -p /etc/convmedia
 		fi
 		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
 		cp config/* /etc/convmedia/
 		for i in frontends/*; do
-		 cp $i /usr/local/bin/
-		 chmod +x /usr/local/bin/`basename $i`
+			sed -i -e 's:#PREFIX#:/usr/local:g'
+			cp "$i" /usr/local/bin/
+			chmod +x /usr/local/bin/`basename "$i"`
 		done
 		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
 		cp includes/* /usr/local/share/convmedia/includes/
@@ -80,16 +81,17 @@ upgrade)
 	if [ -d /usr/local/share/convmedia ]; then
 		echo "Beginning convmedia upgrade."
 		if [ ! -d /usr/local/bin ]; then
-		 mkdir -p /usr/local/bin
+			mkdir -p /usr/local/bin
 		fi    
 		if [ ! -d /etc/convmedia ]; then
-		 mkdir -p /etc/convmedia
+			mkdir -p /etc/convmedia
 		fi
 		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
 		cp -i config/* /etc/convmedia/
 		for i in frontends/*; do
-		 cp $i /usr/local/bin/
-		 chmod +x /usr/local/bin/`basename $i`
+			sed -i -e 's:#PREFIX#:/usr/local:g' "$i"
+			cp "$i" /usr/local/bin/
+			chmod +x /usr/local/bin/`basename "$i"`
 		done
 		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
 		cp includes/* /usr/local/share/convmedia/includes/
