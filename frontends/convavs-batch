@@ -46,8 +46,7 @@ help() {
 	echo "AQUALITY: Audio quality."
 	echo "PASS: Number of encoding passes."
 	echo "THREADS: The number of threads to use for encoding video (default autodetect)."
-	echo "LIVEACTION: Enable or disable live-action content mode."
-	echo "CARTOON: Enable or disable cartoon content mode."
+	echo "TUNE: Codec content tuning mode, can be either animation or film."
 	echo
 	echo "Notes:"
 	echo "convavs-batch requires avs2yuv.exe (http://akuvian.org/src/avisynth/avs2yuv/) to be placed in #PREFIX#/share/convmedia/bin in order to operate."
@@ -93,8 +92,7 @@ for i in $@; do
 	AQUALITY="3"
 	PASS="1"
 	THREADS=""
-	LIVEACTION=""
-	CARTOON=""
+	TUNE=""
 	DELAY=""
 
 	. "$i"

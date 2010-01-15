@@ -206,6 +206,10 @@ for i in $(seq 0 $TRACKS); do
 		set_common_metatags flac "${DIR_MASK}/${FILE_MASK}.flac"
 		echo
 	;;
+	*)
+		info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
+		die "Unsupported audio codec specified!"
+	;;
 	esac
 	restore_masks
 done

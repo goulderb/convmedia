@@ -23,21 +23,7 @@ convertavs() {
 		export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
 	fi
 
-	# Export extension based on codec.
-	case $ACODEC in
-	vorbis)
-		export EXT="ogg"
-	;;
-	aac*)
-		export EXT="mp4"
-	;;
-	mp3)
-		export EXT="mp3"
-	;;
-	flac)
-		export EXT="flac"
-	;;
-	esac
+	audio_codec_set_extension $ACODEC	
 
 	# Actually encode audio file.
 	audio_encode $ACODEC "$AUDIO_FILE" "$TMPDIR/audio.$EXT"
@@ -56,11 +42,19 @@ convertavs() {
 	# Use video_select_codec to define encoding options.
 	case $VCODEC in
 	h264)
-		video_select_codec $VCODEC preset $PRESET
+		video_codec_preset $VCODEC $PRESET
+		if [ -n "$TUNE" ]; then
+			video_codec_tune $VCODEC $TUNE
+		fi
+		video_configure_codec $VCODEC
 		video_encode_avs "$1" "$TMPDIR/video.h264"
 	;;
 	mpeg4)
-		video_select_codec $VCODEC preset $PRESET
+		video_codec_preset $VCODEC $PRESET
+		if [ -n "$TUNE" ]; then
+			video_codec_tune $VCODEC $TUNE
+		fi
+		video_configure_codec $VCODEC
 		video_encode_avs "$1" "$TMPDIR/video.m4v"
 	;;
 	esac

@@ -106,6 +106,31 @@ get_qualitymap() {
 	esac
 }
 
+audio_codec_set_extension() {
+	if [ -n "$1" ]; then
+		case $1 in
+		vorbis)
+			export EXT="ogg"
+		;;
+		aac-*)
+			export EXT="mp4"
+		;;
+		mp3)
+			export EXT="mp3"
+		;;
+		flac)
+			export EXT="flac"
+		;;
+		*)
+			info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
+			die "Unsupported audio codec specified!"
+		;;
+		esac
+	else
+		die "No audio codec defined!!"
+	fi
+}
+
 audio_encode() {
 	if [ -z "$INPUT_IS_WAV" ]; then
 		export ENC_FILE="$TMPDIR/audio_enc.wav"

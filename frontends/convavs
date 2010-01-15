@@ -50,8 +50,7 @@ help() {
 	echo "Codec options:"
 	echo "-c: Codec selection (Format: h264/vorbis)"
 	echo "-p: Select codec quality preset, options are lq (Low quality/High speed), default (Good quality/Medium speed), hq (High quality/Low speed)"	
-	echo "-A: Anime/Cartoon mode, this tweaks the encoder for Anime/Cartoon content."
-	echo "-l: Live action mode, this tweaks the encoder for Live Action content."
+	echo "-A: Codec content mode, this tweaks the encoder for specific content, types supported are animation and film."
 	echo "-q: Audio quality (default 3)."
 	echo "-b: Video bitrate (default 900)."
 	echo "-m: Use multipass encoding, specifying the number of passes up to a maximum of three."
@@ -78,7 +77,7 @@ help() {
 	exit 0
 }
 
-while getopts 'o:f:s:t:T:c:q:b:m:r:a:v:p:hAwlz' z; do
+while getopts 'o:f:s:t:T:c:q:b:m:r:a:v:p:A:hwz' z; do
 	case "$z" in
 	z)
 		set -e -x
@@ -91,7 +90,21 @@ while getopts 'o:f:s:t:T:c:q:b:m:r:a:v:p:hAwlz' z; do
 		fi
 	;;
 	A)
-		export CARTOON=1
+		if [ -n "$OPTARG" ]; then
+			case $OPTARG in
+			animation)
+				export TUNE="$OPTARG"
+			;;
+			film)
+				export TUNE="$OPTARG"
+			;;
+			*)
+				warn "Invalid content tuning supplied, ignoring."
+			;;
+			esac
+		else
+			die "Please supply an argument to -A."
+		fi
 	;;
 	C)
 		if [ -n "$OPTARG" ]; then
@@ -175,9 +188,6 @@ while getopts 'o:f:s:t:T:c:q:b:m:r:a:v:p:hAwlz' z; do
 		else
 			die "Please supply an argument to -f."
 		fi
-	;;
-	l)
-		export LIVEACTION="1"
 	;;
 	r)
 		if [ -n "$OPTARG" ]; then

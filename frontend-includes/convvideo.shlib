@@ -34,8 +34,10 @@ convertvideo() {
 		dvdxchap -t $DVD_TITLE $DVD_DEVICE > "$TMPDIR/dvdchaps.txt"
 	fi
 
+	# Configure audio extension.
+	audio_codec_set_extension $ACODEC
+
 	# Audio encoding
-	echo
 	info "Encoding audio"
 
 	# Handle filters and resampling.
@@ -48,22 +50,6 @@ convertvideo() {
 	elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
 		export MPLAYER_OPTS="$MPLAYER_OPTS $AF"
 	fi
-
-	# Export extension based on codec.
-	case $ACODEC in
-	vorbis)
-		export EXT="ogg"
-	;;
-	aac*)
-		export EXT="mp4"
-	;;
-	mp3)
-		export EXT="mp3"
-	;;
-	flac)
-		export EXT="flac"
-	;;
-	esac
 
 	# Multi-track logic, actually encode audio.
 	if [ -n "$MULTI_TRACK" -a -z "$DONT_ENCODE" ]; then
@@ -91,12 +77,23 @@ convertvideo() {
 	# Use video_select_codec to define encoding options.
 	case $VCODEC in
 	h264)
-		video_select_codec $VCODEC preset $PRESET
+		video_codec_preset $VCODEC $PRESET
+		if [ -n "$TUNE" ]; then
+			video_codec_tune $VCODEC $TUNE
+		fi
+		video_configure_codec $VCODEC
 		video_encode "$1" "$TMPDIR/video.h264"
 	;;
 	mpeg4)
-		video_select_codec $VCODEC preset $PRESET
+		video_codec_preset $VCODEC $PRESET
+		if [ -n "$TUNE" ]; then
+			video_codec_tune $VCODEC $TUNE
+		fi
+		video_configure_codec $VCODEC
 		video_encode "$1" "$TMPDIR/video.m4v"
+	;;
+	*)
+		die "Unsupported video codec specified!"
 	;;
 	esac
 
