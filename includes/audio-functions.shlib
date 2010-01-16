@@ -13,51 +13,79 @@ decode_audio_file() {
 	fi
 }
 
-rip_track() {
-	if [ "$MAX_RERIPS" != "0" ]; then
-		mkdir -p "$TMPDIR/rip-tmp"
-		echo "Doing first rip..."
-		cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/1.wav"
-		echo "Doing second rip..."
-		cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/2.wav"
+audio_rip_track() {
+	case $1 in
+	twice)
+		if [ -d "$TMPDIR" ]; then
+			info "Beginning track extraction #1"
+			cdparanoia ${PARANOIA_OPTS} "$2" "${TMPDIR}/rip-tmp/1.wav"
+			info "Beginning track extraction #2"
+			cdparanoia ${PARANOIA_OPTS} "$2" "${TMPDIR}/rip-tmp/2.wav"
+		else
+			die "Temporary directory does not exist!"
+		fi
+	;;
+	once)
+		info "Beginning track extraction"
+		cdparanoia ${PARANOIA_OPTS} "$2" "$3"
+	;;
+	esac
+}
 
-		echo -n "Comparing files..."
-		cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
-		if [ "$?" = "1" ]; then
-			echo " difference found."
-			for i in `seq 1 $MAX_RERIPS`; do
-				rm "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav"
-				echo
-				echo "Rerip $i..."
-				echo
-				echo "Doing first rip..."
-				cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/1.wav"
-				echo "Doing second rip..."
-				cdparanoia ${PARANOIA_OPTS} "$1" "$TMPDIR/rip-tmp/2.wav"
-			
-				echo -n "Comparing files..."
-				cmp "$TMPDIR/rip-tmp/1.wav" "$TMPDIR/rip-tmp/2.wav" &> /dev/null
-				if [ "$?" = "1" ]; then
-					echo " difference found, retrying."
-					continue
+audio_extract_track() {
+	case $1 in
+	secure)
+		if [ -n "$MAX_RERIPS" ]; then
+			if [ -d "$TMPDIR" ]; then
+				mkdir -p "$TMPDIR/rip-tmp"
+
+				audio_rip_track twice $2
+
+				cmp "${TMPDIR}/rip-tmp/1.wav" "${TMPDIR}/rip-tmp/2.wav"
+				if [ $? = "0" ]; then
+					info "Both extractions match!"
+					info "Track extraction successful"
 				else
-					echo " match"
-					export MATCH=1
-					break
+					info "Extractions differ!"
+					info "Track extraction unsuccessful"
+
+					info "Beginning rerip loop"
+					for i in `seq 1 ${MAX_RERIPS}`; do
+						audio_rip_track twice $2
+
+						cmp "${TMPDIR}/rip-tmp/1.wav" "${TMPDIR}/rip-tmp/2.wav"
+						if [ $? = "0" ]; then
+							info "Both extractions match!"
+							info "Track extraction successful"
+							unset BAD_RIP
+							break
+						else
+							info "Extractions differ!"
+							info "Track extraction unsuccessful"
+							local BAD_RIP="1"
+							continue
+						fi
+					done
 				fi
-			done
-			if [ -z "$MATCH" ]; then
-				echo " hit max rerips."
+
+				if [ -z "$BAD_RIP" ]; then
+					mv "$TMPDIR/rip-tmp/1.wav" "$3"
+				else
+					info "Track extraction was unsuccessful, all rerips failed"
+				fi
+			else
+				die "Temporary directory does not exist!"
 			fi
 		else
-			echo " match."
+			die "The maximum number of rerips is undefined!"
 		fi
-
-		mv "$TMPDIR/rip-tmp/1.wav" "$2"
-	else
-		 cdparanoia ${PARANOIA_OPTS} "$1" "$2"
-	fi
+	;;
+	insecure)
+		audio_rip_track once "$2" "$3"
+	;;
+	esac
 }
+						
 
 get_qualitymap() {
 	case "$1" in

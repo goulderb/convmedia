@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export TMPDIR="/tmp/convcd-$$"
 export INCDIR="#PREFIX#/share/convmedia/includes"
@@ -6,6 +6,7 @@ export CHARSET="UTF-8"
 export VERBOSE="1"
 export INPUT_IS_WAV="1"
 export CDDB_CACHE_DIR="${HOME}/.convmedia/cddb_cache"
+export SECURE="1"
 export MAX_RERIPS=20
 
 if [ ! -d "$TMPDIR" ]; then
@@ -65,23 +66,36 @@ help() {
 	echo "-d: CD-Rom device node to use."
 	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
 	echo "-m: Multi-artist mode, use this for CD's that have multiple artists rather than one."
-	echo "-n: Maximum number of rerips to perform before accepting a possibly imperfect result."
+	echo "-s: Disable secure ripping mode, which will attempt to ensure the integrity of a rip."
+	echo "-n: Maximum number of rerips to perform before giving up on an imperfect rip (default 20)."
 	echo "-b: Enable debugging mode (set -e -x)."
 	echo "-h: Print this help."
 	rm -rf "$TMPDIR"
 	exit 0
 }
 
-while getopts 'f:a:q:r:d:n:wbhmi' z; do
+while getopts 'f:a:q:r:d:n:swbhmi' z; do
 	case "$z" in
 	f)
-		export ACODEC="$OPTARG"
+		if [ -n "$OPTARG" ]; then
+			export ACODEC="$OPTARG"
+		else
+			die "Please supply an argument to -f."
+		fi
 	;;
 	q)
-		export AQUALITY="$OPTARG"
+		if [ -n "$OPTARG" ]; then
+			export AQUALITY="$OPTARG"
+		else
+			die "Please supply an argument to -q."
+		fi
 	;;
 	d)
-		export CD_DEVICE="$OPTARG"
+		if [ -n "$OPTARG" ]; then
+			export CD_DEVICE="$OPTARG"
+		else
+			die "Please supply an argument to -d."
+		fi
 	;;
 	b)
 		set -e -x
@@ -93,7 +107,14 @@ while getopts 'f:a:q:r:d:n:wbhmi' z; do
 		export MULTI_ARTIST="1"
 	;;
 	n)
-		export MAX_RERIPS="$OPTARG"
+		if [ -n "$OPTARG" ]; then
+			export MAX_RERIPS="$OPTARG"
+		else
+			die "Please supply an argument to -n."
+		fi
+	;;
+	s)
+		unset SECURE
 	;;
 	h)
 		help
@@ -175,7 +196,11 @@ for i in $(seq 0 $TRACKS); do
 
 	echo
 	info "Ripping ${FILE_MASK}"
-	rip_track "$I" "${TMPDIR}/${FILE_MASK}.wav"
+	if [ -n "$SECURE" ]; then
+		audio_extract_track secure "$I" "${TMPDIR}/${FILE_MASK}.wav"
+	else
+		audio_extract_track insecure "$I" "${TMPDIR}/${FILE_MASK}.wav"
+	fi
 
 	case $ACODEC in
 	vorbis)
