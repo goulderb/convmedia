@@ -1,6 +1,3 @@
-0.1:
-Finish docs (God I hate documentation...)
-Improve convaudio.
-
-0.2:
-Ate-up-all-these-ideas-for-0.1
+Todo-list for the future:
+Improvements to video preset/tunings (user-definable presets and tuning)
+Improved CDDB querying, preferably produce a new cddb-functions.shlib that will have functions for fetching, parsing, etc.

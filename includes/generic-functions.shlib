@@ -46,7 +46,7 @@ cddb_query_info() {
 	if [ -z "$CDDB_CACHE_HIT" ]; then
 		wget -q -O "$TMPDIR"/cddb_query_results.txt "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5"
 
-		export RETURNCODE="`cat "$TMPDIR"/cddb_query_results.txt | head -n1 | cut -d' ' -f1`"
+		export RETURNCODE="$(cat "$TMPDIR"/cddb_query_results.txt | head -n1 | cut -d' ' -f1)"
 
 		case $RETURNCODE in
 		211)
