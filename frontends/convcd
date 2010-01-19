@@ -8,6 +8,8 @@ export INPUT_IS_WAV="1"
 export CDDB_CACHE_DIR="${HOME}/.convmedia/cddb_cache"
 export SECURE="1"
 export MAX_RERIPS=20
+export SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
+export HELLO="nobody+nowhere+convcd+1.0"
 
 if [ ! -d "$TMPDIR" ]; then
 	mkdir "$TMPDIR"
@@ -35,10 +37,10 @@ fi
 
 set_masks() {
 	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
-	export TITLE="$(grep "${N}:" $TMPDIR/parsed_results | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')"
-	export ARTIST="$(grep "${N}:" ${TMPDIR}/parsed_results | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
-	export ALBUM="$(grep "album:" ${TMPDIR}/parsed_results | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
-	export YEAR="$(grep "year:" ${TMPDIR}/parsed_results | cut -d: -f2)"
+	export TITLE="$(grep "${N}:" "${TMPDIR}"/parsed_results | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')"
+	export ARTIST="$(grep "${N}:" "${TMPDIR}"/parsed_results | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
+	export ALBUM="$(grep "album:" "${TMPDIR}"/parsed_results | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
+	export YEAR="$(grep "year:" "${TMPDIR}"/parsed_results | cut -d: -f2)"
 	export TRACKNUM="$I"
 	export ORIG_FMASK="$FILE_MASK"
 	export ORIG_DMASK="$DIR_MASK"
@@ -140,7 +142,7 @@ info "Querying disc for disc information"
 query_disc $CD_DEVICE
 
 info "Querying local cache about this CD"
-cddb_cache query $TMPDIR/parsed_results
+cddb_cache query "${TMPDIR}"/parsed_results
 
 # Cache hit failed, query CDDB.
 if [ "$?" -gt 0 ]; then
@@ -148,12 +150,12 @@ if [ "$?" -gt 0 ]; then
 	# If it fails use cddb_unknown to produce an Unknown Album template for the user to modify.
 	info "Cache query unsuccessful"
 	info "Retrieving information about this CD from CDDB"
-	cddb_query freedb.freedb.org/cgi-bin/cddb.cgi nobody+localhost+convcd+1.0 $TMPDIR/query_results
+	cddb_query $CDDB_SERVER $HELLO "${TMPDIR}"/query_results
 	if [ "$?" -lt 1 ]; then
-		cddb_read freedb.freedb.org/cgi-bin/cddb.cgi nobody+localhost+convcd+1.0 $TMPDIR/query_results $TMPDIR/read_results
-		cddb_parse $TRACKS $TMPDIR/read_results $TMPDIR/parsed_results
+		cddb_read $CDDB_SERVER $HELLO "${TMPDIR}"/query_results "${TMPDIR}"/read_results
+		cddb_parse $TRACKS "${TMPDIR}"/read_results "${TMPDIR}"/parsed_results
 	else
-		cddb_unknown $TRACKS $TMPDIR/parsed_results
+		cddb_unknown $TRACKS "${TMPDIR}"/parsed_results
 	fi
 fi
 
@@ -177,17 +179,15 @@ done
 cat "${TMPDIR}"/album-info.txt
 
 if [ -n "$INTERACTIVE" ]; then
-	echo -n "Do you want to edit the song titles, artist(s) and album name information now? (y/n) "; read answer
-	if [ "$answer" = "y" ]; then
-		$EDITOR $TMPDIR/parsed_results
-		# Recalculate number of tracks to rip by using parsed_results
-		# We count from zero, minus 2 for album/year in parsed_results.
-		export TRACKS="$(cat "${TMPDIR}"/parsed_results | wc -l)"
-		export TRACKS=$((${TRACKS}-3))
+	echo -n "Do you want to edit the song titles, artist(s) and album name information now? (y/n) "; read ANSWER
+	if [ "$ANSWER" = "y" ]; then
+		$EDITOR "${TMPDIR}"/parsed_results
 	fi
 fi
 
 # Cache our result in our local cache.
+echo
+info "Caching album information"
 cddb_cache add "${TMPDIR}"/parsed_results
 
 for i in $(seq 0 $TRACKS); do
@@ -213,7 +213,6 @@ for i in $(seq 0 $TRACKS); do
 		mkdir -p "$DIR_MASK"
 	fi
 
-	echo
 	info "Ripping ${FILE_MASK}"
 	if [ -n "$SECURE" ]; then
 		audio_extract_track secure "$I" "${TMPDIR}/${FILE_MASK}.wav"
