@@ -1,18 +1,26 @@
 die() {
-	echo "ERROR: $@"
+	C_ERROR="\033[1;31m"
+	C_CLEAR="\033[1;0m"
+	printf "${C_ERROR}ERROR${C_CLEAR}: $@\n"
 	exit 1
 }
 
 error() {
-	echo "ERROR: $@"
+	C_ERROR="\033[1;31m"
+	C_CLEAR="\033[1;0m"
+	printf "${C_ERROR}ERROR${C_CLEAR}: $@\n"
 }
 
 warn() {
-	echo "WARNING: $@"
+	C_WARN="\033[0;33m"
+	C_CLEAR="\033[1;0m"
+	printf "${C_WARN}WARNING${C_CLEAR}: $@\n"
 }
 
 info() {
-	echo "INFO: $@"
+	C_INFO="\033[1;32m"
+	C_CLEAR="\033[1;0m"
+	printf "${C_INFO}INFO${C_CLEAR}: $@\n"
 }
 
 isnumber() {
@@ -20,139 +28,6 @@ isnumber() {
 		return 0
 	else
 		return 1
-	fi
-}
-
-cddb_query_info() {
-	if [ -n "$CDDB_CACHE_DIR" -a ! -d "$CDDB_CACHE_DIR" ]; then
-		mkdir -p "$CDDB_CACHE_DIR"
-	fi
-
-	local DISCINFO="`cd-discid $CDDISCID_OPTS | sed 's: :+:g'`"
-	export TRACKS="`echo $DISCINFO | cut -d+ -f2`"
-	export TRACKS="`expr $TRACKS - 1`"
-	local SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
-	local HELLO="nobody+localhost+convcd+0.1"
-
-	if [ -n "$CDDB_CACHE_DIR" ]; then
-		local DISCID_TEMP="`echo $DISCINFO | cut -d'+' -f1`"
-		if [ -d "${CDDB_CACHE_DIR}/${DISCID_TEMP}" ]; then
-			cp "${CDDB_CACHE_DIR}/${DISCID_TEMP}/cddb_query_results.txt" "$TMPDIR"/cddb_query_results.txt
-			cp "${CDDB_CACHE_DIR}/${DISCID_TEMP}/cddb_read_results.txt" "$TMPDIR"/cddb_read_results.txt
-			export CDDB_CACHE_HIT=1
-		fi
-	fi
-
-	if [ -z "$CDDB_CACHE_HIT" ]; then
-		wget -q -O "$TMPDIR"/cddb_query_results.txt "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5"
-
-		export RETURNCODE="$(cat "$TMPDIR"/cddb_query_results.txt | head -n1 | cut -d' ' -f1)"
-
-		case $RETURNCODE in
-		211)
-			export NUM="`cat "$TMPDIR"/cddb_query_results.txt | wc -l`"
-			export NUM="`expr $NUM - 1`"
-			export RESULTS="`cat "$TMPDIR"/cddb_query_results.txt | sed 's:\r:\n:g' | tr -s '\n' | tr '\n' '+'`"
-			for i in `seq 2 $NUM`; do
-				echo "`echo "$RESULTS" | cut -d'+' -f$i`" > "$TMPDIR"/cddb_query_results.txt
-			done
-		;;
-		*)
-			cat "$TMPDIR"/cddb_query_results.txt | sed 's:\r:\n:g' | tr -s '\n' | sed 's:^ ::g' | \
-				grep "`echo $DISCINFO | cut -d+ -f1`" | sed 's:200 ::' > "$TMPDIR"/cddb_query_results_2.txt
-			mv "$TMPDIR"/cddb_query_results_2.txt "$TMPDIR"/cddb_query_results.txt
-		;;
-		esac
-
-		if [ "`cat "$TMPDIR"/cddb_query_results.txt | wc -l`" -gt "1" ]; then
-			local CNT="`cat "$TMPDIR"/cddb_query_results.txt | wc -l`"	
-			for i in `seq 1 $CNT`; do
-				if [ "$i" = "1" ]; then
-					echo "1: `cat "$TMPDIR"/cddb_query_results.txt | head -n1`" >> "$TMPDIR"/cddb_query_results_2.txt
-				else
-					echo "$i: `cat "$TMPDIR"/cddb_query_results.txt | head -n$i | tail -n1`" >> "$TMPDIR"/cddb_query_results_2.txt
-				fi
-			done
-			# If we're allowed to be interactive query the user on which to use, otherwise use first-hit mode.
-			if [ -z $INTERACTIVE ]; then
-				cat "$TMPDIR"/cddb_query_results_2.txt
-				echo -n "Please pick one of the above entries from the CDDB database by number and then hit enter: "; read entry
-			else
-				local entry="1"
-			fi
-			grep "${entry}:" "$TMPDIR"/cddb_query_results_2.txt | cut -d: -f2 | sed 's:\s::' > "$TMPDIR"/cddb_query_results.txt
-			rm "$TMPDIR"/cddb_query_results_2.txt
-		fi
-
-		case $RETURNCODE in
-		202)
-			export UNKNOWN_DISC=1
-		;;
-		esac
-
-		local GENRE="`cat "$TMPDIR"/cddb_query_results.txt | cut -d' ' -f1`"
-		local DISCID="`cat "$TMPDIR"/cddb_query_results.txt | cut -d' ' -f2`"
-	
-		if [ -z "$UNKNOWN_DISC" ]; then
-			wget -q -O "$TMPDIR"/cddb_read_results.txt "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
-			sed -i -e 's:+::g' -e 's:"::g' "$TMPDIR"/cddb_read_results.txt
-			sed -i -e 's/\[instrumental.*\]/(Instrumental Track)/gI' -e 's/\[bonus.*\]/(Bonus Track)/gI' "$TMPDIR"/cddb_read_results.txt
-		fi
-
-		unset entry CNT GENRE SERVER HELLO DISCINFO
-	fi
-
-	if [ -z "$UNKNOWN_DISC" ]; then
-		local READFILE="$TMPDIR/cddb_read_results.txt"
-		local ARTISTALBUM="`grep ^DTITLE= "$READFILE" | cut -f2 -d= | sed 's: / :%:' | tr -d \[:cntrl:\]`"
-		local ARTIST="`echo "$ARTISTALBUM" | cut -f1 -d'%'`"
-		local ALBUM="`echo "$ARTISTALBUM" | cut -f2 -d'%'`"
-		local YEAR="`grep ^DYEAR= "$READFILE" | cut -f2 -d= | sed 's:\r::g'`"
-		unset ARTISTALBUM
-	else
-		local ARTIST="Unknown Artist"
-		local ALBUM="Unknown Album"
-	fi
-
-	echo "album:${ALBUM}" >> "$TMPDIR"/album.txt
-	echo "year:${YEAR}" >> "$TMPDIR"/album.txt
-	for i in `seq 0 $TRACKS`; do
-		if [ ! "`echo -n "$i" | wc -m`" = "2" ]; then
-			local N="0${i}"
-		else
-			local N="${i}"
-		fi
-		if [ -z "$UNKNOWN_DISC" ]; then
-			local TRACK="`grep ^TTITLE${i}= "$READFILE" | cut -f2 -d= | sed 's:\r::g'`"
-		else
-			local TRACK="Track ${N}"
-		fi
-		if [ -z "`echo $TRACK | grep -x -i 'Data'`" -a -z "`echo $TRACK | grep -x -i 'Data track'`" ]; then
-			if [ -n "$MULTI_ARTIST" ]; then
-				# Assume the split is Artist / Track name
-				echo "${N}:"`echo "$TRACK" | sed 's: / :%:' | cut -d'%' -f1`"" >> "$TMPDIR"/tracks-artists.txt
-				echo "${N}:"`echo "$TRACK" | sed 's: / :%:' | cut -d'%' -f2`"" >> "$TMPDIR"/tracks.txt
-			else
-				echo "${N}:${ARTIST}" >> $TMPDIR/tracks-artists.txt
-				echo "${N}:$TRACK" >> $TMPDIR/tracks.txt
-			fi
-		elif [ -n "`echo $TRACK | grep -x -i "Data"`" -o -n "`echo $TRACK | grep -x -i 'Data track'`" ]; then
-			((TRACKS--))
-		fi
-	done
-	
-	unset ALBUM ARTIST TRACK MULTI_ARTIST N
-	
-	if [ -n "$CDDB_CACHE_DIR"  -a -z "$UNKNOWN_DISC" -a -z "$CDDB_CACHE_HIT" ]; then
-		mkdir -p "${CDDB_CACHE_DIR}/${DISCID}"
-		cp "$TMPDIR"/cddb_read_results.txt "${CDDB_CACHE_DIR}/${DISCID}/"
-		cp "$TMPDIR"/cddb_query_results.txt "${CDDB_CACHE_DIR}/${DISCID}/"
-	fi
-	if [ -z "$UNKNOWN_DISC" -a -f "$TMPDIR"/cddb_read_results.txt ]; then
-		rm "$TMPDIR"/cddb_read_results.txt
-	fi
-	if [ -f "$TMPDIR"/cddb_query_results.txt ]; then
-		rm "$TMPDIR"/cddb_query_results.txt
 	fi
 }
 

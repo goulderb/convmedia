@@ -1,0 +1,141 @@
+query_disc() {
+	export DISCINFO="$(cd-discid $1 | sed 's: :+:g')"
+	export TRACKS="$(echo $DISCINFO | cut -d+ -f2)"
+	export DISCID="$(echo $DISCINFO | cut -d+ -f1)"
+	((TRACKS--))
+}
+
+cddb_cache() {
+	if [ -n "$CDDB_CACHE_DIR" -a ! -d "$CDDB_CACHE_DIR" ]; then
+		mkdir -p "$CDDB_CACHE_DIR"	
+	fi
+
+	case $1 in
+	add)
+		if [ ! -d "${CDDB_CACHE_DIR}/${DISCID}" ]; then
+			mkdir -p "${CDDB_CACHE_DIR}/${DISCID}"
+			cp "$2" "${CDDB_CACHE_DIR}/${DISCID}/cache.txt"
+		else
+			cp "$2" "${CDDB_CACHE_DIR}/${DISCID}/cache.txt"
+		fi
+	;;
+	query)
+		if [ -d "${CDDB_CACHE_DIR}/${DISCID}" ]; then
+			cp "${CDDB_CACHE_DIR}/${DISCID}/cache.txt" "$2"
+			return 0
+		else
+			return 1
+		fi
+	;;
+	esac
+}
+
+# cddb_query freedb.freedb.org/cgi-bin/cddb.cgi nobody+localhost+convcd+1.0 $TMPDIR/query_results
+cddb_query() {
+	local SERVER="$1"
+	local HELLO="$2"
+	local OUTPUT="$3"
+
+	# Query the CDDB server.
+	wget -q -O "$TMPDIR"/cddb_query_responses.txt "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5"
+	# Set the return code from cddb
+	local RETURN_CODE="$(cat "$TMPDIR"/cddb_query_responses.txt | head -n1 | cut -d' ' -f1)"
+
+	case $RETURN_CODE in
+	200)
+		cat "$TMPDIR"/cddb_query_responses.txt | tr -s '\r' | sed 's:^ ::g' | sed 's:200 ::' > "$OUTPUT"
+		return 0
+	;;
+	202)
+		return 1
+	;;
+	210|211)
+		# Multiple possible matches, delete first line of the file.
+		sed -i -e '1d' "$TMPDIR"/cddb_query_responses.txt
+
+		# Are we interactive? If so, prompt the user, otherwise accept the first result
+		if [ -n "$INTERACTIVE" ]; then
+			local COUNT="$(cat "$TMPDIR"/cddb_query_responses.txt | wc -l)"
+
+			# Produce a list of the result to prompt the user with.
+			for i in $(seq 1 $COUNT); do
+				echo "$i: $(cat "$TMPDIR"/cddb_query_results.txt | head -n$i | tail -n1)" >> "$TMPDIR"/cddb_query_list.txt
+			done
+
+			cat "$TMPDIR"/cddb_query_list.txt
+			echo -n "Please your desired entry and hit enter: "; read ENTRY
+			grep "${ENTRY}:" "$TMPDIR"/cddb_query_list.txt | cut -d: -f2 | sed 's:\s::' | tr -s '\r' | sed 's:^ ::g' > "$OUTPUT"
+			rm "$TMPDIR"/cddb_query_list.txt
+		else
+			cat "$TMPDIR"/cddb_query_responses.txt | head -n1 | tail -n1 > "$OUTPUT"
+		fi
+		return 0
+	;;
+	esac
+}
+
+# cddb_read freedb.freedb.org/cgi-bin/cddb.cgi nobody+localhost+convcd+1.0 $TMPDIR/query_results $TMPDIR/read_results
+cddb_read() {
+	local SERVER="$1"
+	local HELLO="$2"
+	local GENRE="$(cat "$3" | cut -d' ' -f1)"
+	local OUTPUT="$4"
+
+	wget -q -O "$OUTPUT" "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"
+}	
+
+# cddb_parse 10 $TMPDIR/read_results $TMPDIR/parsed_results
+cddb_parse() {
+	local INPUT="$2"
+	local OUTPUT="$3"
+
+	local ARTISTALBUM="$(grep ^DTITLE= "$INPUT" | cut -f2 -d= | sed 's: / :%:' | tr -d \[:cntrl:\])"
+	local ARTIST="$(echo "$ARTISTALBUM" | cut -f1 -d'%')"
+	local ALBUM="$(echo "$ARTISTALBUM" | cut -f2 -d'%')"
+	local YEAR="$(grep ^DYEAR= "$INPUT" | cut -f2 -d= | sed 's:\r::g')"
+
+	echo "album:${ALBUM}" >> "$OUTPUT"
+	echo "year:${YEAR}" >> "$OUTPUT"
+
+	for i in $(seq 0 $1); do
+		# Check whether we're more than 2 characters
+		if [ ! "$(echo -n "$i" | wc -m)" -ge "2" ]; then
+			local N="0${i}"
+		else
+			local N="${i}"
+		fi
+
+		local TRACK="$(grep ^TTITLE${i}= "$INPUT" | cut -f2 -d= | sed 's:\r::g')"
+
+		if [ -n "$MULTI_ARTIST" ]; then
+			local ARTIST="$(echo "$TRACK" | sed 's: / :%:' | cut -d'%' -f1)"
+			local TRACK="$(echo "$TRACK" | sed 's: / :%:' | cut -d'%' -f2)"
+		fi
+
+		echo "${N}:${ARTIST}:${TRACK}" >> "$OUTPUT"
+	done
+}
+
+# cddb_unknown 10 $TMPDIR/parsed_results
+cddb_unknown() {
+	local OUTPUT="$2"
+
+	local ARTIST="Unknown Artist"
+	local ALBUM="Unknown Album"
+	local YEAR="$(date +%Y)"
+
+	echo "album:${ALBUM}" >> "$OUTPUT"
+	echo "year:${YEAR}" >> "$OUTPUT"
+
+	for i in $(seq 0 $1); do
+		if [ ! "$(echo -n "$i" | wc -m)" = "2" ]; then
+			local N="0${i}"
+		else
+			local N="${i}"
+		fi
+
+		local TRACK="Track ${N}"
+
+		echo "${N}:${ARTIST}:${TRACK}" >> "$OUTPUT"
+	done
+}
