@@ -132,6 +132,10 @@ fi
 
 export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE"
 
+if ! $(which cd-discid &>/dev/null); then
+	die "cd-discid is not installed, convcd requires this to function."
+fi
+
 cd-discid $CD_DEVICE &> /dev/null
 
 if [ "$?" = "1" ]; then
