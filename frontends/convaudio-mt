@@ -79,4 +79,4 @@ if [ -z "$PASS_ARGS" -a -z "$OF_IS_SET" ]; then
 	help
 fi
 
-find "$@" -print0 | xargs -0 -n 1 -P 2 convaudio $PASS_ARGS
+find "$@" -print0 | xargs -0 -n 1 -P $THREADS convaudio $PASS_ARGS
