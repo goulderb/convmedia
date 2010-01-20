@@ -54,11 +54,12 @@ help() {
 	echo "-C: Codec selection (Format: h264/vorbis)"
 	echo "-p: Select codec quality preset, options are lq (Low quality/High speed), default (Good quality/Medium speed), hq (High quality/Low speed)"
 	echo "-A: Codec content mode, this tweaks the encoder for specific content, types supported are animation and film."
+	echo "-c: Utilize CRF mode with H264, which targets a specific quality instead of a specific bitrate (requires argument, see notes)."
 	echo "-q: Audio quality (default 3)."
 	echo "-b: Video bitrate (default 900)."
 	echo "-m: Use multipass encoding, specifying the number of passes up to a maximum of three."
 	echo "-T: The number of threads to use for encoding video (default autodetect)."
-	echo "-c: On-the-fly bitrate calculation, specify a target size in megabytes for the output."
+	echo "-B: On-the-fly bitrate calculation, specify a target size in megabytes for the output."
 	echo
 	echo "Audio and video manipulation options:"
 	echo "-F: Manual FPS setting, common values are 24000/1001 and 30000/1001, default is to autodetect based on the input's FPS."
@@ -75,6 +76,11 @@ help() {
 	echo "MP4 does NOT support Vorbis audio tracks, this is due to the MP4 standard and only certain software/hardware would be"
 	echo "able to play such files, so Vorbis audio tracks will throw an error when used with MP4."
 	echo
+	echo "CRF mode utilizes X264 constant rate factor encoding, and as such the argument supplied to -c is the exact same as supplied"
+	echo "X264's --crf argument. The argument should be an integer, the lower the integer the higher the quality, with 0 being lossless."
+	echo "In addition, -c will be ignored if you utilise multipass encoding, as constant rate factor encoding and multipass encoding are"
+	echo "incompatible."
+	echo
 	echo "Splitting the video requires extra disc space to store the split video file, by default the temporary directory used"
 	echo "is /tmp/convvideo-PID/. Also, please ensure that the audio and video you're trying to split can be contained in AVI, otherwise"
 	echo "the video cannot be split because the source is split into an intermediary AVI file."
@@ -82,7 +88,7 @@ help() {
 	exit 0
 }
 
-while getopts 'A:f:o:d:s:S:a:b:q:C:c:v:t:T:m:r:p:hDVz' z; do
+while getopts 'A:f:o:d:s:S:a:b:q:C:c:B:v:t:T:m:r:p:hDVz' z; do
 	case "$z" in
 	z)
 		set -e -x
@@ -177,10 +183,17 @@ while getopts 'A:f:o:d:s:S:a:b:q:C:c:v:t:T:m:r:p:hDVz' z; do
 	;;
 	c)
 		if [ -n "$OPTARG" ]; then
+			export CRF="$OPTARG"
+		else
+			die "Please supply an argument to -c."
+		fi
+	;;
+	B)
+		if [ -n "$OPTARG" ]; then
 			export BITCALC="1"
 			export TARGET_FILESIZE="$OPTARG"
 		else
-			die "Please supply an argument to -c."
+			die "Please supply an argument to -B."
 		fi
 	;;
 	m)

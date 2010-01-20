@@ -100,25 +100,25 @@ video_codec_preset() {
 		case $2 in
 		lq)
 			if [ -n "$THREADS" ]; then
-				export X264OPTS="bitrate=$VBITRATE:subq=5:mixed_refs=0:ref=2:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=${THREADS}"
+				export X264OPTS="subq=5:mixed_refs=0:ref=2:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=${THREADS}"
 			else
-				export X264OPTS="bitrate=$VBITRATE:subq=5:mixed_refs=0:ref=2:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=auto"
+				export X264OPTS="subq=5:mixed_refs=0:ref=2:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=auto"
 			fi
 			export REF="2"
 		;;
 		hq)
 			if [ -n "$THREADS" ]; then
-				export X264OPTS="bitrate=$VBITRATE:subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:rc_lookahead=50:threads=${THREADS}"
+				export X264OPTS="subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:rc_lookahead=50:b_pyramid=normal:threads=${THREADS}"
 			else
-				export X264OPTS="bitrate=$VBITRATE:subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:rc_lookahead=50:threads=auto"
+				export X264OPTS="subq=8:mixed_refs=1:ref=5:me=umh:bframes=3:b_adapt=2:direct_pred=auto:weight_b=1:8x8dct:rc_lookahead=50:b_pyramid=normal:threads=auto"
 			fi
 			export REF="5"
 		;;
 		default|*)
 			if [ -n "$THREADS" ]; then
-				export X264OPTS="bitrate=$VBITRATE:subq=7:ref=3:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=${THREADS}"
+				export X264OPTS="subq=7:ref=3:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=${THREADS}"
 			else
-				export X264OPTS="bitrate=$VBITRATE:subq=7:ref=3:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=auto"
+				export X264OPTS="subq=7:ref=3:bframes=3:b_adapt=1:weight_b=1:8x8dct:threads=auto"
 			fi
 			export REF="3"
 		;;
@@ -128,23 +128,23 @@ video_codec_preset() {
 		case $2 in
 		lq)
 			if [ -n "$THREADS" ]; then
-				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:threads=${THREADS}"
+				export LAVCOPTS="vcodec=mpeg4:v4mv:trell:mbd=2:threads=${THREADS}"
 			else
-				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2"
+				export LAVCOPTS="vcodec=mpeg4:v4mv:trell:mbd=2"
 			fi
 		;;
 		hq)
 			if [ -n "$THREADS" ]; then
-				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:last_pred=3:predia=2:preme=2:dia=2:vmax_b_frames=2:vb_strategy=1:cbp:mv0:qns=2:threads=${THREADS}"
+				export LAVCOPTS="vcodec=mpeg4:v4mv:trell:mbd=2:last_pred=3:predia=2:preme=2:dia=2:vmax_b_frames=2:vb_strategy=1:cbp:mv0:threads=${THREADS}"
 			else
-				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:last_pred=2:predia=2:preme=2:dia=2:vmax_b_frames=2:vb_strategy=1:cbp:mv0:qns=2"
+				export LAVCOPTS="vcodec=mpeg4:v4mv:trell:mbd=2:last_pred=2:predia=2:preme=2:dia=2:vmax_b_frames=2:vb_strategy=1:cbp:mv0"
 			fi
 		;;
 		default|*)
 			if [ -n "$THREADS" ]; then
-				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:vqcomp=0.6:threads=${THREADS}"
+				export LAVCOPTS="vcodec=mpeg4:v4mv:trell:mbd=2:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:vqcomp=0.6:threads=${THREADS}"
 			else
-				export LAVCOPTS="vcodec=mpeg4:vbitrate=$VBITRATE:v4mv:trell:mbd=2:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:vqcomp=0.6"
+				export LAVCOPTS="vcodec=mpeg4:v4mv:trell:mbd=2:last_pred=2:dia=-1:vmax_b_frames=2:vb_strategy=1:vqcomp=0.6"
 			fi
 		;;
 		esac
@@ -195,7 +195,15 @@ video_configure_codec() {
 		unset REF
 
 		if [ -n "$X264OPTS" ]; then
-			info "Utilizing H264 options: " "$X264OPTS"
+			# Handle bitrate/crf.
+			if [ -n "$VBITRATE" -a -z "$CRF" ]; then
+				export X264OPTS="${X264OPTS}:bitrate=${VBITRATE}"
+			elif [ -n "$CRF" -a "$PASS" -eq 1 ]; then
+				export X264OPTS="${X264OPTS}:crf=${CRF}"
+			else
+				die "Invalid H264 encoding options set!"
+			fi
+			info "Utilizing H264 options: ${X264OPTS}"
 		else
 			die "No H264 encoding options set!"
 		fi
@@ -203,7 +211,7 @@ video_configure_codec() {
 		# Define our output video codec as x264
 		export OVC="x264"
 
-		# Handle multipass encoding. 
+		# Handle multipass encoding.
 		if [ $PASS -ge 2 ]; then
 			export OVCOPTS="-x264encopts ${X264OPTS}:pass=2"
 		else
@@ -214,7 +222,12 @@ video_configure_codec() {
 	;;
 	mpeg4)
 		if [ -n "$LAVCOPTS" ]; then
-			info "Utilizing MPEG-4 ASP options: " "$LAVCOPTS"
+			if [ -n "$VBITRATE" ]; then
+				export LAVCOPTS="${LAVCOPTS}:vbitrate=${VBITRATE}"
+			else
+				die "Invalid MPEG-4 ASP encoding options set!"
+			fi
+			info "Utilizing MPEG-4 ASP options: $LAVCOPTS"
 		else
 			die "No MPEG-4 ASP encoding options set!"
 		fi
