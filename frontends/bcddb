@@ -1,0 +1,178 @@
+#!/bin/bash
+
+export TMPDIR="/tmp/bcddb-$$"
+export INCDIR="#PREFIX#/share/convmedia/includes"
+export CHARSET="UTF-8"
+export CDDB_CACHE_DIR="${HOME}/.convmedia/cddb_cache"
+
+# Defaults.
+export SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
+export HELLO="nobody+nowhere+bcddb+0.1"
+export CD_DEVICE="/dev/sr0"
+export CACHE_ENABLED="1"
+export SILENT="1"
+
+if [ ! -d "$TMPDIR" ]; then
+	mkdir -p "$TMPDIR"
+else
+	rm -rf "$TMPDIR"
+	mkdir -p "$TMPDIR"
+fi
+
+if [ -f /etc/convmedia/bcddb.conf ]; then
+	source /etc/convmedia/bcddb.conf
+else
+	echo "Can't load configuration, exiting."
+	exit 1
+fi
+
+if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/cddb-functions.shlib ]; then
+	source $INCDIR/generic-functions.shlib
+	source $INCDIR/cddb-functions.shlib
+else
+	echo "Can't load functions, exiting."
+	exit 1
+fi
+
+while [ "$1" ]; do
+	export SHIFT="1"
+	case "$1" in
+	-h|--help)
+		echo "$(basename "$0"): CDDB Query/Read/Parse tool, with caching"
+		echo
+		echo "Options:"
+		echo "-q|--query: Only query CDDB, do not actually attempt to perform a read."
+		echo "-r|--read: Query and read from CDDB, do not parse the results into bcddb format."
+		echo "-p|--parse: Query, read and parse results from CDDB. Produces bcddb format as output."
+		echo "-d|--cd-device: Set the CD-Rom device to retrieve disc information from (default: ${CD_DEVICE})"
+		echo "-c|--cache: Disables caching, useful if you're not getting the correct results."
+		echo "-v|--verbose: Output additional information."
+		echo
+		echo "Default mode is query only."
+		exit 1
+	;;
+	-q|--query)
+		export QUERY="1"
+	;;
+	-r|--read)
+		export READ="1"
+	;;
+	-p|--parse)
+		export PARSE="1"
+	;;
+	-d|--cd-device)
+		export CD_DEVICE="$2"
+		export SHIFT="2"
+	;;
+	-c|--nocache)
+		unset CACHE_ENABLED
+	;;
+	-v|--verbose)
+		unset SILENT
+	;;
+	*)
+	;;
+	esac
+	shift $SHIFT
+done
+
+cache_add() {
+	if [ -n "$1" -a -n "$2" -a -n "$CACHE_ENABLED" ]; then
+		cddb_cache add "$1" "$2"
+		return $?
+	elif [ -n "$1" -a -n "$2" -a -z "$CACHE_ENABLED" ]; then
+		return 1
+	elif [ -z "$1" -o -z "$2" ]; then
+		warn "Invalid cache_add!"
+		return 1
+	fi
+}
+
+cache_query() {
+	if [ -n "$1" -a -n "$2" -a -n "$CACHE_ENABLED" ]; then
+		cddb_cache query "$1" "$2"
+		return $?
+	elif [ -n "$1" -a -n "$2" -a -z "$CACHE_ENABLED" ]; then
+		return 1
+	elif [ -z "$1" -o -z "$2" ]; then
+		warn "Invalid cache_query call!"
+		return 1
+	fi
+}
+
+# Confirm all of our arguments were correct
+if [ -n "$QUERY" -a -n "$READ" -a -n "$PARSE" ]; then
+	die "Invalid mode selection, you must select only one mode."
+elif [ -z "$QUERY" -a -z "$READ" -a -z "$PARSE" ]; then
+	warn "No mode selected, assuming query only"
+	export QUERY=1
+fi
+
+if [ ! -e "$CD_DEVICE" -o ! -b "$CD_DEVICE" ]; then
+	die "The CD-Rom device, ${CD_DEVICE}, is not valid."
+fi
+
+# Make sure that cd-discid is actually installed, we can't function without this.
+if ! $(which cd-discid &>/dev/null); then
+  die "cd-discid is not installed, $(basename "$0") requires this to function."
+fi
+
+cd-discid $CD_DEVICE &> /dev/null
+
+if [ "$?" = "1" ]; then
+	die "$(basename "$0") did not detect a CD in the drive."
+fi
+
+# Query CDDB if that mode is selected
+if [ -n "$QUERY" -o -n "$READ" -o -n "$PARSE" ]; then
+	info "Querying disc for information"
+	query_disc $CD_DEVICE
+
+	info "Retrieving information about this CD from CDDB"
+	cache_query query.txt "${TMPDIR}"/query_results
+	if [ $? -gt 0 ]; then
+		cddb_query $SERVER $HELLO "${TMPDIR}"/query_results
+	fi
+
+	# If the query didn't fail, go on to the next batch of tasks.
+	if [ $? -lt 1 ]; then
+		
+		cache_add "${TMPDIR}"/query_results query.txt
+
+		# Read from cddb based upon our query results.
+		if [ -n "$READ" -o -n "$PARSE" ]; then
+			cache_query read.txt "${TMPDIR}"/read_results
+			if [ $? -gt 0 ]; then
+				cddb_read $SERVER $HELLO "${TMPDIR}"/query_results "${TMPDIR}"/read_results
+			fi
+			
+			if [ "$?" -gt 0 ]; then
+				die "CDDB read failed, exiting."
+			fi
+
+			cache_add "${TMPDIR}"/read_results read.txt
+
+			# Parse results of read, if we're allowed too.
+			if [ -n "$PARSE" ]; then
+				cache_query parse.txt "${TMPDIR}"/parse_results
+				if [ $? -gt 0 ]; then
+					cddb_parse $TRACKS "${TMPDIR}"/read_results "${TMPDIR}"/parse_results
+				fi
+
+				if [ $? -lt 1 ]; then
+					cat "${TMPDIR}"/parse_results
+				fi
+
+				cache_add "${TMPDIR}"/parse_results parse.txt
+			else
+				cat "${TMPDIR}"/read_results
+			fi
+
+		else
+			cat "${TMPDIR}"/query_results
+		fi
+
+	else
+		die "CDDB query failed"
+	fi
+fi

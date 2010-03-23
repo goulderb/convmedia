@@ -14,14 +14,14 @@ cddb_cache() {
 	add)
 		if [ ! -d "${CDDB_CACHE_DIR}/${DISCID}" ]; then
 			mkdir -p "${CDDB_CACHE_DIR}/${DISCID}"
-			cp "$2" "${CDDB_CACHE_DIR}/${DISCID}/cache.txt"
+			cp "$2" "${CDDB_CACHE_DIR}/${DISCID}/$3"
 		else
-			cp "$2" "${CDDB_CACHE_DIR}/${DISCID}/cache.txt"
+			cp "$2" "${CDDB_CACHE_DIR}/${DISCID}/$3"
 		fi
 	;;
 	query)
-		if [ -d "${CDDB_CACHE_DIR}/${DISCID}" ]; then
-			cp "${CDDB_CACHE_DIR}/${DISCID}/cache.txt" "$2"
+		if [ -f "${CDDB_CACHE_DIR}/${DISCID}/$2" ]; then
+			cp "${CDDB_CACHE_DIR}/${DISCID}/$2" "$3"
 			return 0
 		else
 			return 1
@@ -35,6 +35,11 @@ cddb_query() {
 	local SERVER="$1"
 	local HELLO="$2"
 	local OUTPUT="$3"
+
+	if [ -z "$SERVER" -o -z "$HELLO" -o -z "$OUTPUT" ]; then
+		echo "Incorrect arguments specified"
+		return 1
+	fi
 
 	# Query the CDDB server.
 	wget -q -O "$TMPDIR"/cddb_query_responses.txt "$SERVER?cmd=cddb+query+$DISCINFO\&hello=$HELLO\&proto=5"
@@ -96,6 +101,7 @@ cddb_parse() {
 
 	echo "album:${ALBUM}" >> "$OUTPUT"
 	echo "year:${YEAR}" >> "$OUTPUT"
+	echo "ntr:${1}" >> "$OUTPUT"
 
 	for i in $(seq 0 $1); do
 		# Check whether we're more than 2 characters

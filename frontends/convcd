@@ -5,11 +5,8 @@ export INCDIR="#PREFIX#/share/convmedia/includes"
 export CHARSET="UTF-8"
 export VERBOSE="1"
 export INPUT_IS_WAV="1"
-export CDDB_CACHE_DIR="${HOME}/.convmedia/cddb_cache"
 export SECURE="1"
 export MAX_RERIPS=20
-export SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
-export HELLO="nobody+nowhere+convcd+1.0"
 
 if [ ! -d "$TMPDIR" ]; then
 	mkdir "$TMPDIR"
@@ -25,11 +22,10 @@ else
 	exit 1
 fi
 
-if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib -a -f $INCDIR/audio-functions.shlib -a -f $INCDIR/cddb-functions.shlib ]; then
+if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib -a -f $INCDIR/audio-functions.shlib ]; then
 	source $INCDIR/generic-functions.shlib
 	source $INCDIR/container-functions.shlib
 	source $INCDIR/audio-functions.shlib
-	source $INCDIR/cddb-functions.shlib
 else
 	echo "Can't load functions, exiting."
 	exit 1
@@ -37,10 +33,10 @@ fi
 
 set_masks() {
 	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
-	export TITLE="$(grep "${N}:" "${TMPDIR}"/parsed_results | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')"
-	export ARTIST="$(grep "${N}:" "${TMPDIR}"/parsed_results | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
-	export ALBUM="$(grep "album:" "${TMPDIR}"/parsed_results | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
-	export YEAR="$(grep "year:" "${TMPDIR}"/parsed_results | cut -d: -f2)"
+	export TITLE="$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')"
+	export ARTIST="$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
+	export ALBUM="$(grep "album:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
+	export YEAR="$(grep "year:" "${CDDB_FILE}" | cut -d: -f2)"
 	export TRACKNUM="$I"
 	export ORIG_FMASK="$FILE_MASK"
 	export ORIG_DMASK="$DIR_MASK"
@@ -59,114 +55,85 @@ restore_masks() {
 help() {
 	echo "convcd: A secure Audio CD ripper."
 	echo
-	echo "Usage: $0 [OPTIONS]"
+	echo "Usage: $0 [OPTIONS] -m file"
 	echo
 	echo "Supported audio formats: vorbis, mp3, aac-lc, aac-hev1, aac-hev2, flac"
 	echo
 	echo "Options:"
-	echo "-f: Format you want the CD to be ripped to."
-	echo "-q: Encoding quality, highest quality is 10, lowest is 1."
-	echo "-d: CD-Rom device node to use."
-	echo "-i: Interactive mode, convcd may prompt you to change certain things, such as metadata."
-	echo "-m: Multi-artist mode, use this for CD's that have multiple artists rather than one."
-	echo "-s: Disable secure ripping mode, which will attempt to ensure the integrity of a rip."
-	echo "-n: Maximum number of rerips to perform before giving up on an imperfect rip (default 20)."
-	echo "-b: Enable debugging mode (set -e -x)."
-	echo "-h: Print this help."
+	echo "-f|--format: Format you want the CD to be ripped to."
+	echo "-q|--quality: Encoding quality, highest quality is 10, lowest is 1."
+	echo "-d|--cd-device: CD-Rom device node to use."
+	echo "-m|--metadata: CDDB metadata, must be in bcddb fromat. Required"
+	echo "-i|--insecure: Disable secure ripping mode, which will attempt to ensure the integrity of a rip."
+	echo "-n|--rerips: Maximum number of rerips to perform before giving up on an imperfect rip (default 20)."
+	echo "-h|--help: Print this help."
 	rm -rf "$TMPDIR"
 	exit 0
 }
 
-while getopts 'f:a:q:r:d:n:swbhmi' z; do
-	case "$z" in
-	f)
-		if [ -n "$OPTARG" ]; then
-			export ACODEC="$OPTARG"
+while [ $1 ]; do
+	export SHIFT="1"
+	case "$1" in
+	-f|--format)
+		if [ -n "$2" ]; then
+			export ACODEC="$2"
+			export SHIFT="2"
 		else
-			die "Please supply an argument to -f."
+			die "No codec chosen."
 		fi
 	;;
-	q)
-		if [ -n "$OPTARG" ]; then
-			export AQUALITY="$OPTARG"
+	-q|--quality)
+		if [ -n "$2" ]; then
+			export AQUALITY="$2"
+			export SHIFT="2"
 		else
-			die "Please supply an argument to -q."
+			die "No quality level specified."
 		fi
 	;;
-	d)
-		if [ -n "$OPTARG" ]; then
-			export CD_DEVICE="$OPTARG"
+	-d|--cd-device)
+		if [ -n "$2" ]; then
+			export AQUALITY="$2"
+			export SHIFT="2"
 		else
-			die "Please supply an argument to -d."
+			die "No CD-Rom device specified."
 		fi
 	;;
-	b)
-		set -x
-	;;
-	i)
-		export INTERACTIVE="1"
-	;;
-	m)
-		export MULTI_ARTIST="1"
-	;;
-	n)
-		if [ -n "$OPTARG" ]; then
-			export MAX_RERIPS="$OPTARG"
+	-m|--metadata)
+		if [ -n "$2" ]; then
+			export CDDB_FILE="$2"
+			export SHIFT="2"
 		else
-			die "Please supply an argument to -n."
+			die "No metadata file specified."
 		fi
 	;;
-	s)
+	-i|--insecure)
 		unset SECURE
 	;;
-	h)
+	-n|--rerips)
+		if [ -n "$2" ]; then
+			export MAX_RERIPS="$2"
+			export SHIFT="2"
+		else
+			die "The maximum number of rerips was not specified."
+		fi
+	;;
+	-h|--help)
 		help
 	;;
- esac
+	esac
+	shift $SHIFT
 done
-shift $(($OPTIND-1))
 
-if [ -z $ACODEC ]; then
+if [ -z $ACODEC -o -z "$CDDB_FILE" ]; then
 	help
 fi
 
 export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE"
 
-if ! $(which cd-discid &>/dev/null); then
-	die "cd-discid is not installed, convcd requires this to function."
-fi
+export ALBUM="$(grep 'album:' "${CDDB_FILE}" | cut -d: -f2 | sed 's^&^And^g')"
+export YEAR="$(grep 'year:' "${CDDB_FILE}" | cut -d: -f2)"
+export TRACKS="$(grep 'ntr:' "${CDDB_FILE}" | cut -d: -f2)"
 
-cd-discid $CD_DEVICE &> /dev/null
-
-if [ "$?" = "1" ]; then
-	die "There is no CD in the drive to rip."
-fi
-
-info "Querying disc for disc information"
-query_disc $CD_DEVICE
-
-info "Querying local cache about this CD"
-cddb_cache query "${TMPDIR}"/parsed_results
-
-# Cache hit failed, query CDDB.
-if [ "$?" -gt 0 ]; then
-	# Ask CDDB about the current disc, cddb_query returns 0 if successful and 1 if it fails.
-	# If it fails use cddb_unknown to produce an Unknown Album template for the user to modify.
-	info "Cache query unsuccessful"
-	info "Retrieving information about this CD from CDDB"
-	cddb_query $CDDB_SERVER $HELLO "${TMPDIR}"/query_results
-	if [ "$?" -lt 1 ]; then
-		cddb_read $CDDB_SERVER $HELLO "${TMPDIR}"/query_results "${TMPDIR}"/read_results
-		cddb_parse $TRACKS "${TMPDIR}"/read_results "${TMPDIR}"/parsed_results
-	else
-		cddb_unknown $TRACKS "${TMPDIR}"/parsed_results
-	fi
-fi
-
-export ALBUM="$(grep 'album:' "${TMPDIR}"/parsed_results | cut -d: -f2 | sed 's^&^And^g')"
-export YEAR="$(grep 'year:' "${TMPDIR}"/parsed_results | cut -d: -f2)"
-
-echo
 echo "Album title: ${ALBUM}" >> "${TMPDIR}"/album-info.txt
 echo "Year of release: ${YEAR}" >> "${TMPDIR}"/album-info.txt
 unset ALBUM
@@ -182,20 +149,8 @@ for i in $(seq 0 "$TRACKS"); do
 done
 cat "${TMPDIR}"/album-info.txt
 
-if [ -n "$INTERACTIVE" ]; then
-	echo -n "Do you want to edit the song titles, artist(s) and album name information now? (y/n) "; read ANSWER
-	if [ "$ANSWER" = "y" ]; then
-		$EDITOR "${TMPDIR}"/parsed_results
-	fi
-fi
-
-# Cache our result in our local cache.
-echo
-info "Caching album information"
-cddb_cache add "${TMPDIR}"/parsed_results
-
 for i in $(seq 0 $TRACKS); do
-	# Insanely complicated bit of code to do an insanely simple task, make all track numbers double-digit or higher.
+	# A stupidly complicated bit of code to do an insanely simple task, make all track numbers double-digit or higher.
 	if [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" != "9" ]; then
 		export I="$i"
 		((I++))
@@ -265,5 +220,5 @@ info "Finished ripping, cleaning up."
 rm -rf "$TMPDIR"
 if [ -n "$EJECT" ]; then
 	info "Ejecting CD."
-	eject "$CD_DEVICE"
+	eject -T "$CD_DEVICE"
 fi
