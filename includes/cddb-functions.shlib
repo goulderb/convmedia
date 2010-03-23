@@ -132,6 +132,7 @@ cddb_unknown() {
 
 	echo "album:${ALBUM}" >> "$OUTPUT"
 	echo "year:${YEAR}" >> "$OUTPUT"
+	echo "ntr:${1}" >> "$OUTPUT"
 
 	for i in $(seq 0 $1); do
 		if [ ! "$(echo -n "$i" | wc -m)" = "2" ]; then

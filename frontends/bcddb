@@ -44,6 +44,7 @@ while [ "$1" ]; do
 		echo "-q|--query: Only query CDDB, do not actually attempt to perform a read."
 		echo "-r|--read: Query and read from CDDB, do not parse the results into bcddb format."
 		echo "-p|--parse: Query, read and parse results from CDDB. Produces bcddb format as output."
+		echo "-b|--blank: Produce a blank bcddb template file for the current disc."
 		echo "-d|--cd-device: Set the CD-Rom device to retrieve disc information from (default: ${CD_DEVICE})"
 		echo "-c|--cache: Disables caching, useful if you're not getting the correct results."
 		echo "-v|--verbose: Output additional information."
@@ -59,6 +60,9 @@ while [ "$1" ]; do
 	;;
 	-p|--parse)
 		export PARSE="1"
+	;;
+	-b|--blank)
+		export BLANK="1"
 	;;
 	-d|--cd-device)
 		export CD_DEVICE="$2"
@@ -101,9 +105,9 @@ cache_query() {
 }
 
 # Confirm all of our arguments were correct
-if [ -n "$QUERY" -a -n "$READ" -a -n "$PARSE" ]; then
+if [ -n "$QUERY" -a -n "$READ" -a -n "$PARSE" -a -n "$BLANK" ]; then
 	die "Invalid mode selection, you must select only one mode."
-elif [ -z "$QUERY" -a -z "$READ" -a -z "$PARSE" ]; then
+elif [ -z "$QUERY" -a -z "$READ" -a -z "$PARSE" -a -n "$BLANK" ]; then
 	warn "No mode selected, assuming query only"
 	export QUERY=1
 fi
@@ -124,9 +128,22 @@ if [ "$?" = "1" ]; then
 fi
 
 # Query CDDB if that mode is selected
-if [ -n "$QUERY" -o -n "$READ" -o -n "$PARSE" ]; then
+if [ -n "$QUERY" -o -n "$READ" -o -n "$PARSE" -o -n "$BLANK" ]; then
 	info "Querying disc for information"
 	query_disc $CD_DEVICE
+
+	# If we're called to make a blank bcddb-format file, do it and exit. We don't cache blanks.
+	if [ -n "$BLANK" ]; then
+		cddb_unknown $TRACKS "${TMPDIR}"/parse_results
+
+		if [ $? -lt 1 ]; then
+			cat "${TMPDIR}"/parse_results
+		else
+			die "Unable to produce a blank bcddb file."
+		fi
+
+		exit 0
+	fi
 
 	info "Retrieving information about this CD from CDDB"
 	cache_query query.txt "${TMPDIR}"/query_results
