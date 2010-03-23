@@ -1,2 +1,7 @@
 Todo-list for the future:
-Improvements to video preset/tunings (user-definable presets and tuning)
+convvideo:
+	Improvements to video preset/tunings (user-definable presets and tuning)
+	Split out video-splitting into a separate tool, introduce audio splitting.
+
+convcd:
+	Split out CDDB handling into a separate tool.
