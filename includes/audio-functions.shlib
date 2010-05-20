@@ -108,7 +108,7 @@ get_qualitymap() {
 		 echo "256"
 		elif [ "$AQUALITY" = "9" ]; then
 		 echo "320"
-		elif [ "$AQUALITY" = "10" ]; then
+		elif [ "$AQUALITY" -ge "10" ]; then
 		 echo "500"
 		fi
 		;;
@@ -129,6 +129,29 @@ get_qualitymap() {
 		 echo "2"
 		elif [ "$AQUALITY" -ge "8" ]; then
 		 echo "1"
+		fi
+	;;
+	vmap)
+		if [ "$AQUALITY" = "1" ]; then
+			echo "9"
+		elif [ "$AQUALITY" = "2" ]; then
+			echo "8"
+		elif [ "$AQUALITY" = "3" ]; then
+			echo "7"
+		elif [ "$AQUALITY" = "4" ]; then
+			echo "6"
+		elif [ "$AQUALITY" = "5" ]; then
+			echo "5"
+		elif [ "$AQUALITY" = "6" ]; then
+			echo "4"
+		elif [ "$AQUALITY" = "7" ]; then
+			echo "3"
+		elif [ "$AQUALITY" = "8" ]; then
+			echo "2"
+		elif [ "$AQUALITY" = "9" ]; then
+			echo "1"
+		elif [ "$AQUALITY" -ge "10" ]; then
+			echo "0"
 		fi
 	;;
 	esac
@@ -227,9 +250,9 @@ audio_encode() {
 	;;
 	mp3)
 		if [ -z "$VERBOSE" ]; then
-			lame --replaygain-accurate -S --abr $(get_qualitymap bitrate) "$ENC_FILE" "$3" &> /dev/null
+			lame --replaygain-accurate -S -V $(get_qualitymap vmap) "$ENC_FILE" "$3" &> /dev/null
 		else
-			lame --replaygain-accurate -S --abr $(get_qualitymap bitrate) "$ENC_FILE" "$3"
+			lame --replaygain-accurate -S -V $(get_qualitymap vmap) "$ENC_FILE" "$3"
 		fi
 		rm "$ENC_FILE"
 	;;

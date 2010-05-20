@@ -4,6 +4,7 @@ export TMPDIR="/tmp/burncd-$$"
 export INCDIR="#PREFIX#/share/convmedia/includes"
 export CHARSET="UTF-8"
 export CD_DEVICE="/dev/cdrom"
+export CDRECORD_OPTS="-v"
 
 if [ ! -d $TMPDIR ]; then
 	mkdir "$TMPDIR"
@@ -36,12 +37,14 @@ help() {
 	echo "-a: Audio filters to use."
 	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
 	echo "-d: CD-Rom device node to use (default /dev/cdrom)."
+	echo "-s: Session/disc-at-once mode, useful for flakey drives or preventing gaps between songs."
+	echo "-S: Burning speed, defaults to maximum. Useful for flakey drives."
 	echo "-h: Print this help."
 	rm -rf "$TMPDIR"
 	exit 0
 }
 
-while getopts 'a:r:d:h' z; do
+while getopts 'a:r:d:S:sh' z; do
   case "$z" in
   a)
     export AF="-af $OPTARG"
@@ -52,6 +55,12 @@ while getopts 'a:r:d:h' z; do
   r)
     export RESAMPLE="$OPTARG"
   ;;
+	S)
+		export CDRECORD_OPTS="$CDRECORD_OPTS speed=${OPTARG}"
+	;;
+	s)
+		export CDRECORD_OPTS="$CDRECORD_OPTS -dao"
+	;;
 	h)
 		help
 	;;
@@ -90,6 +99,6 @@ for i in `cat "${TMPDIR}"/list.txt`; do
 	export LIST="$LIST $i"
 done
 
-cdrecord dev=$CD_DEVICE -v -audio -pad $LIST
+cdrecord dev=$CD_DEVICE $CDRECORD_OPTS -audio -pad $LIST
 
 rm -rf "$TMPDIR"
