@@ -1,151 +1,67 @@
+# $1 file $2 tag
 get_metatag_data() {
-	if [ -n "$1" -a -n "$2" -a -n "$3" ]; then
-		case "$1" in
-		id3)
-			echo "`id3info "$2" | grep -i "$3" | cut -d: -f2 | sed 's/\s//' | sed 's/\n//g'`"
-		;;
-		ogg)
-			echo "`ogginfo "$2" | grep -i "${3}=" | cut -d= -f2| sed 's/\n//g'`"
-		;;
-		flac)
-			echo "`metaflac --show-tag="$3" "$2" | cut -d= -f2 | sed 's/\n//g'`"
-		;;
-		mp4)
-			echo "`faad -i "$2" 2>&1 | grep -i "$3" | cut -d: -f2 | sed 's/\s//' | sed 's/\n//g'`"
-		;;
-		esac 
+	if [ -f "$1" -a -n "$2" ]; then
+		echo "$(tagreader "$1" | grep -i "${2}*-*" | cut -d\" -f2)"
 	fi
 }
 
-set_metatag() {
-	if [ -n "$1" -a -n "$2" -a -n "$3" -a -n "$4" ]; then
-		case "$1" in
-		flac)
-			metaflac --set-tag="$2=$3" "$4"
+# $1 file $2 tag $3 value
+set_metatag_data() {
+	if [ -f "$1" -a -n "$2" -a -n "$3" ]; then
+		case $2 in
+		artist)
+			tagwriter -a "$3" "$1"
 		;;
-		id3)
-			id3tag -${2}"$3" "$4" &> /dev/null
+		album)
+			tagwriter -A "$3" "$1"
 		;;
-		ogg)
-			vorbiscomment -t "$2=$3" -a "$4"
+		track)
+			tagwriter -T "$3" "$1"
 		;;
-		mp4)
-			mp4tags -$2 "$3" "$4"
+		title)
+			tagwriter -t "$3" "$1"
+		;;
+		year)
+			tagwriter -y "$3" "$1"
 		;;
 		esac
 	fi
 }
 
+# $1 file
 get_common_metatags() {
-	if [ -n "$1" -a -n "$2" ]; then
-		case "$1" in
-		id3)
-			export ARTIST="`get_metatag_data id3 "$2" performer`"
-			export ALBUM="`get_metatag_data id3 "$2" album`"
-			export TITLE="`get_metatag_data id3 "$2" songname`"
-			export TRACKNUM="`get_metatag_data id3 "$2" "Track Number"`"
-			export YEAR="`get_metatag_data id3 "$2" year`"
-		;;
-		ogg)
-			export ARTIST="`get_metatag_data ogg "$2" artist`"
-			export ALBUM="`get_metatag_data ogg "$2" album`"
-			export TITLE="`get_metatag_data ogg "$2" title`"
-			export TRACKNUM="`get_metatag_data ogg "$2" tracknumber`"
-			export YEAR="`get_metatag_data ogg "$2" date`"
-		;;
-		flac)
-			export ARTIST="`get_metatag_data flac "$2" artist`"
-			export ALBUM="`get_metatag_data flac "$2" album`"
-			export TITLE="`get_metatag_data flac "$2" title`"
-			export TRACKNUM="`get_metatag_data flac "$2" tracknumber`"
-			export YEAR="`get_metatag_data flac "$2" date`"
-		;;
-		mp4)
-			export ARTIST="`get_metatag_data mp4 "$2" artist`"
-			export ALBUM="`get_metatag_data mp4 "$2" album`"
-			export TITLE="`get_metatag_data mp4 "$2" title`"
-			export TRACKNUM="`get_metatag_data mp4 "$2" track`"
-			export YEAR="`get_metatag_data mp4 "$2" date`"
-		;;
-		esac
+	if [ -f "$1" ]; then
+		export ARTIST="$(get_metatag_data "$1" artist)"
+		export ALBUM="$(get_metatag_data "$1" album)"
+		export TITLE="$(get_metatag_data "$1" title)"
+		export TRACKNUM="$(get_metatag_data "$1" track)"
+		export YEAR="$(get_metatag_data "$1" year)"
 	fi
 }
 
+# $1 file
 set_common_metatags() {
-	if [ -n "$1" -a -n "$2" ]; then 
-		case "$1" in
-		flac)
-			if [ -n "$ARTIST" ]; then
-				set_metatag flac ARTIST "$ARTIST" "$2"
-			fi
-			if [ -n "$ALBUM" ]; then
-				set_metatag flac ALBUM "$ALBUM" "$2"
-			fi
-			if [ -n "$TITLE" ]; then
-				set_metatag flac TITLE "$TITLE" "$2"
-			fi
-			if [ -n "$TRACKNUM" ]; then
-				set_metatag flac TRACKNUMBER "$TRACKNUM" "$2"
-			fi
-			if [ -n "$YEAR" ]; then
-				set_metatag flac DATE "$YEAR" "$2"
-			fi
-		;;
-		id3)
-			if [ -n "$ARTIST" ]; then
-				set_metatag id3 a "$ARTIST" "$2"
-			fi
-			if [ -n "$ALBUM" ]; then
-				set_metatag id3 A "$ALBUM" "$2"
-			fi
-			if [ -n "$TITLE" ]; then
-				set_metatag id3 s "$TITLE" "$2"
-			fi
-			if [ -n "$TRACKNUM" ]; then
-				set_metatag id3 t "$TRACKNUM" "$2"
-			fi
-			if [ -n "$YEAR" ]; then
-				set_metatag id3 y "$YEAR" "$2"
-			fi
-		;;
-		ogg)
-			if [ -n "$ARTIST" ]; then
-				set_metatag ogg ARTIST "$ARTIST" "$2"
-			fi
-			if [ -n "$ALBUM" ]; then
-				set_metatag ogg ALBUM "$ALBUM" "$2"
-			fi
-			if [ -n "$TITLE" ]; then
-				set_metatag ogg TITLE "$TITLE" "$2"
-			fi
-			if [ -n "$TRACKNUM" ]; then
-				set_metatag ogg TRACKNUMBER "$TRACKNUM" "$2"
-			fi
-			if [ -n "$YEAR" ]; then
-				set_metatag ogg DATE "$YEAR" "$2"
-			fi
-		;;
-		mp4)
-			if [ -n "$ARTIST" ]; then
-				set_metatag mp4 a "$ARTIST" "$2"
-			fi
-			if [ -n "$ALBUM" ]; then
-				set_metatag mp4 A "$ALBUM" "$2"
-			fi
-			if [ -n "$TITLE" ]; then
-				set_metatag mp4 s "$TITLE" "$2"
-			fi
-			if [ -n "$TRACKNUM" ]; then
-				set_metatag mp4 t "$TRACKNUM" "$2"
-			fi
-			if [ -n "$YEAR" ]; then
-				set_metatag mp4 y "$YEAR" "$2"
-			fi
-		;;
-		esac
+	if [ -f "$1" ]; then
+		if [ -n "$ARTIST" ]; then
+			set_metatag_data "$1" artist "$ARTIST"
+		fi
+		if [ -n "$ALBUM" ]; then
+			set_metatag_data "$1" album "$ALBUM"
+		fi
+		if [ -n "$TRACKNUM" ]; then
+			set_metatag_data "$1" track "$TRACKNUM"
+		fi
+		if [ -n "$TITLE" ]; then
+			set_metatag_data "$1" title "$TITLE"
+		fi
+		if [ -n "$YEAR" ]; then
+			set_metatag_data "$1" year "$YEAR"
+		fi
 	fi
 }
 
+# $1 format $2 input file $3 output file
+# required vars: VIDEO_FPS
 mux_file() {
 	if [ -n "$1" ]; then
 		case "$1" in
@@ -158,8 +74,10 @@ mux_file() {
 	fi
 }
 
+# $1 format $2 output file
+# required vars: FILEMERGE_ARGS, VIDEO_FPS if format mp4
 merge_files() { 
-	if [ -n "$1" -a -n "$2" -a -n "$VIDEO_FPS" ]; then
+	if [ -n "$1" -a -n "$2" ]; then
 		case "$1" in
 		mkv)
 			mkvmerge -o "$2" $FILEMERGE_ARGS 1> /dev/null
@@ -168,7 +86,11 @@ merge_files() {
 			ogmmerge -o "$2" $FILEMERGE_ARGS 1> /dev/null
 		;;
 		mp4)
-			MP4Box "$2" -fps "$VIDEO_FPS" $FILEMERGE_ARGS 1> /dev/null
+			if [ -n "$VIDEO_FPS" ]; then
+				MP4Box "$2" -fps "$VIDEO_FPS" $FILEMERGE_ARGS 1> /dev/null
+			else
+				die "Can't mux into MP4 without the video FPS"
+			fi
 		;;
 		esac
 	fi

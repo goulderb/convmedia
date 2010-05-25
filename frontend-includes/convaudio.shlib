@@ -1,4 +1,8 @@
 findinputformat() {
+	if [ ! -f "$1" ]; then
+		die "Input is not a file, exiting."
+	fi
+
 	if [ -n "$(echo "$1" | grep -i '\.mp3')" ]; then
 		export INPUTFORMAT=mp3
 	elif [ -n "$(echo "$1" | grep -i '\.ogg')" ]; then
@@ -13,17 +17,21 @@ findinputformat() {
 }
 
 convertaudio()	{
+	if [ ! -f "$1" ]; then
+		die "Input is not a file, exiting."
+	fi
+
 	case $INPUTFORMAT in
 	ogg)
-		get_common_metatags ogg "$1"
+		get_common_metatags "$1"
 		local OUTPUT_FILE_NOEXT="$(basename "$1" .ogg)"
 	;;
 	mp3)
-		get_common_metatags id3 "$1"
+		get_common_metatags "$1"
 		local OUTPUT_FILE_NOEXT="$(basename "$1" .mp3)"
 	;;
 	aac)
-		get_common_metatags mp4 "$1"
+		get_common_metatags "$1"
 		if [ -n "$(echo "$1" | grep -i '\.m4a')" ]; then
 			local OUTPUT_FILE_NOEXT="$(basename "$1" .m4a)"
 		else
@@ -31,7 +39,7 @@ convertaudio()	{
 		fi
 	;;
 	flac)
-		get_common_metatags flac "$1"
+		get_common_metatags "$1"
 		local OUTPUT_FILE_NOEXT="$(basename "$1" .flac)"
 	;;
 	esac
@@ -52,7 +60,7 @@ convertaudio()	{
 		 info "Converting $1 to $OUTPUT_FILE_NOEXT.ogg"
 		 audio_encode vorbis "$1" "$OUTPUT_FILE_NOEXT.ogg"
 		 info "Setting metatags for $OUTPUT_FILE_NOEXT.ogg"
-		 set_common_metatags ogg "$OUTPUT_FILE_NOEXT.ogg"
+		 set_common_metatags "$OUTPUT_FILE_NOEXT.ogg"
 		else
 		 die "A file named $OUTPUT_FILE_NOEXT.ogg already exists, exiting."
 		fi
@@ -62,7 +70,7 @@ convertaudio()	{
 		 info "Converting $1 to $OUTPUT_FILE_NOEXT.flac"
 		 audio_encode flac "$1" "$OUTPUT_FILE_NOEXT.flac"
 		 info "Setting metatags for $OUTPUT_FILE_NOEXT.flac"
-		 set_common_metatags flac "$OUTPUT_FILE_NOEXT.flac"
+		 set_common_metatags "$OUTPUT_FILE_NOEXT.flac"
 		else
 		 die "A file named $OUTPUT_FILE_NOEXT.flac already exists, exiting."
 		fi
@@ -72,7 +80,7 @@ convertaudio()	{
 		 info "Converting $1 to $OUTPUT_FILE_NOEXT.mp4"
 		 audio_encode $OUTPUTFORMAT "$1" "$OUTPUT_FILE_NOEXT.mp4"
 		 info "Setting metatags for $OUTPUT_FILE_NOEXT.mp4"
-		 set_common_metatags mp4 "$OUTPUT_FILE_NOEXT.mp4"
+		 set_common_metatags "$OUTPUT_FILE_NOEXT.mp4"
 		else
 		 die "A file named $OUTPUT_FILE_NOEXT.mp4 already exists, exiting."
 		fi
@@ -82,7 +90,7 @@ convertaudio()	{
 		 info "Converting $1 to $OUTPUT_FILE_NOEXT.mp3"
 		 audio_encode mp3 "$1" "$OUTPUT_FILE_NOEXT.mp3"
 		 info "Setting metatags for $OUTPUT_FILE_NOEXT.mp3"
-		 set_common_metatags id3 "$OUTPUT_FILE_NOEXT.mp3"
+		 set_common_metatags "$OUTPUT_FILE_NOEXT.mp3"
 		else
 		 die "A file named $OUTPUT_FILE_NOEXT.mp3 already exists, exiting."
 		fi
