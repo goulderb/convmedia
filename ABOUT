@@ -1,0 +1,36 @@
+==== About Convmedia ====
+Convmedia is a collection of Linux/UNIX shell scripts for handling many multimedia tasks,
+which are written for the GNU BASH shell. They utilize mplayer/mencoder, taglib's tagreader &
+tagwriter binaries, as well as gpac/mkvtoolnix/vorbis-tools/flac and others.
+
+At the time of writing, the project includes the following scripts:
+- bcddb: A CDDB client written in shell script, which can query, read and parse CDDB entries. It
+	utilizes wget and standard UNIX tools.
+- btagger: A Vorbis/FLAC/ID3/MP4 audio tagging script, capable of tagging and renaming audio files.
+- burnaudiocd: An audio CD burning script, which utilizes wodim/cdrecord to burn audio CDs which can be
+	based off any audio format which mplayer supports.
+- convaudio[-mt]: An audio transcoding script, which preserves metatags when transcoding between formats.
+	The -mt version is a multithreaded variant, which processes multiple files at a time to speed up conversion.
+- convavs[-batch]: A video transcoding/encoding script, which utilizes avs2yuv and wine to encode AviSynth
+	scripts into video files. The batch variant allows for the usage of special input files which allow for
+	bulk processing of multiple AviSynth scripts.
+- convcd: A secure audio ripping application, which rips at least twice in order to ensure that rips are consistent.
+- convvideo: A video transcoding/encoding script, which utilizing mencoder and other tools to produce high-quality,
+	encoded videos in either MPEG-4 ASP or H.264 format.
+
+All of these applications are built upon the core functions, which are included in the includes/ directory.
+These have the extension of ".shlib", to distinguish them from regular shell-script files. These are more akin
+to headers or modules in other languages, as they contain shared functions.
+
+These shlibs include:
+- generic-functions: Includes common functions which almost every frontend uses.
+- audio-functions: Includes all of the generic audio encoding, decoding and processing functions.
+- cddb-functions: Includes all of the generic cddb querying, reading and parsing functions.
+- container-functions: Includes all of the generic metatag handling and muxing functions.
+- video-functions: Includes all of the generic video encoding and processing functions.
+
+It is designed to be fairly modification-friendly, and those wishing to extend and modify it are encouraged too.
+Currently, documentation is somewhat out-dated, and certain portions may be undocumented; however the code is fairly
+clean and readable. Because of this, those looking to modify it are encouraged to hack first and document later.
+It is distributed under a liberal BSD-style license, which allows for anyone to modify it so long as they maintain
+the copyright notice in the COPYING file.
