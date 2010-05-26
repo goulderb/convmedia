@@ -1,0 +1,272 @@
+#!/bin/bash
+
+export INCDIR="#PREFIX#/share/convmedia/includes"
+export CHARSET="UTF-8"
+
+if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib ]; then
+	source $INCDIR/generic-functions.shlib
+	source $INCDIR/container-functions.shlib
+else
+	echo "Can't load functions, exiting."
+	exit 1
+fi
+
+help() {
+	echo "btagger - An extra sane audio tagging tool utilizing taglib"
+	echo
+	echo "Options:"
+	echo "-r|--rename: Sets btagger into file rename mode, mutually exclusive with -T and -f."
+	echo "-T|--tag: Sets btagger into file tagging mode, mutually exclusive with -r and -f."
+	echo "-f|--fromname: Sets btagger to generate tags based on file names, mutually exclusive with -r and -T."
+	echo "-h|--help: Displays this help."
+	echo
+	echo "Rename mode switches:"
+	echo "-m|--filemask: File mask, see mask format below."
+	echo
+	echo "Tagging mode switches:"
+	echo "-a|--artist: Sets artist metatag."
+	echo "-A|--album: Sets album metatag."
+	echo "-t|--title: Sets title metatag."
+  echo "-n|--tracknum: Sets track number metatag."
+  echo "-y|--year: Sets year tag"
+	echo
+	echo "From name mode switches:"
+	echo "-i|--inputmask: Input mask, see mask format below."
+	echo "-d|--delim: Delimiter for input mask, such as -. If your delimiter is a space, use ' '."
+	echo
+	echo "Mask format:"
+	echo "Masks are formatted like so:"
+	echo "File mask: %ALBUM - %TRACKNUM - %TITLE"
+	echo "Input mask: %ALBUM %TRACKNUM %TITLE"
+	echo
+	echo "Input masks differ from file masks because the delimiter is specified with -d, however file masks can separate"
+	echo "tags using whatever delimiter the user chooses."
+	echo
+	echo "Here are the tags available: %ALBUM, %ARTIST, %TRACKNUM, %TITLE, %YEAR"
+	exit 0
+}
+
+findinputformat() {
+	if [ ! -f "$1" ]; then
+		die "Input is not a file, exiting."
+	fi
+
+	if [ -n "$(echo "$1" | grep -i '\.mp3')" ]; then
+		export INPUTFORMAT=mp3
+	elif [ -n "$(echo "$1" | grep -i '\.ogg')" ]; then
+		export INPUTFORMAT=ogg
+	elif [ -n "$(echo "$1" | grep -i '\.flac')" ]; then
+		export INPUTFORMAT=flac
+	elif  [ -n "$(echo "$1" | grep -i '\.m4a')" -o -n "$(echo "$1" | grep -i '\.mp4')" ]; then
+		export INPUTFORMAT=aac
+	else
+		die "No supported format found, exiting."
+	fi
+}
+
+set_extension() {
+	case $INPUTFORMAT in
+	ogg)
+		export EXT="ogg"
+	;;
+	mp3)
+		export EXT="mp3"
+	;;
+	aac)
+		if [ -n "$(echo "$1" | grep -i '\.m4a')" ]; then
+			export EXT="m4a"
+		else
+			export EXT="mp4"
+		fi
+	;;
+	flac)
+		export EXT="flac"
+	;;
+	esac
+}
+
+while [ "$1" ]; do
+	export SHIFT="1"
+	case "$1" in
+	-r|--rename)
+		export MODE="rename"
+	;;
+	-T|--tag)
+		export MODE="tag"
+	;;
+	-f|--fromname)
+		export MODE="from-name"
+	;;
+	-a|--artist)
+		if [ -n "$2" ]; then
+			export ARTIST="$2"
+			export SHIFT="2"
+		else
+			die "No artist information specified."
+		fi
+	;;
+	-A|--album)
+		if [ -n "$2" ]; then
+			export ALBUM="$2"
+			export SHIFT="2"
+		else
+			die "No album information specified."
+		fi
+	;;
+	-t|--title)
+		if [ -n "$2" ]; then
+			export TITLE="$2"
+			export SHIFT="2"
+		else
+			die "No title information specified."
+		fi
+	;;
+	-n|--tracknum)
+		if [ -n "$2" ]; then
+			export TRACKNUM="$2"
+			export SHIFT="2"
+		else
+			die "No title information specified."
+		fi
+	;;
+	-y|--year)
+		if [ -n "$2" ]; then
+			export YEAR="$2"
+			export SHIFT="2"
+		else
+			die "No year information specified."
+		fi
+	;;
+	-m|--filemask)
+		if [ -n "$2" ]; then
+			export FILE_MASK="$2"
+			export SHIFT="2"
+		else
+			die "No file mask specified."
+		fi
+	;;
+	-d|--delim)
+		if [ -n "$2" ]; then
+			export DELIM="$2"
+			export SHIFT="2"
+		else
+			die "No delimiter specified."
+		fi
+	;;
+	-i|--inputmask)
+		if [ -n "$2" ]; then
+			for i in $2; do
+				INPUT_MASK=("${INPUT_MASK[@]}" "$i")
+			done
+			export SHIFT="2"
+		else
+			die "No input mask specified"
+		fi
+	;;
+	-h|--help)
+		help
+	;;
+	*)
+		export FILES=("${FILES[@]}" "$1")
+	;;
+	esac
+	shift $SHIFT
+done
+
+if [ "${FILES[*]}" = "" ]; then
+	help
+fi
+
+if [ "$MODE" = "rename" ]; then
+	for f in "${FILES[@]}"; do
+		if [ -n "$FILE_MASK" ]; then
+			findinputformat "$f"
+			set_extension "$f"
+
+			get_common_metatags "$f"
+
+			export FILENAME="$(basename "$f")"
+
+			set_masks
+			export NEW_FNAME="${FILE_MASK}.${EXT}"
+			info "Renaming ${FILENAME} to ${NEW_FNAME}"
+			if [ -z "$PRETEND" ]; then
+				if [ ! -f "${NEW_FNAME}" ]; then
+					mv "$f" "${NEW_FNAME}"
+				else
+					warn "File ${NEW_FNAME} already exists, not overwriting."
+				fi
+			fi
+			restore_masks
+		else
+			die "No file mask specified, aborting."
+		fi
+	done
+elif [ "$MODE" = "tag" ]; then
+	for f in "${FILES[@]}"; do
+		if [ -f "$f" ]; then
+			if [ -n "$ARTIST" -a -n "$ALBUM" -a -n "$TITLE" -a -n "$TRACKNUM" -a -n "$YEAR" ]; then
+				if [ -n "$ARTIST" ]; then
+					info "Setting artist to: $ARTIST"
+				fi
+				if [ -n "$ALBUM" ]; then
+					info "Setting album to: $ALBUM"
+				fi
+				if [ -n "$TRACKNUM" ]; then
+					info "Setting tracknum to: $TRACKNUM"
+				fi
+				if [ -n "$TITLE" ]; then
+					info "Setting title to: $TITLE"
+				fi
+				if [ -n "$YEAR" ]; then
+					info "Setting year to: $YEAR"
+				fi
+
+				set_common_metatags "$f"
+			else
+				die "No metadata specified, aborting tagging."
+			fi
+		else
+			die "Input is not a file, exiting."
+		fi
+	done
+elif [ "$MODE" = "from-name" ]; then
+	for f in "${FILES[@]}"; do
+		if [ -n "$INPUT_MASK" ]; then
+			if [ -n "$DELIM" ]; then
+				if [ -f "$f" ]; then
+					findinputformat "$f"
+					set_extension "$f"
+
+					BASENAME="$(basename "$f" ".${EXT}")"
+					reverse_mask "$DELIM" "$BASENAME"
+
+					if [ -n "$ARTIST" ]; then
+						info "Setting artist to: $ARTIST"
+					fi
+					if [ -n "$ALBUM" ]; then
+						info "Setting album to: $ALBUM"
+					fi
+					if [ -n "$TRACKNUM" ]; then
+						info "Setting tracknum to: $TRACKNUM"
+					fi
+
+					if [ -n "$TITLE" ]; then
+						info "Setting title to: $TITLE"
+					fi
+					if [ -n "$YEAR" ]; then
+						info "Setting year to: $YEAR"
+					fi
+
+					set_common_metatags "$f"
+				else
+					die "Input is not a file, exiting."
+				fi
+			else
+				die "No delimiter specified, aborting."
+			fi
+		else
+			die "No input mask specified, aborting."
+		fi
+	done
+fi

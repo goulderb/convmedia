@@ -74,6 +74,29 @@ restore_masks() {
 	export DIR_MASK="$ORIG_DMASK"
 }
 
+reverse_mask() {
+	local DELIMITER="$1"
+
+	local POS=1
+	# Logic: We use the delimiter we're given as arg-1 and a positional count (from 1 onward) to split the filename.
+	# So, if our delimiter is - and our mask ("%ARTIST" "%ALBUM"), we get ARTIST=POS[1] and ALBUM=POS[2]. Christ this is a kludge.
+	# Also, we strip leading/trailing whitespace due to insanity.
+	for i in ${INPUT_MASK[@]}; do
+		if [ "$i" = "%ARTIST" ]; then
+			export ARTIST="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		elif [ "$i" = "%ALBUM" ]; then
+			export ALBUM="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		elif [ "$i" = "%TITLE" ]; then
+			export TITLE="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		elif [ "$i" = "%TRACKNUM" ]; then
+			export TRACKNUM="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		elif [ "$i" = "%YEAR" ]; then
+			export YEAR="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		fi
+		((POS++))
+	done
+}
+
 # $1 format $2 input file $3 output file
 # required vars: VIDEO_FPS
 mux_file() {
