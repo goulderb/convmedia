@@ -35,8 +35,8 @@ help() {
 	echo "-a|--artist: Sets artist metatag."
 	echo "-A|--album: Sets album metatag."
 	echo "-t|--title: Sets title metatag."
-  echo "-n|--tracknum: Sets track number metatag."
-  echo "-y|--year: Sets year tag"
+	echo "-n|--tracknum: Sets track number metatag."
+	echo "-y|--year: Sets year tag"
 	echo
 	echo "From name mode switches:"
 	echo "-i|--inputmask: Input mask, see mask format below."
