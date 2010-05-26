@@ -31,25 +31,17 @@ else
 	exit 1
 fi
 
-set_masks() {
-	# Export title/artist/album/tracknum, then change FILE_MASK accordingly.
+set_albuminfo() {
+	# Export title/artist/album/tracknum
 	export TITLE="$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')"
 	export ARTIST="$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
 	export ALBUM="$(grep "album:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
 	export YEAR="$(grep "year:" "${CDDB_FILE}" | cut -d: -f2)"
 	export TRACKNUM="$I"
-	export ORIG_FMASK="$FILE_MASK"
-	export ORIG_DMASK="$DIR_MASK"
-	export FILE_MASK="$(echo "$FILE_MASK" | sed "s^%TITLE^$TITLE^g" | sed "s^%ARTIST^$ARTIST^g" | sed "s^%ALBUM^$ALBUM^g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
-		sed "s:%YEAR:$TRACK:g")"
-	export DIR_MASK="$(echo "$DIR_MASK" | sed "s^%TITLE^$TITLE^g" | sed "s^%ARTIST^$ARTIST^g" | sed "s^%ALBUM^$ALBUM^g" | sed "s:%TRACKNUM:$TRACKNUM:g" | \
-		sed "s:%YEAR:$TRACK:g")"
 }
 
-restore_masks() {
-	unset TITLE ARTIST ALBUM TRACKNUM
-	export FILE_MASK="$ORIG_FMASK"
-	export DIR_MASK="$ORIG_DMASK"
+unset_albuminfo() {
+	unset TITLE ARTIST ALBUM YEAR TRACKNUM
 }
 
 help() {
@@ -166,6 +158,7 @@ for i in $(seq 0 $TRACKS); do
 		export N="$i"
 	fi
 
+	set_albuminfo
 	set_masks
 
 	if [ ! -d "$DIR_MASK" ]; then
@@ -213,6 +206,7 @@ for i in $(seq 0 $TRACKS); do
 		die "Unsupported audio codec specified!"
 	;;
 	esac
+	unset_albuminfo
 	restore_masks
 done
 
