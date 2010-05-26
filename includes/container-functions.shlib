@@ -1,7 +1,14 @@
 # $1 file $2 tag
 get_metatag_data() {
 	if [ -f "$1" -a -n "$2" ]; then
-		echo "$(tagreader "$1" | grep -i "${2}*-*" | cut -d\" -f2)"
+		local ret="$(echo "$(tagreader "$1" | grep -i "${2}*-*" | cut -d\" -f2)")"
+		if [ "$2" = "track" ]; then
+			# Ensure that track numbers always come back as at least double-digit.
+			if [ ! "$(echo -n "$ret" | wc -m)" = "2" ]; then
+				local ret="0${ret}"
+			fi
+		fi
+		echo $ret
 	fi
 }
 

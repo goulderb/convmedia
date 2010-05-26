@@ -3,6 +3,13 @@
 export INCDIR="#PREFIX#/share/convmedia/includes"
 export CHARSET="UTF-8"
 
+if [ -f /etc/convmedia/btagger.conf ]; then
+	source /etc/convmedia/btagger.conf
+else
+	echo "Can't load configuration, exiting."
+	exit 1
+fi
+
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib ]; then
 	source $INCDIR/generic-functions.shlib
 	source $INCDIR/container-functions.shlib
@@ -18,6 +25,7 @@ help() {
 	echo "-r|--rename: Sets btagger into file rename mode, mutually exclusive with -T and -f."
 	echo "-T|--tag: Sets btagger into file tagging mode, mutually exclusive with -r and -f."
 	echo "-f|--fromname: Sets btagger to generate tags based on file names, mutually exclusive with -r and -T."
+	echo "-p|--pretend: Perform a dry run."
 	echo "-h|--help: Displays this help."
 	echo
 	echo "Rename mode switches:"
@@ -163,6 +171,9 @@ while [ "$1" ]; do
 			die "No input mask specified"
 		fi
 	;;
+	-p|--pretend)
+		export PRETEND="1"
+	;;
 	-h|--help)
 		help
 	;;
@@ -222,7 +233,9 @@ elif [ "$MODE" = "tag" ]; then
 					info "Setting year to: $YEAR"
 				fi
 
-				set_common_metatags "$f"
+				if [ -z "$PRETEND" ]; then
+					set_common_metatags "$f"
+				fi
 			else
 				die "No metadata specified, aborting tagging."
 			fi
@@ -258,7 +271,9 @@ elif [ "$MODE" = "from-name" ]; then
 						info "Setting year to: $YEAR"
 					fi
 
-					set_common_metatags "$f"
+					if [ -z "$PRETEND" ]; then
+						set_common_metatags "$f"
+					fi
 				else
 					die "Input is not a file, exiting."
 				fi
