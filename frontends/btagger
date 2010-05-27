@@ -10,9 +10,10 @@ else
 	exit 1
 fi
 
-if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib ]; then
+if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib -a -f $INCDIR/audio-functions.shlib ]; then
 	source $INCDIR/generic-functions.shlib
 	source $INCDIR/container-functions.shlib
+	source $INCDIR/audio-functions.shlib
 else
 	echo "Can't load functions, exiting."
 	exit 1
