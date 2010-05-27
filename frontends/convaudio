@@ -77,7 +77,6 @@ if [ -z $OUTPUTFORMAT ]; then
 fi
 
 for i in "$@"; do
-		findinputformat "$i"
 		convertaudio "$i"
 done
 rm -rf "$TMPDIR"
