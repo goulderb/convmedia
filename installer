@@ -37,7 +37,7 @@ checkdeps()	{
 		warn "bc is not installed, bc is required for on-the-fly bitrate calculation."
 	fi
 	if [ -z "`which cd-discid 2>/dev/null`" ]; then
-		warn "cd-discid is not installed, cd-discid is required for convcd to function."
+		warn "cd-discid is not installed, cd-discid is required for CDDB querying to function."
 	fi
 	if [ -z "`which cdparanoia 2>/dev/null`" ]; then
 		warn "cdparanoia is not installed, cdparanoia is required for ripping CD's with convcd."
