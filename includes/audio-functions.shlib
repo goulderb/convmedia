@@ -157,14 +157,40 @@ get_qualitymap() {
 	esac
 }
 
+audio_detect_format() {
+	if [ ! -f "$1" ]; then
+		die "Input is not a file, exiting."
+	fi
+
+	if [ -n "$(echo "$1" | grep -i '\.mp3')" ]; then
+		echo "mp3"
+		return 0
+	elif [ -n "$(echo "$1" | grep -i '\.ogg')" ]; then
+		echo "ogg"
+		return 0
+	elif [ -n "$(echo "$1" | grep -i '\.flac')" ]; then
+		echo "flac"
+		return 0
+	elif  [ -n "$(echo "$1" | grep -i '\.m4a')" -o -n "$(echo "$1" | grep -i '\.mp4')" ]; then
+		echo "aac"
+		return 0
+	else
+		die "Unsupported input format, exiting."
+	fi
+}
+
 audio_codec_set_extension() {
 	if [ -n "$1" ]; then
 		case $1 in
 		vorbis)
 			export EXT="ogg"
 		;;
-		aac-*)
-			export EXT="mp4"
+		aac*)
+			if [ -n "$(echo "$2" | grep -i '\.m4a')" ]; then
+				export EXT="m4a"
+			else
+				export EXT="mp4"
+			fi
 		;;
 		mp3)
 			export EXT="mp3"

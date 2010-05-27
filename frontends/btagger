@@ -54,45 +54,6 @@ help() {
 	exit 0
 }
 
-findinputformat() {
-	if [ ! -f "$1" ]; then
-		die "Input is not a file, exiting."
-	fi
-
-	if [ -n "$(echo "$1" | grep -i '\.mp3')" ]; then
-		export INPUTFORMAT=mp3
-	elif [ -n "$(echo "$1" | grep -i '\.ogg')" ]; then
-		export INPUTFORMAT=ogg
-	elif [ -n "$(echo "$1" | grep -i '\.flac')" ]; then
-		export INPUTFORMAT=flac
-	elif  [ -n "$(echo "$1" | grep -i '\.m4a')" -o -n "$(echo "$1" | grep -i '\.mp4')" ]; then
-		export INPUTFORMAT=aac
-	else
-		die "No supported format found, exiting."
-	fi
-}
-
-set_extension() {
-	case $INPUTFORMAT in
-	ogg)
-		export EXT="ogg"
-	;;
-	mp3)
-		export EXT="mp3"
-	;;
-	aac)
-		if [ -n "$(echo "$1" | grep -i '\.m4a')" ]; then
-			export EXT="m4a"
-		else
-			export EXT="mp4"
-		fi
-	;;
-	flac)
-		export EXT="flac"
-	;;
-	esac
-}
-
 while [ "$1" ]; do
 	export SHIFT="1"
 	case "$1" in
@@ -191,8 +152,7 @@ fi
 if [ "$MODE" = "rename" ]; then
 	for f in "${FILES[@]}"; do
 		if [ -n "$FILE_MASK" ]; then
-			findinputformat "$f"
-			set_extension "$f"
+			audio_codec_set_extension "$(audio_detect_format "$f")" "$f"
 
 			get_common_metatags "$f"
 

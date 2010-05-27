@@ -1,37 +1,20 @@
-findinputformat() {
-	if [ ! -f "$1" ]; then
-		die "Input is not a file, exiting."
-	fi
-
-	if [ -n "$(echo "$1" | grep -i '\.mp3')" ]; then
-		export INPUTFORMAT=mp3
-	elif [ -n "$(echo "$1" | grep -i '\.ogg')" ]; then
-		export INPUTFORMAT=ogg
-	elif [ -n "$(echo "$1" | grep -i '\.flac')" ]; then
-		export INPUTFORMAT=flac
-	elif  [ -n "$(echo "$1" | grep -i '\.m4a')" -o -n "$(echo "$1" | grep -i '\.mp4')" ]; then
-		export INPUTFORMAT=aac
-	else
-		die "No supported format found, exiting."
-	fi
-}
-
 convertaudio()	{
 	if [ ! -f "$1" ]; then
 		die "Input is not a file, exiting."
 	fi
 
+	local INPUTFORMAT="$(audio_detect_format "$1")"
+
+	get_common_metatags "$1"
+
 	case $INPUTFORMAT in
 	ogg)
-		get_common_metatags "$1"
 		local OUTPUT_FILE_NOEXT="$(basename "$1" .ogg)"
 	;;
 	mp3)
-		get_common_metatags "$1"
 		local OUTPUT_FILE_NOEXT="$(basename "$1" .mp3)"
 	;;
 	aac)
-		get_common_metatags "$1"
 		if [ -n "$(echo "$1" | grep -i '\.m4a')" ]; then
 			local OUTPUT_FILE_NOEXT="$(basename "$1" .m4a)"
 		else
@@ -39,7 +22,6 @@ convertaudio()	{
 		fi
 	;;
 	flac)
-		get_common_metatags "$1"
 		local OUTPUT_FILE_NOEXT="$(basename "$1" .flac)"
 	;;
 	esac
