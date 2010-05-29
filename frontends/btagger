@@ -41,7 +41,6 @@ help() {
 	echo
 	echo "From name mode switches:"
 	echo "-i|--inputmask: Input mask, see mask format below."
-	echo "-d|--delim: Delimiter for input mask, such as -. If your delimiter is a space, use ' '."
 	echo
 	echo "Mask format:"
 	echo "Masks are formatted like so:"
@@ -113,14 +112,6 @@ while [ "$1" ]; do
 			export SHIFT="2"
 		else
 			die "No file mask specified."
-		fi
-	;;
-	-d|--delim)
-		if [ -n "$2" ]; then
-			export DELIM="$2"
-			export SHIFT="2"
-		else
-			die "No delimiter specified."
 		fi
 	;;
 	-i|--inputmask)
@@ -213,7 +204,7 @@ elif [ "$MODE" = "from-name" ]; then
 					set_extension "$f"
 
 					BASENAME="$(basename "$f" ".${EXT}")"
-					reverse_mask "$DELIM" "$BASENAME"
+					reverse_mask "$BASENAME"
 
 					if [ -n "$ARTIST" ]; then
 						info "Setting artist to: $ARTIST"

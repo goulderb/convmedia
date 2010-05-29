@@ -82,27 +82,55 @@ restore_masks() {
 }
 
 reverse_mask() {
-	local DELIMITER="$1"
+	local OLD_IFS="$IFS"
+	local MASK_VALUE=()
+	local FILE_ARRAY=()
+	local OUTPUT_ARRAY=()
 
-	local POS=1
-	# Logic: We use the delimiter we're given as arg-1 and a positional count (from 1 onward) to split the filename.
-	# So, if our delimiter is - and our mask ("%ARTIST" "%ALBUM"), we get ARTIST=POS[1] and ALBUM=POS[2]. Christ this is a kludge.
-	# Also, we strip leading/trailing whitespace due to insanity.
 	for i in ${INPUT_MASK[@]}; do
+		# Index the INPUT_MASK, determining delimiters and marking them with del
 		if [ "$i" = "%ARTIST" ]; then
-			export ARTIST="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+			local MASK_VALUE=("${MASK_VALUE[@]}" "%ARTIST")
 		elif [ "$i" = "%ALBUM" ]; then
-			export ALBUM="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+			local MASK_VALUE=("${MASK_VALUE[@]}" "%ALBUM")
 		elif [ "$i" = "%TITLE" ]; then
-			export TITLE="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+			local MASK_VALUE=("${MASK_VALUE[@]}" "%TITLE")
 		elif [ "$i" = "%TRACKNUM" ]; then
-			export TRACKNUM="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+			local MASK_VALUE=("${MASK_VALUE[@]}" "%TRACKNUM")
 		elif [ "$i" = "%YEAR" ]; then
-			export YEAR="$(echo "$2" | cut -d"${DELIM}" -f"${POS}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+			local MASK_VALUE=("${MASK_VALUE[@]}" "%YEAR")
+		else
+			local MASK_DELIM=("${MASK_DELIM[@]}" "$i")
 		fi
-		((POS++))
 	done
-}
+
+	echo ${MASK_DELIM[@]}
+	for d in ${MASK_DELIM[@]}; do
+		IFS="${IFS}${d}"
+	done
+
+	for p in $1; do
+		FILE_ARRAY=("${FILE_ARRAY[@]}" "$p")
+	done
+
+	local CNT=0
+	for v in ${MASK_VALUE[@]}; do
+		if [ "$v" = "%ARTIST" ]; then
+			export ARTIST="$(echo "${FILE_ARRAY[$CNT]}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		elif [ "$v" = "%ALBUM" ]; then
+			export ALBUM="$(echo "${FILE_ARRAY[$CNT]}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		elif [ "$v" = "%TITLE" ]; then
+			export TITLE="$(echo "${FILE_ARRAY[$CNT]}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		elif [ "$v" = "%TRACKNUM" ]; then
+			export TRACKNUM="$(echo "${FILE_ARRAY[$CNT]}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		elif [ "$v" = "%YEAR" ]; then
+			export YEAR="$(echo "${FILE_ARRAY[$CNT]}" | sed -e 's/^[ \t]*//;s/[ \t]*$//')"
+		fi
+		((CNT++))
+	done
+
+	export IFS="$OLD_IFS"
+}	
 
 # $1 format $2 input file $3 output file
 # required vars: VIDEO_FPS
