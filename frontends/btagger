@@ -198,39 +198,33 @@ elif [ "$MODE" = "tag" ]; then
 elif [ "$MODE" = "from-name" ]; then
 	for f in "${FILES[@]}"; do
 		if [ -n "$INPUT_MASK" ]; then
-			if [ -n "$DELIM" ]; then
-				if [ -f "$f" ]; then
-					findinputformat "$f"
-					set_extension "$f"
+			if [ -f "$f" ]; then
+				audio_codec_set_extension "$(audio_detect_format "$f")" "$f"
 
-					BASENAME="$(basename "$f" ".${EXT}")"
-					reverse_mask "$BASENAME"
+				BASENAME="$(basename "$f" ".${EXT}")"
+				reverse_mask "$BASENAME"
 
-					if [ -n "$ARTIST" ]; then
-						info "Setting artist to: $ARTIST"
-					fi
-					if [ -n "$ALBUM" ]; then
-						info "Setting album to: $ALBUM"
-					fi
-					if [ -n "$TRACKNUM" ]; then
-						info "Setting tracknum to: $TRACKNUM"
-					fi
+				if [ -n "$ARTIST" ]; then
+					info "Setting artist to: $ARTIST"
+				fi
+				if [ -n "$ALBUM" ]; then
+					info "Setting album to: $ALBUM"
+				fi
+				if [ -n "$TRACKNUM" ]; then
+					info "Setting tracknum to: $TRACKNUM"
+				fi
+				if [ -n "$TITLE" ]; then
+					info "Setting title to: $TITLE"
+				fi
+				if [ -n "$YEAR" ]; then
+					info "Setting year to: $YEAR"
+				fi
 
-					if [ -n "$TITLE" ]; then
-						info "Setting title to: $TITLE"
-					fi
-					if [ -n "$YEAR" ]; then
-						info "Setting year to: $YEAR"
-					fi
-
-					if [ -z "$PRETEND" ]; then
-						set_common_metatags "$f"
-					fi
-				else
-					die "Input is not a file, exiting."
+				if [ -z "$PRETEND" ]; then
+					set_common_metatags "$f"
 				fi
 			else
-				die "No delimiter specified, aborting."
+				die "Input is not a file, exiting."
 			fi
 		else
 			die "No input mask specified, aborting."

@@ -104,7 +104,6 @@ reverse_mask() {
 		fi
 	done
 
-	echo ${MASK_DELIM[@]}
 	for d in ${MASK_DELIM[@]}; do
 		IFS="${IFS}${d}"
 	done
