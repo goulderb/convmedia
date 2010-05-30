@@ -135,6 +135,7 @@ for i in $(seq 0 "$TRACKS"); do
 	else
 		export N="$i"
 	fi
+	set_albuminfo
 	set_masks
 	echo "Track $N: $TITLE by $ARTIST" >> "${TMPDIR}"/album-info.txt
 	restore_masks

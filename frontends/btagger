@@ -168,7 +168,7 @@ if [ "$MODE" = "rename" ]; then
 elif [ "$MODE" = "tag" ]; then
 	for f in "${FILES[@]}"; do
 		if [ -f "$f" ]; then
-			if [ -n "$ARTIST" -a -n "$ALBUM" -a -n "$TITLE" -a -n "$TRACKNUM" -a -n "$YEAR" ]; then
+			if [ -n "$ARTIST" -o -n "$ALBUM" -o -n "$TITLE" -o -n "$TRACKNUM" -o -n "$YEAR" ]; then
 				if [ -n "$ARTIST" ]; then
 					info "Setting artist to: $ARTIST"
 				fi
