@@ -178,28 +178,28 @@ for i in $(seq 0 $TRACKS); do
 		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.ogg"
 		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
-		set_common_metatags ogg "${DIR_MASK}/${FILE_MASK}.ogg"
+		set_common_metatags "${DIR_MASK}/${FILE_MASK}.ogg"
 		echo
 	;;
 	aac-*)
 		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp4"
 		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
-		set_common_metatags mp4 "${DIR_MASK}/${FILE_MASK}.mp4"
+		set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp4"
 		echo
 	;;
 	mp3)
 		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp3"
 		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
-		set_common_metatags id3 "${DIR_MASK}/${FILE_MASK}.mp3"
+		set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp3"
 		echo
 	;;
 	flac)
 		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.flac"
 		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
-		set_common_metatags flac "${DIR_MASK}/${FILE_MASK}.flac"
+		set_common_metatags "${DIR_MASK}/${FILE_MASK}.flac"
 		echo
 	;;
 	*)
