@@ -8,7 +8,7 @@ convertaudio()	{
 	get_common_metatags "$1"
 
 	case $INPUTFORMAT in
-	ogg)
+	vorbis)
 		local OUTPUT_FILE_NOEXT="$(basename "$1" .ogg)"
 	;;
 	mp3)

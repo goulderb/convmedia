@@ -166,7 +166,7 @@ audio_detect_format() {
 		echo "mp3"
 		return 0
 	elif [ -n "$(echo "$1" | grep -i '\.ogg')" ]; then
-		echo "ogg"
+		echo "vorbis"
 		return 0
 	elif [ -n "$(echo "$1" | grep -i '\.flac')" ]; then
 		echo "flac"
