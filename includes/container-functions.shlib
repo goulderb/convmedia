@@ -104,6 +104,7 @@ reverse_mask() {
 		fi
 	done
 
+	export IFS=""
 	for d in ${MASK_DELIM[@]}; do
 		IFS="${IFS}${d}"
 	done
