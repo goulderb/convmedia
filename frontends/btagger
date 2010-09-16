@@ -45,10 +45,7 @@ help() {
 	echo "Mask format:"
 	echo "Masks are formatted like so:"
 	echo "File mask: %ALBUM - %TRACKNUM - %TITLE"
-	echo "Input mask: %ALBUM %TRACKNUM %TITLE"
-	echo
-	echo "Input masks differ from file masks because the delimiter is specified with -d, however file masks can separate"
-	echo "tags using whatever delimiter the user chooses."
+	echo "Input mask: %TRACKNUMBER.%ARTIST - %TITLE"
 	echo
 	echo "Here are the tags available: %ALBUM, %ARTIST, %TRACKNUM, %TITLE, %YEAR"
 	exit 0
