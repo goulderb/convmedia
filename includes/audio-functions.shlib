@@ -231,7 +231,7 @@ audio_encode() {
 			oggenc -q "$AQUALITY" -o "$3" "$ENC_FILE"
 		fi
 		# We might not have Vorbisgain, make sure we do otherwise DON'T try to call it.
-		if [ -n "$(which vorbisgain)" ]; then
+		if `which vorbisgain 2>/dev/null`; then
 			if [ -z "$VERBOSE" ]; then
 				vorbisgain -q -f "$3"
 			else

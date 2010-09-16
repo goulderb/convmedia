@@ -42,6 +42,9 @@ checkdeps()	{
 	if [ -z "`which cdparanoia 2>/dev/null`" ]; then
 		warn "cdparanoia is not installed, cdparanoia is required for ripping CD's with convcd."
 	fi
+	if [ -z "`which vorbisgain 2>/dev/null`" ]; then
+		warn "vorbisgain is not installed, vorbisgain is required to calculate ReplayGain information for Ogg Vorbis files."
+	fi
 }
 
 if [ ! `whoami` = "root" ]; then
