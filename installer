@@ -2,6 +2,13 @@
 # installer
 # Written by: predatorfreak
 
+if [ -f config/installer.conf ]; then
+	source config/installer.conf
+else
+	echo "Can't load config, exiting."
+	exit 1
+fi
+
 if [ -f includes/generic-functions.shlib ]; then
 	source includes/generic-functions.shlib
 else
@@ -54,52 +61,52 @@ fi
 case "$1" in
 install)
 	checkdeps
-	if [ ! -d /usr/local/share/convmedia ]; then
+	if [ ! -d $PREFIX/share/convmedia ]; then
 		echo "Beginning convmedia installation."
-		if [ ! -d /usr/local/bin ]; then
-			mkdir -p /usr/local/bin
+		if [ ! -d $PREFIX/bin ]; then
+			mkdir -p $PREFIX/bin
 		fi
-		if [ ! -d /etc/convmedia ]; then
-			mkdir -p /etc/convmedia
+		if [ ! -d $ROOT/etc/convmedia ]; then
+			mkdir -p $ROOT/etc/convmedia
 		fi
-		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
+		mkdir -p $PREFIX/share/convmedia/{includes,frontend-includes}
 		cp config/* /etc/convmedia/
 		for i in frontends/*; do
-			cp "$i" /usr/local/bin/
-			chmod +x /usr/local/bin/`basename "$i"`
-			sed -i -e 's:#PREFIX#:/usr/local:g' /usr/local/bin/`basename "$i"`
+			cp "$i" $PREFIX/bin/
+			chmod +x $PREFIX/bin/`basename "$i"`
+			sed -i -e 's:#PREFIX#:$PREFIX:g' $PREFIX/bin/`basename "$i"`
 		done
-		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
-		cp includes/* /usr/local/share/convmedia/includes/
+		cp frontend-includes/* $PREFIX/share/convmedia/frontend-includes/
+		cp includes/* $PREFIX/share/convmedia/includes/
 		echo "Done."
 		exit 0
 	else
-		die "Installer: The directory /usr/local/share/convmedia already exists, please run ./installer upgrade instead."
+		die "Installer: The directory $PREFIX/share/convmedia already exists, please run ./installer upgrade instead."
 	fi
 ;;
 upgrade)
 	checkdeps
-	if [ -d /usr/local/share/convmedia ]; then
+	if [ -d $PREFIX/share/convmedia ]; then
 		echo "Beginning convmedia upgrade."
-		if [ ! -d /usr/local/bin ]; then
-			mkdir -p /usr/local/bin
+		if [ ! -d $PREFIX/bin ]; then
+			mkdir -p $PREFIX/bin
 		fi    
-		if [ ! -d /etc/convmedia ]; then
-			mkdir -p /etc/convmedia
+		if [ ! -d $ROOT/etc/convmedia ]; then
+			mkdir -p $ROOT/etc/convmedia
 		fi
-		mkdir -p /usr/local/share/convmedia/{includes,frontend-includes}
+		mkdir -p $PREFIX/share/convmedia/{includes,frontend-includes}
 		cp -i config/* /etc/convmedia/
 		for i in frontends/*; do
-			cp "$i" /usr/local/bin/
-			chmod +x /usr/local/bin/`basename "$i"`
-			sed -i -e 's:#PREFIX#:/usr/local:g' /usr/local/bin/`basename "$i"`
+			cp "$i" $PREFIX/bin/
+			chmod +x $PREFIX/bin/`basename "$i"`
+			sed -i -e 's:#PREFIX#:$PREFIX:g' $PREFIX/bin/`basename "$i"`
 		done
-		cp frontend-includes/* /usr/local/share/convmedia/frontend-includes/
-		cp includes/* /usr/local/share/convmedia/includes/
+		cp frontend-includes/* $PREFIX/share/convmedia/frontend-includes/
+		cp includes/* $PREFIX/share/convmedia/includes/
 		echo "Done."
 		exit 0
 	else
-		die "Installer: The directory /usr/local/share/convmedia doesn't exist, please run ./installer install instead."
+		die "Installer: The directory $PREFIX/share/convmedia doesn't exist, please run ./installer install instead."
 	fi
 ;;
 *)
