@@ -2,11 +2,12 @@
 # installer
 # Written by: predatorfreak
 
-if [ -f config/installer.conf ]; then
-	source config/installer.conf
-else
-	echo "Can't load config, exiting."
-	exit 1
+if [ -z "$DESTDIR" ]; then
+	DESTDIR=/
+fi
+
+if [ -z "$PREFIX" ]; then
+	PREFIX=/usr/local/
 fi
 
 if [ -f includes/generic-functions.shlib ]; then
@@ -61,23 +62,23 @@ fi
 case "$1" in
 install)
 	checkdeps
-	if [ ! -d $PREFIX/share/convmedia ]; then
+	if [ ! -d $DESTDIR/$PREFIX/share/convmedia ]; then
 		echo "Beginning convmedia installation."
-		if [ ! -d $PREFIX/bin ]; then
-			mkdir -p $PREFIX/bin
+		if [ ! -d $DESTDIR/$PREFIX/bin ]; then
+			mkdir -p $DESTDIR/$PREFIX/bin
 		fi
-		if [ ! -d $ROOT/etc/convmedia ]; then
-			mkdir -p $ROOT/etc/convmedia
+		if [ ! -d $DESTDIR/etc/convmedia ]; then
+			mkdir -p $DESTDIR/etc/convmedia
 		fi
-		mkdir -p $PREFIX/share/convmedia/{includes,frontend-includes}
+		mkdir -p $DESTDIR/$PREFIX/share/convmedia/{includes,frontend-includes}
 		cp config/* /etc/convmedia/
 		for i in frontends/*; do
-			cp "$i" $PREFIX/bin/
-			chmod +x $PREFIX/bin/`basename "$i"`
-			sed -i -e 's:#PREFIX#:$PREFIX:g' $PREFIX/bin/`basename "$i"`
+			cp "$i" $DESTDIR/$PREFIX/bin/
+			chmod +x $DESTDIR/$PREFIX/bin/`basename "$i"`
+			sed -i -e "s:#PREFIX#:$PREFIX:g" $DESTDIR/$PREFIX/bin/`basename "$i"`
 		done
-		cp frontend-includes/* $PREFIX/share/convmedia/frontend-includes/
-		cp includes/* $PREFIX/share/convmedia/includes/
+		cp frontend-includes/* $DESTDIR/$PREFIX/share/convmedia/frontend-includes/
+		cp includes/* $DESTDIR/$PREFIX/share/convmedia/includes/
 		echo "Done."
 		exit 0
 	else
@@ -86,23 +87,23 @@ install)
 ;;
 upgrade)
 	checkdeps
-	if [ -d $PREFIX/share/convmedia ]; then
+	if [ -d $DESTDIR/$PREFIX/share/convmedia ]; then
 		echo "Beginning convmedia upgrade."
-		if [ ! -d $PREFIX/bin ]; then
-			mkdir -p $PREFIX/bin
+		if [ ! -d $DESTDIR/$PREFIX/bin ]; then
+			mkdir -p $DESTDIR/$PREFIX/bin
 		fi    
-		if [ ! -d $ROOT/etc/convmedia ]; then
-			mkdir -p $ROOT/etc/convmedia
+		if [ ! -d $DESTDIR/etc/convmedia ]; then
+			mkdir -p $DESTDIR/etc/convmedia
 		fi
-		mkdir -p $PREFIX/share/convmedia/{includes,frontend-includes}
+		mkdir -p $DESTDIR/$PREFIX/share/convmedia/{includes,frontend-includes}
 		cp -i config/* /etc/convmedia/
 		for i in frontends/*; do
 			cp "$i" $PREFIX/bin/
 			chmod +x $PREFIX/bin/`basename "$i"`
-			sed -i -e 's:#PREFIX#:$PREFIX:g' $PREFIX/bin/`basename "$i"`
+			sed -i -e "s:#PREFIX#:$PREFIX:g" $DESTDIR/$PREFIX/bin/`basename "$i"`
 		done
-		cp frontend-includes/* $PREFIX/share/convmedia/frontend-includes/
-		cp includes/* $PREFIX/share/convmedia/includes/
+		cp frontend-includes/* $DESTDIR/$PREFIX/share/convmedia/frontend-includes/
+		cp includes/* $DESTDIR/$PREFIX/share/convmedia/includes/
 		echo "Done."
 		exit 0
 	else
