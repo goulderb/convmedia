@@ -85,7 +85,6 @@ reverse_mask() {
 	local OLD_IFS="$IFS"
 	local MASK_VALUE=()
 	local FILE_ARRAY=()
-	local OUTPUT_ARRAY=()
 
 	for i in ${INPUT_MASK[@]}; do
 		# Index the INPUT_MASK, determining delimiters and putting them in MASK_DELIM.
