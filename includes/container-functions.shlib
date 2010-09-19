@@ -88,7 +88,7 @@ reverse_mask() {
 	local OUTPUT_ARRAY=()
 
 	for i in ${INPUT_MASK[@]}; do
-		# Index the INPUT_MASK, determining delimiters and marking them with del
+		# Index the INPUT_MASK, determining delimiters and putting them in MASK_DELIM.
 		if [ "$i" = "%ARTIST" ]; then
 			local MASK_VALUE=("${MASK_VALUE[@]}" "%ARTIST")
 		elif [ "$i" = "%ALBUM" ]; then
@@ -104,6 +104,8 @@ reverse_mask() {
 		fi
 	done
 
+	# Use the IFS variable to allow us to split the file name using a loop.
+	# God knows we'll need arrays for this magic.
 	export IFS=""
 	for d in ${MASK_DELIM[@]}; do
 		IFS="${IFS}${d}"
