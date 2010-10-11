@@ -2,7 +2,3 @@ Todo-list for the future:
 
 convvideo:
 	Improvements to video preset/tunings (user-definable presets and tuning)
-
-convcd:
-	Auto-run bcddb with reasonable defaults, but inform the user that no attempts to do any corrections will be given
-	and that they will have to use bcddb in order to modify the tagging information used by convcd.

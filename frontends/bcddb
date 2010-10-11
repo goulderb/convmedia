@@ -8,7 +8,7 @@ export CDDB_CACHE_DIR="${HOME}/.convmedia/cddb_cache"
 # Defaults.
 export SERVER="freedb.freedb.org/cgi-bin/cddb.cgi"
 export HELLO="nobody+nowhere+bcddb+0.1"
-export CD_DEVICE="/dev/sr0"
+export CD_DEVICE="/dev/cdrom"
 export CACHE_ENABLED="1"
 export SILENT="1"
 

@@ -7,6 +7,7 @@ export VERBOSE="1"
 export INPUT_IS_WAV="1"
 export SECURE="1"
 export MAX_RERIPS=20
+export CD_DEVICE="/dev/cdrom"
 
 if [ ! -d "$TMPDIR" ]; then
 	mkdir "$TMPDIR"
@@ -47,7 +48,7 @@ unset_albuminfo() {
 help() {
 	echo "convcd: A secure Audio CD ripper."
 	echo
-	echo "Usage: $0 [OPTIONS] -m file"
+	echo "Usage: $0 [OPTIONS]"
 	echo
 	echo "Supported audio formats: vorbis, mp3, aac-lc, aac-hev1, aac-hev2, flac"
 	echo
@@ -55,7 +56,7 @@ help() {
 	echo "-f|--format: Format you want the CD to be ripped to."
 	echo "-q|--quality: Encoding quality, highest quality is 10, lowest is 1."
 	echo "-d|--cd-device: CD-Rom device node to use."
-	echo "-m|--metadata: CDDB metadata, must be in bcddb fromat. Required"
+	echo "-m|--metadata: CDDB metadata file, must be in bcddb format."
 	echo "-i|--insecure: Disable secure ripping mode, which will attempt to ensure the integrity of a rip."
 	echo "-n|--rerips: Maximum number of rerips to perform before giving up on an imperfect rip (default 20)."
 	echo "-h|--help: Print this help."
@@ -116,11 +117,19 @@ while [ $1 ]; do
 	shift $SHIFT
 done
 
-if [ -z $ACODEC -o -z "$CDDB_FILE" ]; then
+if [ -z $ACODEC ]; then
 	help
 fi
 
 export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE"
+
+if [ -z "${CDDB_FILE}" ]; then
+	warn "No CDDB file given, taking the first possible result. You will not be able to make any changes to this information."
+	warn "In order to do so, you must use bcddb -p > FILE.bcddb and edit this information in a text editor, then run: convcd -m FILE.bcddb"
+	echo
+	bcddb -d $CD_DEVICE -p > ${TMPDIR}/cddb_auto.txt
+	export CDDB_FILE="${TMPDIR}/cddb_auto.txt"
+fi
 
 export ALBUM="$(grep 'album:' "${CDDB_FILE}" | cut -d: -f2 | sed 's^&^And^g')"
 export YEAR="$(grep 'year:' "${CDDB_FILE}" | cut -d: -f2)"
