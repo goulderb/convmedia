@@ -1,8 +1,7 @@
 die() {
 	C_ERROR="\033[1;31m"
 	C_CLEAR="\033[1;0m"
-	printf "${C_ERROR}ERROR${C_CLEAR}: "
-	echo "$@"
+	printf "${C_ERROR}ERROR${C_CLEAR}: %s\n" "$@"
 	exit 1
 }
 
@@ -10,8 +9,7 @@ error() {
 	if [ -z "$SILENT" ]; then
 		C_ERROR="\033[1;31m"
 		C_CLEAR="\033[1;0m"
-		printf "${C_ERROR}ERROR${C_CLEAR}: "
-		echo "$@"
+		printf "${C_ERROR}ERROR${C_CLEAR}: %s\n" "$@"
 	fi
 }
 
@@ -19,8 +17,7 @@ warn() {
 	if [ -z "$SILENT" ]; then
 		C_WARN="\033[0;33m"
 		C_CLEAR="\033[1;0m"
-		printf "${C_WARN}WARNING${C_CLEAR}: "
-		echo "$@"
+		printf "${C_WARN}WARNING${C_CLEAR}: %s\n" "$@"
 	fi
 }
 
@@ -28,8 +25,7 @@ info() {
 	if [ -z "$SILENT" ]; then
 		C_INFO="\033[1;32m"
 		C_CLEAR="\033[1;0m"
-		printf "${C_INFO}INFO${C_CLEAR}: "
-		echo "$@"
+		printf "${C_INFO}INFO${C_CLEAR}: %s\n" "$@"
 	fi
 }
 

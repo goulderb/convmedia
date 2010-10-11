@@ -25,6 +25,13 @@ checkdeps()	{
 	if [ -z "`which MP4Box 2>/dev/null`" ]; then
 		warn "Gpac is not installed, this is required for muxing of MP4 streams."
 	fi
+	if [ -n "`which pkg-config 2>/dev/null`" ]; then
+		if ! `pkg-config --exists taglib`; then
+			warn "Taglib is not installed, Taglib is required for reading and writing metatags for audio files."
+		fi
+	else
+		warn "pkg-config is not installed, this is required to check for taglib and build the tagreader/writer binaries, which allow tagging of audio files."
+	fi
 	if [ -z "`which mkvmerge 2>/dev/null`" ]; then
 		warn "mkvtoolnix is not installed, this provides convmedia with the ability to mux Matroska files."
 	fi
@@ -72,6 +79,7 @@ install)
 		fi
 		mkdir -p $DESTDIR/$PREFIX/share/convmedia/{includes,frontend-includes}
 		cp config/* /etc/convmedia/
+
 		for i in frontends/*; do
 			cp "$i" $DESTDIR/$PREFIX/bin/
 			chmod +x $DESTDIR/$PREFIX/bin/`basename "$i"`
@@ -79,6 +87,19 @@ install)
 		done
 		cp frontend-includes/* $DESTDIR/$PREFIX/share/convmedia/frontend-includes/
 		cp includes/* $DESTDIR/$PREFIX/share/convmedia/includes/
+
+
+		# Detect if tagreader/writer are provided, if not build them ourselves.
+		if [ -n "`which pkg-config 2>/dev/null`" ]; then
+			if `pkg-config --exists taglib` && ! `which tagreader 2>/dev/null` && ! `which tagwriter 2>/dev/null`; then
+				for i in *.cpp; do
+					echo "Building tagreader and tagwriter."
+					g++ `pkg-config --libs --cflags taglib` "$i" -o "$(basename "$i" .cpp)"
+					cp "$(basename "$i" .cpp)" $DESTDIR/$PREFIX/bin/
+				done
+			fi
+		fi
+
 		echo "Done."
 		exit 0
 	else
@@ -98,12 +119,25 @@ upgrade)
 		mkdir -p $DESTDIR/$PREFIX/share/convmedia/{includes,frontend-includes}
 		cp -i config/* /etc/convmedia/
 		for i in frontends/*; do
-			cp "$i" $PREFIX/bin/
-			chmod +x $PREFIX/bin/`basename "$i"`
+			cp "$i" $DESTDIR/$PREFIX/bin/
+			chmod +x $DESTDIR/$PREFIX/bin/`basename "$i"`
 			sed -i -e "s:#PREFIX#:$PREFIX:g" $DESTDIR/$PREFIX/bin/`basename "$i"`
 		done
+
 		cp frontend-includes/* $DESTDIR/$PREFIX/share/convmedia/frontend-includes/
 		cp includes/* $DESTDIR/$PREFIX/share/convmedia/includes/
+
+		# Detect if tagreader/writer are provided, if not build them ourselves.
+		if [ -n "`which pkg-config 2>/dev/null`" ]; then
+			if `pkg-config --exists taglib` && ! `which tagreader 2>/dev/null` && ! `which tagwriter 2>/dev/null`; then
+				echo "Building tagreader and tagwriter."
+				for i in *.cpp; do
+					g++ `pkg-config --libs --cflags taglib` "$i" -o "$(basename "$i" .cpp)"
+					cp "$(basename "$i" .cpp)" $DESTDIR/$PREFIX/bin/
+				done
+			fi
+		fi
+
 		echo "Done."
 		exit 0
 	else
