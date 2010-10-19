@@ -1,15 +1,15 @@
-decode_audio_pipe() {
-	if [ -n "$1" -a -n "$2" ]; then
-		mkfifo "$2"
-		mplayer $MPLAYER_OPTS "$1" -nocache -vc ffsiff -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null &
-	fi
-}
-
-decode_audio_file() {
-	if [ -n "$1" -a -n "$2" -a -z "$VERBOSE" ]; then
-		mplayer $MPLAYER_OPTS "$1" -nocache -vc ffsiff -vo null -ao pcm:file="$2":fast -benchmark &> /dev/null
-	elif [ -n "$1" -a -n "$2" -a -n "$VERBOSE" ]; then
-		mplayer $MPLAYER_OPTS "$1" -nocache -vc ffsiff -vo null -ao pcm:file="$2":fast -benchmark
+decode_audio() {
+	if [ -n "$1" -a -n "$2" -a -n "$3" ]; then
+		if [ "$1" = "pipe" ]; then
+			mkfifo "$3"
+			mplayer $MPLAYER_OPTS "$2" -nocache -vc ffsiff -vo null -ao pcm:file="$3":fast -benchmark &>/dev/null &
+		elif [ "$1" = "file" ]; then
+			if [ -n "$VERBOSE" ]; then
+				mplayer $MPLAYER_OPTS "$2" -nocache -vc ffsiff -vo null -ao pcm:file="$3":fast -benchmark
+			else
+				mplayer $MPLAYER_OPTS "$2" -nocache -vc ffsiff -vo null -ao pcm:file="$3":fast -benchmark &>/dev/null
+			fi
+		fi
 	fi
 }
 
@@ -216,9 +216,9 @@ audio_encode() {
 	fi
 
 	if [ -z "$INPUT_IS_WAV" -a -z "$DECODE_FIRST" ]; then
-		decode_audio_pipe "$2" "$ENC_FILE"
+		decode_audio pipe "$2" "$ENC_FILE"
 	elif [ -z "$INPUT_IS_WAV" -a -n "$DECODE_FIRST" ]; then
-		decode_audio_file "$2" "$ENC_FILE"
+		decode_audio file "$2" "$ENC_FILE"
 	fi
 
 	local BR="$(( $(get_qualitymap bitrate) * 1024 ))"

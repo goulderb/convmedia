@@ -87,7 +87,7 @@ for i in "$@"; do
 		((N++))
 		echo "Decoding ${i}..."
 		if [ -z "`file -b "$i" | grep "WAVE audio"`" ]; then
-			decode_audio_file "$i" "${TMPDIR}"/${N}.wav
+			decode_audio file "$i" "${TMPDIR}"/${N}.wav
 		else
 			cp "$i" "${TMPDIR}"/${N}.wav
 		fi
