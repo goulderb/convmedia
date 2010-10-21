@@ -66,7 +66,7 @@ done
 shift $(($OPTIND-1))
 
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib \
-	-a -f $INCDIR/audio-functions.shlib -a -f source $INCDIR/thread-functions.shlib \
+	-a -f $INCDIR/audio-functions.shlib -a -f $INCDIR/thread-functions.shlib \
 	-a -f #PREFIX#/share/convmedia/frontend-includes/convaudio.shlib ]; then
 		source $INCDIR/generic-functions.shlib
 		source $INCDIR/container-functions.shlib
