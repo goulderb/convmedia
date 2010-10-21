@@ -82,5 +82,5 @@ if [ -z $OUTPUTFORMAT ]; then
 	help
 fi
 
-run_parallel convertaudio "$@"
+(run_parallel convertaudio "$@")
 rm -rf "$TMPDIR"
