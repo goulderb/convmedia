@@ -6,30 +6,30 @@ run_parallel() {
 	fi
 
 	# We want the pid of our current shell, so use $BASHPID, as $$ returns the parent pid if we're in a subshell.
-	local shell_pid="$BASHPID"
-	local current_task=0
-	local running_task
-	local run_cmd="$1"
+	local SHELL_PID="$BASHPID"
+	local CURRENT_TASK=0
+	local RUNNING_TASK
+	local RUN_CMD="$1"
 	# Shift so we only get arguments in $@.
 	shift 1
-	local num_tasks="$#"
-	local cmd_params=("$@")
+	local NUM_TASKS="$#"
+	local CMD_PARAMS=("$@")
 
 	trapper() {
-		if [ $current_task -lt $num_tasks ]; then
-			($run_cmd "${cmd_params[$current_task]}" kill -USR1 "$subshell_pid") &
-			((current_task++))
+		if [ $CURRENT_TASK -lt $NUM_TASKS ]; then
+			($RUN_CMD "${CMD_PARAMS[$CURRENT_TASK]}" kill -USR1 "$SUBSHELL_PID") &
+			((CURRENT_TASK++))
 		fi
 	}
 
 	trap trapper SIGUSR1
-	while [ $current_task -lt $num_tasks ]; do
+	while [ $CURRENT_TASK -lt $NUM_TASKS ]; do
 		wait
-		if [ $current_task -lt $num_tasks -a $? -lt 127 ]; then
+		if [ $CURRENT_TASK -lt $NUM_TASKS -a $? -lt 127 ]; then
 			sleep 1
-			running_task="$current_task"
+			RUNNING_TASK="$CURRENT_TASK"
 			wait
-			if [ $current_task -eq $running_task ]; then
+			if [ $CURRENT_TASK -eq $RUNNING_TASK ]; then
 				for i in $(seq 1 ${THREADS}); do
 					trapper
 				done
