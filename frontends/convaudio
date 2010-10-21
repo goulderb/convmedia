@@ -27,6 +27,7 @@ help() {
 	echo "Supported formats: vorbis, flac, mp3, aac, aac-lc, aac-hev1, aac-hev2"
 	echo
 	echo "Options:"
+	echo "-t: Number of threads to use for conversion, defaults to auto detection."
 	echo "-f: Format you want the files to be transcoded to."
 	echo "-q: Quality scale, highest quality is 10, lowest is 1."
 	echo "-a: Audio filters to use."
@@ -37,8 +38,11 @@ help() {
 	exit 0
 }
 
-while getopts 'f:a:q:r:wdh' z; do
+while getopts 't:f:a:q:r:wdh' z; do
 	case "$z" in
+	t)
+		export THREADS="$OPTARG"
+	;;
 	f)
 		export OUTPUTFORMAT="$OPTARG"
 	;;
@@ -62,10 +66,12 @@ done
 shift $(($OPTIND-1))
 
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib \
-	-a -f $INCDIR/audio-functions.shlib -a -f #PREFIX#/share/convmedia/frontend-includes/convaudio.shlib ]; then
+	-a -f $INCDIR/audio-functions.shlib -a -f source $INCDIR/thread-functions.shlib \
+	-a -f #PREFIX#/share/convmedia/frontend-includes/convaudio.shlib ]; then
 		source $INCDIR/generic-functions.shlib
 		source $INCDIR/container-functions.shlib
 		source $INCDIR/audio-functions.shlib
+		source $INCDIR/thread-functions.shlib
 		source #PREFIX#/share/convmedia/frontend-includes/convaudio.shlib
 else
 		echo "Can't load functions, exiting."
@@ -76,7 +82,5 @@ if [ -z $OUTPUTFORMAT ]; then
 	help
 fi
 
-for i in "$@"; do
-		convertaudio "$i"
-done
+run_parallel convertaudio "$@"
 rm -rf "$TMPDIR"

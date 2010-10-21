@@ -210,7 +210,7 @@ audio_codec_set_extension() {
 
 audio_encode() {
 	if [ -z "$INPUT_IS_WAV" ]; then
-		export ENC_FILE="$TMPDIR/audio_enc.wav"
+		export ENC_FILE="$TMPDIR/audio_enc-${RANDOM}.wav"
 	else
 		export ENC_FILE="$2"
 	fi

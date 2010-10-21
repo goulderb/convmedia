@@ -1,0 +1,46 @@
+# This is a modified version of Jule Varlec's mapp function. All credit for the cleverness inside it goes to him, I just cleaned up some parts.
+
+run_parallel() {
+	if [ -z "$THREADS" ]; then
+		local THREADS=$(grep "processor" /proc/cpuinfo | wc -l)
+	fi
+
+	# We want the pid of our current shell, so use $BASHPID, as $$ returns the parent pid if we're in a subshell.
+	local shell_pid="$BASHPID"
+	local current_task=0
+	local running_task
+	local run_cmd="$1"
+	# Shift so we only get arguments in $@.
+	shift 1
+	local num_tasks="$#"
+	local cmd_params=("$@")
+
+	trapper() {
+		if [ $current_task -lt $num_tasks ]; then
+			($run_cmd "${cmd_params[$current_task]}" kill -USR1 "$subshell_pid") &
+			((current_task++))
+		fi
+	}
+
+	trap trapper SIGUSR1
+	while [ $current_task -lt $num_tasks ]; do
+		wait
+		if [ $current_task -lt $num_tasks -a $? -lt 127 ]; then
+			sleep 1
+			running_task="$current_task"
+			wait
+			if [ $current_task -eq $running_task ]; then
+				for i in $(seq 1 ${THREADS}); do
+					trapper
+				done
+			fi
+		fi
+	done
+
+	for i in $(seq 1 ${THREADS}); do
+		wait
+	done
+
+	trap - SIGUSR1
+	unset -f trapper
+}
