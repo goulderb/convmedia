@@ -98,6 +98,10 @@ cddb_parse() {
 	local ARTIST="$(echo "$ARTISTALBUM" | cut -f1 -d'%')"
 	local ALBUM="$(echo "$ARTISTALBUM" | cut -f2 -d'%')"
 	local YEAR="$(grep ^DYEAR= "$INPUT" | cut -f2 -d= | sed 's:\r::g')"
+	# Safety-net default. If there's no year specified on the CDDB information, use the current year.
+	if [ -z "$YEAR" ]; then
+		YEAR="$(date +%Y)"
+	fi
 
 	echo "album:${ALBUM}" >> "$OUTPUT"
 	echo "year:${YEAR}" >> "$OUTPUT"
