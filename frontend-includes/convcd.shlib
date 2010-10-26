@@ -1,0 +1,139 @@
+populate_metadata_arrays() {
+	if [ -z "${TITLES[*]}" ]; then
+		export -a TITLES
+		TITLES=("$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')")
+	else
+		TITLES=("${TITLES[@]}" "$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')")
+	fi
+
+	if [ -z "${ARTISTS[*]}" ]; then
+		export -a ARTISTS
+		ARTISTS=("$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')")
+	else
+		ARTISTS=("${ARTISTS[@]}" "$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')")
+	fi
+
+	export ALBUM="$(grep "album:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
+	export YEAR="$(grep "year:" "${CDDB_FILE}" | cut -d: -f2)"
+
+	if [ -z "${TRACKNUMS[*]}" ]; then
+		export -a TRACKNUMS
+		TRACKNUMS=("$I")
+	else
+		TRACKNUMS=("${TRACKNUMS[@]}" "$I")
+	fi
+}
+
+set_albuminfo() {
+	export ARTIST="${ARTISTS[$1]}"
+	export TITLE="${TITLES[$1]}"
+	export TRACKNUM="${TRACKNUMS[$1]}"
+}
+
+handle_encoding() {
+	local OUR_FMASK="$FILE_MASK"
+	local OUR_DMASK="$DIR_MASK"
+	
+	while [ "$NUM_JOBS" == "$THREADS" ]; do
+		sleep 1
+	done
+
+	((NUM_JOBS++))
+	case $ACODEC in
+		vorbis)
+			info "Encoding ${OUR_FMASK}.wav to ${ACODEC}"
+			audio_encode $ACODEC "${TMPDIR}/${OUR_FMASK}.wav" "${OUR_DMASK}/${OUR_FMASK}.ogg"
+			info "Setting metatags for ${OUR_DMASK}/${OUR_FMASK}.ogg"
+			set_common_metatags "${OUR_DMASK}/${OUR_FMASK}.ogg"
+			return 0
+		;;
+		aac-*)
+			info "Encoding ${OUR_FMASK}.wav to ${ACODEC}"
+			audio_encode $ACODEC "${TMPDIR}/${OUR_FMASK}.wav" "${OUR_DMASK}/${OUR_FMASK}.mp4"
+			info "Setting metatags for ${OUR_DMASK}/${OUR_FMASK}.mp4"
+			set_common_metatags "${OUR_DMASK}/${OUR_FMASK}.mp4"
+			return 0
+		;;
+		mp3)
+			info "Encoding ${OUR_FMASK}.wav to ${ACODEC}"
+			audio_encode $ACODEC "${TMPDIR}/${OUR_FMASK}.wav" "${OUR_DMASK}/${OUR_FMASK}.mp3"
+			info "Setting metatags for ${OUR_DMASK}/${OUR_FMASK}.mp3"
+			set_common_metatags "${OUR_DMASK}/${OUR_FMASK}.mp3"
+			return 0
+		;;
+		flac)
+			info "Encoding ${OUR_FMASK}.wav to ${ACODEC}"
+			audio_encode $ACODEC "${TMPDIR}/${OUR_FMASK}.wav" "${OUR_DMASK}/${OUR_FMASK}.flac"
+			info "Setting metatags for ${OUR_DMASK}/${OUR_FMASK}.flac"
+			set_common_metatags "${OUR_DMASK}/${OUR_FMASK}.flac"
+			return 0
+		;;
+		*)
+			info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
+			die "Unsupported audio codec specified!"
+			return 1
+		;;
+	esac
+	((NUM_JOBS--))
+}
+
+convert_cd() {
+	for i in $(seq 0 $TRACKS); do
+		# A stupidly complicated bit of code to do an insanely simple task, make all track numbers double-digit or higher.
+		if [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" != "9" ]; then
+			export I="$i"
+			((I++))
+			export I="0${I}"
+			export N="0${i}"
+		elif [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" = "9" ]; then
+			export I="$i"
+			((I++))
+			export N="0${i}"
+		else
+			export I="${i}"
+			((I++))
+			export N="$i"
+		fi
+		
+		populate_metadata_arrays
+	done
+
+	# Print album information out.
+	echo "Album title: ${ALBUM}"
+	echo "Year of release: ${YEAR}"
+	for i in $(seq 0 "$TRACKS"); do
+		set_albuminfo $i
+		set_masks
+		echo "Track $TRACKNUM: $TITLE by $ARTIST"
+		restore_masks
+	done
+
+	# Handle threading. If THREADS is empty, auto-detect by default. Track the number of running jobs
+	# to ensure that our running jobs never exceed available threads.
+	if [ -z "$THREADS" ]; then
+		export THREADS=$(grep "processor" /proc/cpuinfo | wc -l)
+	fi
+	export NUM_JOBS=0
+
+	for i in $(seq 0 $TRACKS); do
+		set_albuminfo $i
+		set_masks
+
+		if [ ! -d "$DIR_MASK" ]; then
+			mkdir -p "$DIR_MASK"
+		fi
+
+		info "Ripping ${FILE_MASK}"
+		if [ -n "$SECURE" ]; then
+			audio_extract_track secure "$TRACKNUM" "${TMPDIR}/${FILE_MASK}.wav"
+		else
+			audio_extract_track insecure "$TRACKNUM" "${TMPDIR}/${FILE_MASK}.wav"
+		fi
+
+		handle_encoding &
+		restore_masks
+	done
+
+	# Make sure we don't exit before all encoding is finished.
+	wait
+}

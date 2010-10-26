@@ -3,7 +3,6 @@
 export TMPDIR="/tmp/convcd-$$"
 export INCDIR="#PREFIX#/share/convmedia/includes"
 export CHARSET="UTF-8"
-export VERBOSE="1"
 export INPUT_IS_WAV="1"
 export SECURE="1"
 export MAX_RERIPS=20
@@ -23,27 +22,16 @@ else
 	exit 1
 fi
 
-if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib -a -f $INCDIR/audio-functions.shlib ]; then
+if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib -a -f $INCDIR/audio-functions.shlib \
+	-a -f #PREFIX#/share/convmedia/frontend-includes/convcd.shlib ]; then
 	source $INCDIR/generic-functions.shlib
 	source $INCDIR/container-functions.shlib
 	source $INCDIR/audio-functions.shlib
+	source #PREFIX#/share/convmedia/frontend-includes/convcd.shlib
 else
 	echo "Can't load functions, exiting."
 	exit 1
 fi
-
-set_albuminfo() {
-	# Export title/artist/album/tracknum
-	export TITLE="$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')"
-	export ARTIST="$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
-	export ALBUM="$(grep "album:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
-	export YEAR="$(grep "year:" "${CDDB_FILE}" | cut -d: -f2)"
-	export TRACKNUM="$I"
-}
-
-unset_albuminfo() {
-	unset TITLE ARTIST ALBUM YEAR TRACKNUM
-}
 
 help() {
 	echo "convcd: A secure Audio CD ripper."
@@ -59,6 +47,7 @@ help() {
 	echo "-m|--metadata: CDDB metadata file, must be in bcddb format."
 	echo "-i|--insecure: Disable secure ripping mode, which will attempt to ensure the integrity of a rip."
 	echo "-n|--rerips: Maximum number of rerips to perform before giving up on an imperfect rip (default 20)."
+	echo "-t|--threads: Maximum number of threads to utilize for encoding (default auto-detect)."
 	echo "-h|--help: Print this help."
 	rm -rf "$TMPDIR"
 	exit 0
@@ -110,6 +99,14 @@ while [ $1 ]; do
 			die "The maximum number of rerips was not specified."
 		fi
 	;;
+	-t|--threads)
+		if [ -n "$2" ]; then
+			export THREADS="$2"
+			export SHIFT="2"
+		else
+			die "The maximum number of threads was not specified."
+		fi
+	;;
 	-h|--help)
 		help
 	;;
@@ -121,7 +118,7 @@ if [ -z $ACODEC ]; then
 	help
 fi
 
-export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE"
+export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE -Z --quiet"
 
 if [ -z "${CDDB_FILE}" ]; then
 	warn "No CDDB file given, taking the first possible result. You will not be able to make any changes to this information."
@@ -131,94 +128,9 @@ if [ -z "${CDDB_FILE}" ]; then
 	export CDDB_FILE="${TMPDIR}/cddb_auto.txt"
 fi
 
-export ALBUM="$(grep 'album:' "${CDDB_FILE}" | cut -d: -f2 | sed 's^&^And^g')"
-export YEAR="$(grep 'year:' "${CDDB_FILE}" | cut -d: -f2)"
 export TRACKS="$(grep 'ntr:' "${CDDB_FILE}" | cut -d: -f2)"
 
-echo "Album title: ${ALBUM}" >> "${TMPDIR}"/album-info.txt
-echo "Year of release: ${YEAR}" >> "${TMPDIR}"/album-info.txt
-unset ALBUM
-for i in $(seq 0 "$TRACKS"); do
-	if [ ! "$(echo -n "$i" | wc -m)" = "2" ]; then
-		export N="0${i}"
-	else
-		export N="$i"
-	fi
-	set_albuminfo
-	set_masks
-	echo "Track $N: $TITLE by $ARTIST" >> "${TMPDIR}"/album-info.txt
-	restore_masks
-done
-cat "${TMPDIR}"/album-info.txt
-
-for i in $(seq 0 $TRACKS); do
-	# A stupidly complicated bit of code to do an insanely simple task, make all track numbers double-digit or higher.
-	if [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" != "9" ]; then
-		export I="$i"
-		((I++))
-		export I="0${I}"
-		export N="0${i}"
-	elif [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" = "9" ]; then
-		export I="$i"
-		((I++))
-		export N="0${i}"
-	else
-		export I="${i}"
-		((I++))
-		export N="$i"
-	fi
-
-	set_albuminfo
-	set_masks
-
-	if [ ! -d "$DIR_MASK" ]; then
-		mkdir -p "$DIR_MASK"
-	fi
-
-	info "Ripping ${FILE_MASK}"
-	if [ -n "$SECURE" ]; then
-		audio_extract_track secure "$I" "${TMPDIR}/${FILE_MASK}.wav"
-	else
-		audio_extract_track insecure "$I" "${TMPDIR}/${FILE_MASK}.wav"
-	fi
-
-	case $ACODEC in
-	vorbis)
-		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
-		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.ogg"
-		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
-		set_common_metatags "${DIR_MASK}/${FILE_MASK}.ogg"
-		echo
-	;;
-	aac-*)
-		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
-		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp4"
-		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
-		set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp4"
-		echo
-	;;
-	mp3)
-		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
-		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp3"
-		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
-		set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp3"
-		echo
-	;;
-	flac)
-		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
-		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.flac"
-		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
-		set_common_metatags "${DIR_MASK}/${FILE_MASK}.flac"
-		echo
-	;;
-	*)
-		info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
-		die "Unsupported audio codec specified!"
-	;;
-	esac
-	unset_albuminfo
-	restore_masks
-done
+convert_cd
 
 info "Finished ripping, cleaning up."
 rm -rf "$TMPDIR"

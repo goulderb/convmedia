@@ -193,3 +193,4 @@ if [ -n "$QUERY" -o -n "$READ" -o -n "$PARSE" -o -n "$BLANK" ]; then
 		die "CDDB query failed"
 	fi
 fi
+rm -rf "$TMPDIR"
