@@ -34,50 +34,50 @@ set_albuminfo() {
 }
 
 handle_encoding() {
-	local OUR_FMASK="$FILE_MASK"
-	local OUR_DMASK="$DIR_MASK"
+	set_trackinfo $1
+	set_masks
 	
-	while [ "$NUM_JOBS" == "$THREADS" ]; do
-		sleep 1
-	done
+	if [ ! -d "$DIR_MASK" ]; then
+		mkdir -p "$DIR_MASK"
+	fi
 
-	((NUM_JOBS++))
 	case $ACODEC in
-		vorbis)
-			info "Encoding ${OUR_FMASK}.wav to ${ACODEC}"
-			audio_encode $ACODEC "${TMPDIR}/${OUR_FMASK}.wav" "${OUR_DMASK}/${OUR_FMASK}.ogg"
-			info "Setting metatags for ${OUR_DMASK}/${OUR_FMASK}.ogg"
-			set_common_metatags "${OUR_DMASK}/${OUR_FMASK}.ogg"
-			return 0
-		;;
-		aac-*)
-			info "Encoding ${OUR_FMASK}.wav to ${ACODEC}"
-			audio_encode $ACODEC "${TMPDIR}/${OUR_FMASK}.wav" "${OUR_DMASK}/${OUR_FMASK}.mp4"
-			info "Setting metatags for ${OUR_DMASK}/${OUR_FMASK}.mp4"
-			set_common_metatags "${OUR_DMASK}/${OUR_FMASK}.mp4"
-			return 0
-		;;
-		mp3)
-			info "Encoding ${OUR_FMASK}.wav to ${ACODEC}"
-			audio_encode $ACODEC "${TMPDIR}/${OUR_FMASK}.wav" "${OUR_DMASK}/${OUR_FMASK}.mp3"
-			info "Setting metatags for ${OUR_DMASK}/${OUR_FMASK}.mp3"
-			set_common_metatags "${OUR_DMASK}/${OUR_FMASK}.mp3"
-			return 0
-		;;
-		flac)
-			info "Encoding ${OUR_FMASK}.wav to ${ACODEC}"
-			audio_encode $ACODEC "${TMPDIR}/${OUR_FMASK}.wav" "${OUR_DMASK}/${OUR_FMASK}.flac"
-			info "Setting metatags for ${OUR_DMASK}/${OUR_FMASK}.flac"
-			set_common_metatags "${OUR_DMASK}/${OUR_FMASK}.flac"
-			return 0
-		;;
-		*)
-			info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
-			die "Unsupported audio codec specified!"
-			return 1
-		;;
+	vorbis)
+		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
+		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.ogg"
+		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
+		set_common_metatags "${DIR_MASK}/${FILE_MASK}.ogg"
+		return 0
+	;;
+	aac-*)
+		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
+		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp4"
+		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
+		set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp4"
+		return 0
+	;;
+	mp3)
+		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
+		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp3"
+		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
+		set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp3"
+		return 0
+	;;
+	flac)
+		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
+		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.flac"
+		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
+		set_common_metatags "${DIR_MASK}/${FILE_MASK}.flac"
+		return 0
+	;;
+	*)
+		info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
+		die "Unsupported audio codec specified!"
+		return 1
+	;;
 	esac
-	((NUM_JOBS--))
+
+	restore_masks
 }
 
 convert_cd() {
@@ -113,13 +113,6 @@ convert_cd() {
 		restore_masks
 	done
 
-	# Handle threading. If THREADS is empty, auto-detect by default. Track the number of running jobs
-	# to ensure that our running jobs never exceed available threads.
-	if [ -z "$THREADS" ]; then
-		export THREADS=$(grep "processor" /proc/cpuinfo | wc -l)
-	fi
-	export NUM_JOBS=0
-
 	for i in $(seq 0 $TRACKS); do
 		set_trackinfo $i
 		set_masks
@@ -135,10 +128,14 @@ convert_cd() {
 			audio_extract_track insecure "$TRACKNUM" "${TMPDIR}/${FILE_MASK}.wav"
 		fi
 
-		handle_encoding &
 		restore_masks
 	done
 
-	# Make sure we don't exit before all encoding is finished.
-	wait
+	# We need an array containing our indexes for handle_encoding to get the tagging information.
+	local -a INDEX
+	for i in $(seq 0 $TRACKS); do
+		INDEX=("${INDEX[@]}" "$i")
+	done
+
+	run_parallel handle_encoding "${INDEX[@]}"
 }

@@ -23,10 +23,11 @@ else
 fi
 
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib -a -f $INCDIR/audio-functions.shlib \
-	-a -f #PREFIX#/share/convmedia/frontend-includes/convcd.shlib ]; then
+	-a -f source $INCDIR/thread-functions.shlib -a -f #PREFIX#/share/convmedia/frontend-includes/convcd.shlib ]; then
 	source $INCDIR/generic-functions.shlib
 	source $INCDIR/container-functions.shlib
 	source $INCDIR/audio-functions.shlib
+	source $INCDIR/thread-functions.shlib
 	source #PREFIX#/share/convmedia/frontend-includes/convcd.shlib
 else
 	echo "Can't load functions, exiting."

@@ -39,47 +39,54 @@ convertaudio()	{
 	case $OUTPUTFORMAT in
 	vorbis)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.ogg" ]; then
-		 info "Converting $1 to $OUTPUT_FILE_NOEXT.ogg"
-		 audio_encode vorbis "$1" "$OUTPUT_FILE_NOEXT.ogg"
-		 info "Setting metatags for $OUTPUT_FILE_NOEXT.ogg"
-		 set_common_metatags "$OUTPUT_FILE_NOEXT.ogg"
+			info "Converting $1 to $OUTPUT_FILE_NOEXT.ogg"
+			audio_encode vorbis "$1" "$OUTPUT_FILE_NOEXT.ogg"
+			info "Setting metatags for $OUTPUT_FILE_NOEXT.ogg"
+			set_common_metatags "$OUTPUT_FILE_NOEXT.ogg"
 		else
-		 die "A file named $OUTPUT_FILE_NOEXT.ogg already exists, exiting."
+			error "A file named $OUTPUT_FILE_NOEXT.ogg already exists, exiting."
+			return 1
 		fi
 	;;
 	flac)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.flac" ]; then
-		 info "Converting $1 to $OUTPUT_FILE_NOEXT.flac"
-		 audio_encode flac "$1" "$OUTPUT_FILE_NOEXT.flac"
-		 info "Setting metatags for $OUTPUT_FILE_NOEXT.flac"
-		 set_common_metatags "$OUTPUT_FILE_NOEXT.flac"
+			info "Converting $1 to $OUTPUT_FILE_NOEXT.flac"
+			audio_encode flac "$1" "$OUTPUT_FILE_NOEXT.flac"
+			info "Setting metatags for $OUTPUT_FILE_NOEXT.flac"
+			set_common_metatags "$OUTPUT_FILE_NOEXT.flac"
 		else
-		 die "A file named $OUTPUT_FILE_NOEXT.flac already exists, exiting."
+			error "A file named $OUTPUT_FILE_NOEXT.flac already exists, exiting."
+			return 1
 		fi
 	;;
 	aac-*)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.mp4" ]; then
-		 info "Converting $1 to $OUTPUT_FILE_NOEXT.mp4"
-		 audio_encode $OUTPUTFORMAT "$1" "$OUTPUT_FILE_NOEXT.mp4"
-		 info "Setting metatags for $OUTPUT_FILE_NOEXT.mp4"
-		 set_common_metatags "$OUTPUT_FILE_NOEXT.mp4"
+			info "Converting $1 to $OUTPUT_FILE_NOEXT.mp4"
+			audio_encode $OUTPUTFORMAT "$1" "$OUTPUT_FILE_NOEXT.mp4"
+			info "Setting metatags for $OUTPUT_FILE_NOEXT.mp4"
+			set_common_metatags "$OUTPUT_FILE_NOEXT.mp4"
 		else
-		 die "A file named $OUTPUT_FILE_NOEXT.mp4 already exists, exiting."
+			error "A file named $OUTPUT_FILE_NOEXT.mp4 already exists, exiting."
+			return 1
 		fi
 	;;
 	mp3)
 		if [ ! -f "$OUTPUT_FILE_NOEXT.mp3" ]; then
-		 info "Converting $1 to $OUTPUT_FILE_NOEXT.mp3"
-		 audio_encode mp3 "$1" "$OUTPUT_FILE_NOEXT.mp3"
-		 info "Setting metatags for $OUTPUT_FILE_NOEXT.mp3"
-		 set_common_metatags "$OUTPUT_FILE_NOEXT.mp3"
+			info "Converting $1 to $OUTPUT_FILE_NOEXT.mp3"
+			audio_encode mp3 "$1" "$OUTPUT_FILE_NOEXT.mp3"
+			info "Setting metatags for $OUTPUT_FILE_NOEXT.mp3"
+			set_common_metatags "$OUTPUT_FILE_NOEXT.mp3"
 		else
-		 die "A file named $OUTPUT_FILE_NOEXT.mp3 already exists, exiting."
+			error "A file named $OUTPUT_FILE_NOEXT.mp3 already exists, exiting."
+			return 1
 		fi
 	;;
 	*)
-	 info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
-	 die "Unsupported format selected!"
+		info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
+		error "Unsupported format selected!"
+		return 1
 	;;
 	esac
+
+	return 0
 }
