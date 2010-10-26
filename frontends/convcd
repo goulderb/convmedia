@@ -118,7 +118,7 @@ if [ -z $ACODEC ]; then
 	help
 fi
 
-export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE -Z --quiet"
+export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE --quiet"
 
 if [ -z "${CDDB_FILE}" ]; then
 	warn "No CDDB file given, taking the first possible result. You will not be able to make any changes to this information."
@@ -127,8 +127,6 @@ if [ -z "${CDDB_FILE}" ]; then
 	bcddb -d $CD_DEVICE -p > ${TMPDIR}/cddb_auto.txt
 	export CDDB_FILE="${TMPDIR}/cddb_auto.txt"
 fi
-
-export TRACKS="$(grep 'ntr:' "${CDDB_FILE}" | cut -d: -f2)"
 
 convert_cd
 

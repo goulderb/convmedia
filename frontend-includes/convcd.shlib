@@ -1,4 +1,4 @@
-populate_metadata_arrays() {
+populate_trackinfo_arrays() {
 	if [ -z "${TITLES[*]}" ]; then
 		export -a TITLES
 		TITLES=("$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f3 | sed -e 's^&^And^g' -e 's^\/^ - ^g' -e 's^\?^^g')")
@@ -13,9 +13,6 @@ populate_metadata_arrays() {
 		ARTISTS=("${ARTISTS[@]}" "$(grep "${N}:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')")
 	fi
 
-	export ALBUM="$(grep "album:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
-	export YEAR="$(grep "year:" "${CDDB_FILE}" | cut -d: -f2)"
-
 	if [ -z "${TRACKNUMS[*]}" ]; then
 		export -a TRACKNUMS
 		TRACKNUMS=("$I")
@@ -24,10 +21,16 @@ populate_metadata_arrays() {
 	fi
 }
 
-set_albuminfo() {
+set_trackinfo() {
 	export ARTIST="${ARTISTS[$1]}"
 	export TITLE="${TITLES[$1]}"
 	export TRACKNUM="${TRACKNUMS[$1]}"
+}
+
+set_albuminfo() {
+	export ALBUM="$(grep "album:" "${CDDB_FILE}" | cut -d: -f2 | sed -e 's^&^And^g' -e 's^\/^ - ^g')"
+	export YEAR="$(grep "year:" "${CDDB_FILE}" | cut -d: -f2)"
+	export TRACKS="$(grep 'ntr:' "${CDDB_FILE}" | cut -d: -f2)"
 }
 
 handle_encoding() {
@@ -78,6 +81,8 @@ handle_encoding() {
 }
 
 convert_cd() {
+	set_albuminfo
+
 	for i in $(seq 0 $TRACKS); do
 		# A stupidly complicated bit of code to do an insanely simple task, make all track numbers double-digit or higher.
 		if [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" != "9" ]; then
@@ -95,14 +100,14 @@ convert_cd() {
 			export N="$i"
 		fi
 		
-		populate_metadata_arrays
+		populate_trackinfo_arrays
 	done
 
 	# Print album information out.
 	echo "Album title: ${ALBUM}"
 	echo "Year of release: ${YEAR}"
 	for i in $(seq 0 "$TRACKS"); do
-		set_albuminfo $i
+		set_trackinfo $i
 		set_masks
 		echo "Track $TRACKNUM: $TITLE by $ARTIST"
 		restore_masks
@@ -116,7 +121,7 @@ convert_cd() {
 	export NUM_JOBS=0
 
 	for i in $(seq 0 $TRACKS); do
-		set_albuminfo $i
+		set_trackinfo $i
 		set_masks
 
 		if [ ! -d "$DIR_MASK" ]; then
