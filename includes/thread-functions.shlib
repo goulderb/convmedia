@@ -6,7 +6,6 @@ run_parallel() {
 	fi
 
 	# We want the pid of our current shell, so use $BASHPID, as $$ returns the parent pid if we're in a subshell.
-	local SUBSHELL_PID="$BASHPID"
 	local CURRENT_TASK=0
 	local RUNNING_TASK
 	local RUN_CMD="$1"
@@ -17,7 +16,7 @@ run_parallel() {
 
 	trapper() {
 		if [ $CURRENT_TASK -lt $NUM_TASKS ]; then
-			($RUN_CMD "${CMD_PARAMS[$CURRENT_TASK]}" kill -USR1 "$SUBSHELL_PID") &
+			($RUN_CMD "${CMD_PARAMS[$CURRENT_TASK]}" kill -USR1 "$BASHPID") &
 			((CURRENT_TASK++))
 		fi
 	}
