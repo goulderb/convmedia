@@ -5,7 +5,8 @@ run_parallel() {
 		local THREADS=$(grep "processor" /proc/cpuinfo | wc -l)
 	fi
 
-	# We want the pid of our current shell, so use $BASHPID, as $$ returns the parent pid if we're in a subshell.
+	# BASHPID/PPID does not return the right pid when executed under a subshell, we need the pid of our current shell, as it is handing out tasks.
+	local PARENT_PID="$BASHPID"
 	local CURRENT_TASK=0
 	local RUNNING_TASK
 	local RUN_CMD="$1"
@@ -16,7 +17,8 @@ run_parallel() {
 
 	trapper() {
 		if [ $CURRENT_TASK -lt $NUM_TASKS ]; then
-			($RUN_CMD "${CMD_PARAMS[$CURRENT_TASK]}" kill -USR1 "$BASHPID") &
+			($RUN_CMD "${CMD_PARAMS[$CURRENT_TASK]}"
+				kill -USR1 "$PARENT_PID") &
 			((CURRENT_TASK++))
 		fi
 	}

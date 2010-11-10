@@ -75,7 +75,7 @@ while [ $1 ]; do
 	;;
 	-d|--cd-device)
 		if [ -n "$2" ]; then
-			export AQUALITY="$2"
+			export CD_DEVICE="$2"
 			export SHIFT="2"
 		else
 			die "No CD-Rom device specified."
@@ -119,7 +119,7 @@ if [ -z $ACODEC ]; then
 	help
 fi
 
-export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE --quiet"
+export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE --quiet -Z"
 
 if [ -z "${CDDB_FILE}" ]; then
 	warn "No CDDB file given, taking the first possible result. You will not be able to make any changes to this information."

@@ -21,19 +21,19 @@ else
 fi
 
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/audio-functions.shlib ]; then
-  source $INCDIR/generic-functions.shlib
-  source $INCDIR/audio-functions.shlib
+	source $INCDIR/generic-functions.shlib
+	source $INCDIR/audio-functions.shlib
 else
-  echo "Can't load functions, exiting."
-  exit 1
+	echo "Can't load functions, exiting."
+	exit 1
 fi
 
 help() {
-  echo "burnaudiocd: An extra-sane audio CD burning application."
-  echo
-  echo "Usage: $0 [OPTIONS]"
-  echo
-  echo "Options:"
+	echo "burnaudiocd: An extra-sane audio CD burning application."
+	echo
+	echo "Usage: $0 [OPTIONS]"
+	echo
+	echo "Options:"
 	echo "-a: Audio filters to use."
 	echo "-r: Resample input audio to the specified sampling rate, such as 44100."
 	echo "-d: CD-Rom device node to use (default /dev/cdrom)."
@@ -45,25 +45,25 @@ help() {
 }
 
 while getopts 'a:r:d:S:sh' z; do
-  case "$z" in
-  a)
-    export AF="-af $OPTARG"
-  ;;
-  d)
-    export CD_DEVICE="$OPTARG"
-  ;;
-  r)
-    export RESAMPLE="$OPTARG"
-  ;;
-	S)
-		export CDRECORD_OPTS="$CDRECORD_OPTS speed=${OPTARG}"
-	;;
-	s)
-		export CDRECORD_OPTS="$CDRECORD_OPTS -dao"
-	;;
-	h)
-		help
-	;;
+	case "$z" in
+		a)
+			export AF="-af $OPTARG"
+		;;
+		d)
+			export CD_DEVICE="$OPTARG"
+		;;
+		r)
+			export RESAMPLE="$OPTARG"
+		;;
+		S)
+			export CDRECORD_OPTS="$CDRECORD_OPTS speed=${OPTARG}"
+		;;
+		s)
+			export CDRECORD_OPTS="$CDRECORD_OPTS -dao"
+		;;
+		h)
+			help
+		;;
 	esac
 done
 shift $(($OPTIND-1))
@@ -83,9 +83,9 @@ elif [ -z "$RESAMPLE" -a -n "$AF" ]; then
 fi
 
 for i in "$@"; do
+	((N++))
 	if [ -f "$i" ]; then
-		((N++))
-		echo "Decoding ${i}..."
+		echo "Decoding $i..."
 		if [ -z "`file -b "$i" | grep "WAVE audio"`" ]; then
 			decode_audio file "$i" "${TMPDIR}"/${N}.wav
 		else
@@ -95,9 +95,13 @@ for i in "$@"; do
 	fi
 done
 
-for i in `cat "${TMPDIR}"/list.txt`; do
-	export LIST="$LIST $i"
-done
+if [ -f "${TMPDIR}/list.txt" ]; then
+	for i in `cat "${TMPDIR}"/list.txt`; do
+		export LIST="$LIST $i"
+	done
+else
+	die "${TMPDIR}/list.txt does not exist!"
+fi
 
 cdrecord dev=$CD_DEVICE $CDRECORD_OPTS -audio -pad $LIST
 
