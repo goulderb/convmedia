@@ -19,6 +19,8 @@ else
 	mkdir -p "$TMPDIR"
 fi
 
+trap "rm -rf "$TMPDIR"" 0 SIGHUP SIGINT SIGTERM
+
 if [ -f /etc/convmedia/bcddb.conf ]; then
 	source /etc/convmedia/bcddb.conf
 else
@@ -193,4 +195,3 @@ if [ -n "$QUERY" -o -n "$READ" -o -n "$PARSE" -o -n "$BLANK" ]; then
 		die "CDDB query failed"
 	fi
 fi
-rm -rf "$TMPDIR"

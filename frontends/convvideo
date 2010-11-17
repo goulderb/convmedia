@@ -19,6 +19,8 @@ else
 	mkdir -p "$TMPDIR"
 fi
 
+trap "rm -rf "$TMPDIR"" 0 SIGHUP SIGINT SIGTERM
+
 # Load required functions and the configuration file.
 if [ -f $INCDIR/generic-functions.shlib -a -f $INCDIR/container-functions.shlib \
 	-a -f $INCDIR/audio-functions.shlib -a -f $INCDIR/video-functions.shlib \
@@ -83,7 +85,6 @@ help() {
 	echo "Splitting the video requires extra disc space to store the split video file, by default the temporary directory used"
 	echo "is /tmp/convvideo-PID/. Also, please ensure that the audio and video you're trying to split can be contained in AVI, otherwise"
 	echo "the video cannot be split because the source is split into an intermediary AVI file."
-	rm -rf "$TMPDIR"
 	exit 0
 }
 

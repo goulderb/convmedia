@@ -83,20 +83,19 @@ handle_encoding() {
 convert_cd() {
 	set_albuminfo
 
+	export I=0
 	for i in $(seq 0 $TRACKS); do
 		# A stupidly complicated bit of code to do an insanely simple task, make all track numbers double-digit or higher.
 		if [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" != "9" ]; then
-			export I="$i"
-			((I++))
+			I="$(expr $i + 1)"
 			export I="0${I}"
 			export N="0${i}"
 		elif [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" = "9" ]; then
-			export I="$i"
+			I="$i"
 			((I++))
 			export N="0${i}"
 		else
 			export I="${i}"
-			((I++))
 			export N="$i"
 		fi
 		

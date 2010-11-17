@@ -19,6 +19,8 @@ else
 		exit 1
 fi
 
+trap "rm -rf "$TMPDIR"" 0 SIGHUP SIGINT SIGTERM
+
 help() {
 	echo "convavs-batch: A Video transcoding application that works with AviSynth through wine in batch."
 	echo
@@ -56,7 +58,6 @@ help() {
 	echo "MP4 does NOT support multiple audio tracks, do not bother ripping the extract tracks as only the first will be used."
 	echo "MP4 does NOT support Vorbis audio tracks, this is due to the MP4 standard and only certain software/hardware would be"
 	echo "able to play such files, so Vorbis audio tracks will throw an error when used with MP4."
-	rm -rf "$TMPDIR"
 	exit 0
 }
 

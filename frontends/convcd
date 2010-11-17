@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 export TMPDIR="/tmp/convcd-$$"
 export INCDIR="#PREFIX#/share/convmedia/includes"
@@ -14,6 +15,8 @@ else
 	rm -rf "$TMPDIR"
 	mkdir "$TMPDIR"
 fi
+
+trap "rm -rf "$TMPDIR"" 0 SIGHUP SIGINT SIGTERM
 
 if [ -f /etc/convmedia/convcd.conf ]; then
 	source /etc/convmedia/convcd.conf
@@ -50,7 +53,6 @@ help() {
 	echo "-n|--rerips: Maximum number of rerips to perform before giving up on an imperfect rip (default 20)."
 	echo "-t|--threads: Maximum number of threads to utilize for encoding (default auto-detect)."
 	echo "-h|--help: Print this help."
-	rm -rf "$TMPDIR"
 	exit 0
 }
 
@@ -124,15 +126,14 @@ export PARANOIA_OPTS="--never-skip=40 -d $CD_DEVICE --quiet -Z"
 if [ -z "${CDDB_FILE}" ]; then
 	warn "No CDDB file given, taking the first possible result. You will not be able to make any changes to this information."
 	warn "In order to do so, you must use bcddb -p > FILE.bcddb and edit this information in a text editor, then run: convcd -m FILE.bcddb"
-	echo
+
 	bcddb -d $CD_DEVICE -p > ${TMPDIR}/cddb_auto.txt
 	export CDDB_FILE="${TMPDIR}/cddb_auto.txt"
 fi
 
 convert_cd
+echo $?
 
-info "Finished ripping, cleaning up."
-rm -rf "$TMPDIR"
 if [ -n "$EJECT" ]; then
 	info "Ejecting CD."
 	eject -T "$CD_DEVICE"

@@ -1,6 +1,5 @@
 #!/bin/bash
 # installer
-# Written by: predatorfreak
 
 if [ -z "$DESTDIR" ]; then
 	DESTDIR=/
@@ -18,46 +17,46 @@ else
 fi
 
 checkdeps()	{
-	if [ -z "`which mplayer 2>/dev/null`" -a -z "`which mencoder 2>/dev/null`" ]; then
+	if ! which mplayer &>/dev/null && ! which mencoder &>/dev/null; then
 		warn "MPlayer isn't installed or wasn't built with MEncoder enabled."
 		warn "MPlayer/MEncoder are required for anything which decodes or encodes audio/video. However, bcddb/btagger will function without MPlayer/MEncoder."
 	fi
-	if [ -z "`which MP4Box 2>/dev/null`" ]; then
+	if ! which MP4Box &>/dev/null; then
 		warn "Gpac is not installed, this is required for muxing of MP4 streams."
 	fi
-	if [ -n "`which pkg-config 2>/dev/null`" ]; then
-		if ! `pkg-config --exists taglib`; then
+	if which pkg-config &>/dev/null; then
+		if ! pkg-config --exists taglib; then
 			warn "Taglib is not installed, Taglib is required for reading and writing metatags for audio files."
 		fi
 	else
 		warn "pkg-config is not installed, this is required to check for taglib and build the tagreader/writer binaries, which allow tagging of audio files."
 	fi
-	if [ -z "`which mkvmerge 2>/dev/null`" ]; then
+	if ! which mkvmerge &>/dev/null; then
 		warn "mkvtoolnix is not installed, this provides convmedia with the ability to mux Matroska files."
 	fi
-	if [ -z "`which oggenc 2>/dev/null`" ]; then
+	if ! which oggenc &>/dev/null; then
 		warn "Vorbis-tools is not installed, this provides oggenc which is required for encoding Ogg Vorbis files."
 	fi
-	if [ -z "`which lame 2>/dev/null`" ]; then
+	if ! which lame &>/dev/null; then
 		warn "LAME is not installed, this provides lame, which is required for encoding MP3 files."
 	fi
-	if [ -z "`which flac 2>/dev/null`" ]; then
+	if ! which flac &>/dev/null; then
 		warn "FLAC is not installed, this provides flac, which is required for encoding FLAC files."
 	fi
-	if [ -z "`which neroAacEnc 2>/dev/null`" ]; then
+	if ! which neroAacEnc &>/dev/null; then
 		warn "Nero Digital AAC is not installed, this provides neroAacEnc, which is required for encoding AAC (LC/HE/HEv2) files."
 		warn "Nero Digital AAC can be acquired from: http://www.nero.com/eng/downloads-nerodigital-nero-aac-codec.php"
 	fi
-	if [ -z "`which bc 2>/dev/null`" ]; then
+	if ! which bc &>/dev/null; then
 		warn "bc is not installed, bc is required for on-the-fly bitrate calculation."
 	fi
-	if [ -z "`which cd-discid 2>/dev/null`" ]; then
+	if ! which cd-discid &>/dev/null; then
 		warn "cd-discid is not installed, cd-discid is required for CDDB querying to function."
 	fi
-	if [ -z "`which cdparanoia 2>/dev/null`" ]; then
+	if ! which cdparanoia &>/dev/null; then
 		warn "cdparanoia is not installed, cdparanoia is required for ripping CD's with convcd."
 	fi
-	if [ -z "`which vorbisgain 2>/dev/null`" ]; then
+	if ! which vorbisgain &>/dev/null; then
 		warn "vorbisgain is not installed, vorbisgain is required to calculate ReplayGain information for Ogg Vorbis files."
 	fi
 }
@@ -91,12 +90,15 @@ install)
 
 		# Detect if tagreader/writer are provided, if not build them ourselves.
 		if [ -n "`which pkg-config 2>/dev/null`" ]; then
-			if `pkg-config --exists taglib` && ! `which tagreader 2>/dev/null` && ! `which tagwriter 2>/dev/null`; then
+			if pkg-config --exists taglib && ! which tagreader &>/dev/null && ! which tagwriter &>/dev/null && which g++ &>/dev/null; then
+				pushd external &>/dev/null
+				echo "Building tagreader and tagwriter."
 				for i in *.cpp; do
-					echo "Building tagreader and tagwriter."
 					g++ `pkg-config --libs --cflags taglib` "$i" -o "$(basename "$i" .cpp)"
 					cp "$(basename "$i" .cpp)" $DESTDIR/$PREFIX/bin/
+					rm "$(basename "$i" .cpp)"
 				done
+				popd &>/dev/null
 			fi
 		fi
 
@@ -129,12 +131,15 @@ upgrade)
 
 		# Detect if tagreader/writer are provided, if not build them ourselves.
 		if [ -n "`which pkg-config 2>/dev/null`" ]; then
-			if `pkg-config --exists taglib` && ! `which tagreader 2>/dev/null` && ! `which tagwriter 2>/dev/null`; then
+			if pkg-config --exists taglib && ! which tagreader &>/dev/null && ! which tagwriter &>/dev/null && which g++ &>/dev/null; then
+				pushd external
 				echo "Building tagreader and tagwriter."
 				for i in *.cpp; do
 					g++ `pkg-config --libs --cflags taglib` "$i" -o "$(basename "$i" .cpp)"
 					cp "$(basename "$i" .cpp)" $DESTDIR/$PREFIX/bin/
+					rm "$(basename "$i" .cpp)"
 				done
+				popd &>/dev/null
 			fi
 		fi
 

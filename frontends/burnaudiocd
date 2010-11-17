@@ -13,6 +13,8 @@ else
 	mkdir "$TMPDIR"
 fi
 
+trap "rm -rf "$TMPDIR"" 0 SIGHUP SIGINT SIGTERM
+
 if [ -f /etc/convmedia/burncd.conf ]; then
 	source /etc/convmedia/burncd.conf
 else
@@ -40,7 +42,6 @@ help() {
 	echo "-s: Session/disc-at-once mode, useful for flakey drives or preventing gaps between songs."
 	echo "-S: Burning speed, defaults to maximum. Useful for flakey drives."
 	echo "-h: Print this help."
-	rm -rf "$TMPDIR"
 	exit 0
 }
 
@@ -104,5 +105,3 @@ else
 fi
 
 cdrecord dev=$CD_DEVICE $CDRECORD_OPTS -audio -pad $LIST
-
-rm -rf "$TMPDIR"

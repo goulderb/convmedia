@@ -238,7 +238,6 @@ audio_encode() {
 				vorbisgain -f "$3"
 			fi
 		fi
-		rm "$ENC_FILE"
 	;;
 	flac)
 		if [ -z "$VERBOSE" ]; then
@@ -248,7 +247,6 @@ audio_encode() {
 			flac -s -$(get_qualitymap invertq) -o "$3" "$ENC_FILE"
 			metaflac --add-replay-gain "$3"
 		fi
-		rm "$ENC_FILE"
 	;;
 	aac-lc)
 		if [ -z "$VERBOSE" ]; then
@@ -256,7 +254,6 @@ audio_encode() {
 		else
 			neroAacEnc -lc -br $BR -if "$ENC_FILE" -of "$3"
 		fi
-		rm "$ENC_FILE"
 	;;
 	aac-hev1)
 		if [ -z "$VERBOSE" ]; then
@@ -264,7 +261,6 @@ audio_encode() {
 		else
 			neroAacEnc -he -br $BR -if "$ENC_FILE" -of "$3"
 		fi
-		rm "$ENC_FILE"
 	;;
 	aac-hev2)
 		if [ -z "$VERBOSE" ]; then
@@ -272,7 +268,6 @@ audio_encode() {
 		else
 			neroAacEnc -hev2 -br $BR -if "$ENC_FILE" -of "$3"
 		fi
-		rm "$ENC_FILE"
 	;;
 	mp3)
 		if [ -z "$VERBOSE" ]; then
@@ -280,7 +275,6 @@ audio_encode() {
 		else
 			lame --replaygain-accurate -S -V $(get_qualitymap vmap) "$ENC_FILE" "$3"
 		fi
-		rm "$ENC_FILE"
 	;;
 	esac
 }

@@ -144,7 +144,4 @@ convertvideo() {
 		merge_files mp4 "$OUTPUT"
 	;;
 	esac
-
-	info "Finished encoding, cleaning up and exiting."
-	rm -rf "$TMPDIR"
 }
