@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 export TMPDIR="/tmp/convcd-$$"
 export INCDIR="#PREFIX#/share/convmedia/includes"
@@ -132,7 +131,6 @@ if [ -z "${CDDB_FILE}" ]; then
 fi
 
 convert_cd
-echo $?
 
 if [ -n "$EJECT" ]; then
 	info "Ejecting CD."

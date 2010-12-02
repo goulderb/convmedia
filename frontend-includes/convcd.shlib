@@ -45,30 +45,46 @@ handle_encoding() {
 	vorbis)
 		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.ogg"
-		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
-		set_common_metatags "${DIR_MASK}/${FILE_MASK}.ogg"
-		return 0
+		if [ "$?" = "0" ]; then
+			info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.ogg"
+			set_common_metatags "${DIR_MASK}/${FILE_MASK}.ogg"
+			return 0
+		else
+			return 1
+		fi
 	;;
 	aac-*)
 		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp4"
-		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
-		set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp4"
-		return 0
+		if [ "$?" = "0" ]; then
+			info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp4"
+			set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp4"
+			return 0
+		else
+			return 1
+		fi
 	;;
 	mp3)
 		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.mp3"
-		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
-		set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp3"
-		return 0
+		if [ "$?" = "0" ]; then
+			info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.mp3"
+			set_common_metatags "${DIR_MASK}/${FILE_MASK}.mp3"
+			return 0
+		else
+			return 1
+		fi
 	;;
 	flac)
 		info "Encoding ${FILE_MASK}.wav to ${ACODEC}"
 		audio_encode $ACODEC "${TMPDIR}/${FILE_MASK}.wav" "${DIR_MASK}/${FILE_MASK}.flac"
-		info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
-		set_common_metatags "${DIR_MASK}/${FILE_MASK}.flac"
-		return 0
+		if [ "$?" = "0" ]; then
+			info "Setting metatags for ${DIR_MASK}/${FILE_MASK}.flac"
+			set_common_metatags "${DIR_MASK}/${FILE_MASK}.flac"
+			return 0
+		else
+			return 1
+		fi
 	;;
 	*)
 		info "Supported formats: vorbis, flac, mp3, aac-lc, aac-hev1, aac-hev2"
@@ -83,20 +99,19 @@ handle_encoding() {
 convert_cd() {
 	set_albuminfo
 
-	export I=0
 	for i in $(seq 0 $TRACKS); do
-		# A stupidly complicated bit of code to do an insanely simple task, make all track numbers double-digit or higher.
-		if [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" != "9" ]; then
-			I="$(expr $i + 1)"
-			export I="0${I}"
+		if [ $i -lt 9 ]; then
+			export I="0$(expr $i + 1)"
 			export N="0${i}"
-		elif [ ! "$(echo -n "$i" | wc -m)" = "2" -a "$i" = "9" ]; then
-			I="$i"
-			((I++))
+			echo "$I $N"
+		elif [ $i = 9 ]; then
+			export I="$(expr $i + 1)"
 			export N="0${i}"
-		else
-			export I="${i}"
-			export N="$i"
+			echo "$I $N"
+		elif [ $i -gt 9 ]; then
+			export I="$(expr $i + 1)"
+			export N="${i}"
+			echo "$I $N"
 		fi
 		
 		populate_trackinfo_arrays
@@ -105,7 +120,7 @@ convert_cd() {
 	# Print album information out.
 	echo "Album title: ${ALBUM}"
 	echo "Year of release: ${YEAR}"
-	for i in $(seq 0 "$TRACKS"); do
+	for i in $(seq 0 $TRACKS); do
 		set_trackinfo $i
 		set_masks
 		echo "Track $TRACKNUM: $TITLE by $ARTIST"
@@ -136,5 +151,5 @@ convert_cd() {
 		INDEX=("${INDEX[@]}" "$i")
 	done
 
-	run_parallel handle_encoding "${INDEX[@]}"
+	(run_parallel handle_encoding "${INDEX[@]}")
 }

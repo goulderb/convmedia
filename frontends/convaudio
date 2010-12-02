@@ -86,5 +86,4 @@ if [ -z $OUTPUTFORMAT ]; then
 	help
 fi
 
-#prll convertaudio "$@"
-run_parallel convertaudio "$@"
+(run_parallel convertaudio "$@")

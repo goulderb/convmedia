@@ -109,7 +109,7 @@ cddb_parse() {
 
 	for i in $(seq 0 $1); do
 		# Check whether we're more than 2 characters
-		if [ ! "$(echo -n "$i" | wc -m)" -ge "2" ]; then
+		if [ $i -lt 10 ]; then
 			local N="0${i}"
 		else
 			local N="${i}"
@@ -139,7 +139,7 @@ cddb_unknown() {
 	echo "ntr:${1}" >> "$OUTPUT"
 
 	for i in $(seq 0 $1); do
-		if [ ! "$(echo -n "$i" | wc -m)" = "2" ]; then
+		if [ $i -lt 10 ]; then
 			local N="0${i}"
 		else
 			local N="${i}"
