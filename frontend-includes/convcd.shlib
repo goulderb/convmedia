@@ -103,15 +103,12 @@ convert_cd() {
 		if [ $i -lt 9 ]; then
 			export I="0$(expr $i + 1)"
 			export N="0${i}"
-			echo "$I $N"
 		elif [ $i = 9 ]; then
 			export I="$(expr $i + 1)"
 			export N="0${i}"
-			echo "$I $N"
 		elif [ $i -gt 9 ]; then
 			export I="$(expr $i + 1)"
 			export N="${i}"
-			echo "$I $N"
 		fi
 		
 		populate_trackinfo_arrays
