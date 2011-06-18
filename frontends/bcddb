@@ -48,7 +48,7 @@ while [ "$1" ]; do
 		echo "-p|--parse: Query, read and parse results from CDDB. Produces bcddb format as output."
 		echo "-b|--blank: Produce a blank bcddb template file for the current disc."
 		echo "-d|--cd-device: Set the CD-Rom device to retrieve disc information from (default: ${CD_DEVICE})"
-		echo "-c|--cache: Disables caching, useful if you're not getting the correct results."
+		echo "-c|--nocache: Disables caching, useful if you're not getting the correct results."
 		echo "-v|--verbose: Output additional information."
 		echo
 		echo "Default mode is query only."

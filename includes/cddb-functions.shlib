@@ -20,7 +20,7 @@ cddb_cache() {
 		fi
 	;;
 	query)
-		if [ -f "${CDDB_CACHE_DIR}/${DISCID}/$2" ]; then
+		if [ -f "${CDDB_CACHE_DIR}/${DISCID}/$2" ]; then	
 			cp "${CDDB_CACHE_DIR}/${DISCID}/$2" "$3"
 			return 0
 		else
@@ -84,6 +84,7 @@ cddb_read() {
 	local SERVER="$1"
 	local HELLO="$2"
 	local GENRE="$(cat "$3" | cut -d' ' -f1)"
+	local DISCID="$(cat "$3" | cut -d' ' -f2)"
 	local OUTPUT="$4"
 
 	wget -q -O "$OUTPUT" "$SERVER?cmd=cddb+read+$GENRE+$DISCID\&hello=$HELLO\&proto=5"

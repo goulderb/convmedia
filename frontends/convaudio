@@ -5,8 +5,6 @@ export CHARSET="UTF-8"
 export TMPDIR="/tmp/convaudio-$$"
 export INCDIR="#PREFIX#/share/convmedia/includes"
 
-source /etc/profile.d/prll.sh
-
 if [ -f /etc/convmedia/convaudio.conf ]; then
 		source /etc/convmedia/convaudio.conf
 else
