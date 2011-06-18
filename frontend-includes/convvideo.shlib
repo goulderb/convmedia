@@ -103,11 +103,13 @@ convertvideo() {
 	mkv)
 		if [ -f "$TMPDIR/video.m4v" ]; then
 			mux_file mp4 $TMPDIR/video.m4v $TMPDIR/video.mp4
-		elif [ -f "$TMPDIR/video.h264" ]; then
-			mux_file mp4 $TMPDIR/video.h264 $TMPDIR/video.mp4
 		fi
 
-		export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
+		if [ -f "${TMPDIR}/video.h264" ]; then
+			export FILEMERGE_ARGS="--default-duration 0:${VIDEO_FPS}fps $TMPDIR/video.h264 $SUBTITLE"
+		elif [ -f "${TMPDIR}/video.mp4" ]; then
+			export FILEMERGE_ARGS="$TMPDIR/video.mp4 $SUBTITLE"
+		fi
 
 		if [ -n "$DVDMODE" -a -f "$TMPDIR/dvdchaps.txt" ]; then
 			export FILEMERGE_ARGS="$FILEMERGE_ARGS $TMPDIR/dvdchaps.txt"
