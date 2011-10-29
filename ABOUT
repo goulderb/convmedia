@@ -9,11 +9,7 @@ At the time of writing, the project includes the following scripts:
 - btagger: A Vorbis/FLAC/ID3/MP4 audio tagging script, capable of tagging and renaming audio files.
 - burnaudiocd: An audio CD burning script, which utilizes wodim/cdrecord to burn audio CDs which can be
 	based off any audio format which mplayer supports.
-- convaudio[-mt]: An audio transcoding script, which preserves metatags when transcoding between formats.
-	The -mt version is a multithreaded variant, which processes multiple files at a time to speed up conversion.
-- convavs[-batch]: A video transcoding/encoding script, which utilizes avs2yuv and wine to encode AviSynth
-	scripts into video files. The batch variant allows for the usage of special input files which allow for
-	bulk processing of multiple AviSynth scripts.
+- convaudio: An audio transcoding script, which preserves metatags when transcoding between formats.
 - convcd: A secure audio ripping application, which rips at least twice in order to ensure that rips are consistent.
 - convvideo: A video transcoding/encoding script, which utilizing mencoder and other tools to produce high-quality,
 	encoded videos in either MPEG-4 ASP or H.264 format.

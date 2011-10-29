@@ -67,20 +67,33 @@ set_common_metatags() {
 	fi
 }
 
+# optional vars: $FILE_MASK $DIR_MASK $TITLE $ARTIST $ALBUM $TRACKNUM $YEAR
 set_masks() {
 	export ORIG_FMASK="$FILE_MASK"
 	export ORIG_DMASK="$DIR_MASK"
-	export FILE_MASK="$(echo "$FILE_MASK" | sed -e "s^%TITLE^$TITLE^g" -e "s^%ARTIST^$ARTIST^g" -e "s^%ALBUM^$ALBUM^g" -e "s:%TRACKNUM:$TRACKNUM:g" \
-    -e "s:%YEAR:$TRACK:g")"
-	export DIR_MASK="$(echo "$DIR_MASK" | sed -e "s^%TITLE^$TITLE^g" -e "s^%ARTIST^$ARTIST^g" -e "s^%ALBUM^$ALBUM^g" -e "s:%TRACKNUM:$TRACKNUM:g" \
-    -e "s:%YEAR:$TRACK:g")"
+
+	# Substitute all place holders for their actual values
+	export FILE_MASK="${FILE_MASK/\%TITLE/$TITLE}"
+	export FILE_MASK="${FILE_MASK/\%ARTIST/$ARTIST}"
+	export FILE_MASK="${FILE_MASK/\%ALBUM/$ALBUM}"
+	export FILE_MASK="${FILE_MASK/\%TRACKNUM/$TRACKNUM}"
+	export FILE_MASK="${FILE_MASK/\%YEAR/$YEAR}"
+
+	export DIR_MASK="${DIR_MASK/\%TITLE/$TITLE}"
+	export DIR_MASK="${DIR_MASK/\%ARTIST/$ARTIST}"
+	export DIR_MASK="${DIR_MASK/\%ALBUM/$ALBUM}"
+	export DIR_MASK="${DIR_MASK/\%TRACKNUM/$TRACKNUM}"
+	export DIR_MASK="${DIR_MASK/\%YEAR/$YEAR}"
 }
 
+# optional vars: $ORIG_FMASK $ORIG_DMASK
 restore_masks() {
 	export FILE_MASK="$ORIG_FMASK"
 	export DIR_MASK="$ORIG_DMASK"
 }
 
+# $1 files to reverse-mask (extract metadata from filename)
+# output vars: $TITLE $ARTIST $ALBUM $TRACKNUM $YEAR
 reverse_mask() {
 	local OLD_IFS="$IFS"
 	local MASK_VALUE=()
@@ -103,8 +116,9 @@ reverse_mask() {
 		fi
 	done
 
-	# Use the IFS variable to allow us to split the file name using a loop.
-	# God knows we'll need arrays for this magic.
+	# Use the IFS variable to allow us to easily split the filename using the mask
+	# delimiters. Afterwards, split the filename apart using IFS and put the output
+	# in an array.
 	export IFS=""
 	for d in ${MASK_DELIM[@]}; do
 		IFS="${IFS}${d}"
@@ -114,6 +128,9 @@ reverse_mask() {
 		FILE_ARRAY=("${FILE_ARRAY[@]}" "$p")
 	done
 
+	# For each element of mask value, substitute the mask with the value from the filename
+	# E.G. if the mask is %TRACKNUM - %TITLE, we'd use the first value from FILE_ARRAY as
+	# $TRACKNUM and the second as $TITLE
 	local CNT=0
 	for v in ${MASK_VALUE[@]}; do
 		if [ "$v" = "%ARTIST" ]; then
